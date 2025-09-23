@@ -1,4 +1,4 @@
-import os
+import os, time
 
 def clear_terminal():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -62,57 +62,20 @@ class crate():
         self.weight = good.weight*amount
 
 class ship():
-    def __init__(self,name:str,health_current:int = 100,health_max:int = 100,cargo_max_weight:int = 1000,cargo:list[crate] = []):
+    def __init__(self,name:str,health_current:int = 100,health_max:int = 100,cargo_max_weight:int = 1000):
         self.name = name
         self.health_current = health_current
         self.health_max = health_max
         self.cargo_max_weight = cargo_max_weight
-        self.cargo = cargo
         self.cargo_weight = 0
         self.storage = Storage(f"{name} Cargo", cargo_max_weight)
-    def calc_cargo(self):
-        self.cargo_weight = 0
-        for crate in self.cargo:
-            self.cargo_weight += crate.weight
-    def show_invent(self):
-        self.calc_cargo()
-        print(f"|{self.name} inventory | {self.cargo_weight}lbs/{self.cargo_max_weight}lbs |")
-        i=1
-        for crate in self.cargo:
-            print(f"[{i}] | Crate of {crate.good.name} | Amount: {crate.amount} | Value: ${crate.good.value*crate.amount} | Weight: {crate.weight}")
-            i+=1
-    def add_to_cargo(self,new_crate:crate):
-        self.calc_cargo
-        if self.cargo_weight + new_crate.weight <= self.cargo_max_weight:
-            self.cargo.append(new_crate)
-            return #f"Added {new_crate.good.name}!"
-        else:
-            return "Sorry, that couldnt be added"
-    def remove_cargo(self,crate_to_remove:crate):
-        try:
-            self.cargo.remove(crate_to_remove)
-            self.calc_cargo()
-            return
-        except Exception:
-            return "That couldn't be removed"
-    def select_from_invent(self):
-        self.calc_cargo()
-        self.show_invent()
-        print(f"[{len(self.cargo)+1}] | Go back")
-        while True:
-            try:
-                answer = int(input(f"|:"))
-                if answer <= (len(self.cargo)+1) and answer > 0:
-                    return int(answer)
-            except Exception as e:
-                #print(e) #Uncomment this line to show error message when the user enters an invalid option
-                print("Invalid selection, try again")
+
 
 class Storage():
-    def __init__(self,name:str,cargo_max_weight:int = 1000,cargo:list[crate] = []):
+    def __init__(self,name:str,cargo_max_weight:int = 1000,cargo: list[crate] | None = None):
+        self.cargo = cargo or []
         self.name = name
         self.cargo_max_weight = cargo_max_weight
-        self.cargo = cargo
         self.cargo_weight = 0
     def calc_cargo(self):
         self.cargo_weight = 0
@@ -129,16 +92,16 @@ class Storage():
         self.calc_cargo
         if self.cargo_weight + new_crate.weight <= self.cargo_max_weight:
             self.cargo.append(new_crate)
-            return #f"Added {new_crate.good.name}!"
+            return True
         else:
-            return "Sorry, that couldnt be added"
+            return False
     def remove_cargo(self,crate_to_remove:crate):
         try:
             self.cargo.remove(crate_to_remove)
             self.calc_cargo()
-            return
-        except Exception:
-            return "That couldn't be removed"
+            return True          # ✅ success
+        except ValueError:
+            return False         # ✅ failure
     def select_from_invent(self):
         self.calc_cargo()
         self.show_invent()
@@ -170,34 +133,36 @@ class port():
             while True:
                 clear_terminal()
                 print(f"|{selected_ship.name}|")
-                action = menu("Actions",["Load","Unload","Change name"],True)
+                action = menu("Actions",["Load","Unload","view inventory","Change name"],True)
                 #Loading logic
-                if action == 1:
-                    clear_terminal()
-                    selected_ship_from:ship = self.ships[menu("Load from",self.ship_names) -1] #Get the ship we are moving from
-                    while True:
-                        try:
-                            clear_terminal()
-                            moving_cargo = selected_ship_from.cargo[selected_ship_from.select_from_invent() -1] #Select the cargo that will be moved
-                        except Exception:
-                            print("Returning...")
-                            break
-                        if selected_ship_from.remove_cargo(moving_cargo): #Attempt to remove cargo from the FROM ship
-                            print("There was a problem moving that cargo") #On failure, do nothing
-                        else: 
-                            if selected_ship.add_to_cargo(moving_cargo): #Attempt to add cargo to current ship
-                                selected_ship_from.add_to_cargo(moving_cargo) #On failure, return removed cargo
+                match action:
+                    case 1:
+                        clear_terminal()
+                        selected_ship_from:ship = self.ships[menu("Load from",self.ship_names) -1] #Get the ship we are moving from
+                        while True:
+                            try:
+                                clear_terminal()
+                                moving_cargo = selected_ship_from.storage.cargo[selected_ship_from.storage.select_from_invent() -1] #Select the cargo that will be moved
+                            except Exception:
+                                break
+                            if not selected_ship_from.storage.remove_cargo(moving_cargo):
                                 print("There was a problem moving that cargo")
+                                time.sleep(1)
                             else:
-                                print("Cargo moved!")
-                #Unloading logic:
-                elif action == 2:
-                    pass
-                #Change name logic
-                elif action == 3:
-                    pass
-                elif action == 4:
-                    break
+                                if not selected_ship.storage.add_to_cargo(moving_cargo):
+                                    # add failed → return the crate back
+                                    selected_ship_from.storage.add_to_cargo(moving_cargo)
+                                    print("There was a problem moving that cargo")
+                                    time.sleep(1)
+                                else:
+                                    print("Cargo moved!")
+                                    time.sleep(1)
+                    case 2:
+                        pass
+                    case 3:
+                        clear_terminal()
+                        selected_ship.storage.show_invent()
+                        input("Press enter to go back")
 
 
 class fleet():
