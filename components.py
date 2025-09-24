@@ -16,10 +16,12 @@ def menu(name:str,list_options:list,return_option=False,horizontal_sign="_",vert
         ex: in the previous example, (1,"a") would be returned'''
     length = 1
     i=1
-    options = list_options.copy()
+    options = []
     items = []
     if return_option:
         options.append("Go back")
+    for each in list_options:
+        options.append(each)
     for item in options:
         if type(item) != str:
             raise TypeError("Items in list must be type str")
@@ -41,38 +43,36 @@ def menu(name:str,list_options:list,return_option=False,horizontal_sign="_",vert
             if answer == "0":
                 raise Exception
             if return_tuple:
+                if return_option:
+                    if int(answer) == 1:
+                        return ("Go back","Go back")
+                    return (int(answer)-1,selected)
                 return (int(answer),selected)
             else:
+                if return_option:
+                    if int(answer) == 1:
+                        return "Go back"
+                    return int(answer)-1
                 return int(answer)
         except Exception as e:
             #print(e) #Uncomment this line to show error message when the user enters an invalid option
             print("Invalid selection, try again")
 
-class good():
+class Good():
     def __init__(self,name:str,description:str,value:int,weight:int):
         self.name = name
         self.description = description
         self.value = value
         self.weight = weight
 
-class crate():
-    def __init__(self,good:good,amount:int):
+class Crate():
+    def __init__(self,good:Good,amount:int):
         self.amount = amount
         self.good = good
         self.weight = good.weight*amount
 
-class ship():
-    def __init__(self,name:str,health_current:int = 100,health_max:int = 100,cargo_max_weight:int = 1000):
-        self.name = name
-        self.health_current = health_current
-        self.health_max = health_max
-        self.cargo_max_weight = cargo_max_weight
-        self.cargo_weight = 0
-        self.storage = Storage(f"{name} Cargo", cargo_max_weight)
-
-
 class Storage():
-    def __init__(self,name:str,cargo_max_weight:int = 1000,cargo: list[crate] | None = None):
+    def __init__(self,name:str,cargo_max_weight:int = 1000,cargo: list[Crate] | None = None):
         self.cargo = cargo or []
         self.name = name
         self.cargo_max_weight = cargo_max_weight
@@ -88,20 +88,20 @@ class Storage():
         for crate in self.cargo:
             print(f"[{i}] | Crate of {crate.good.name} | Amount: {crate.amount} | Value: ${crate.good.value*crate.amount} | Weight: {crate.weight}")
             i+=1
-    def add_to_cargo(self,new_crate:crate):
-        self.calc_cargo
+    def add_to_cargo(self,new_crate:Crate):
+        self.calc_cargo()
         if self.cargo_weight + new_crate.weight <= self.cargo_max_weight:
             self.cargo.append(new_crate)
             return True
         else:
             return False
-    def remove_cargo(self,crate_to_remove:crate):
+    def remove_cargo(self,crate_to_remove:Crate):
         try:
             self.cargo.remove(crate_to_remove)
             self.calc_cargo()
-            return True          # ✅ success
+            return True          
         except ValueError:
-            return False         # ✅ failure
+            return False         
     def select_from_invent(self):
         self.calc_cargo()
         self.show_invent()
@@ -115,20 +115,58 @@ class Storage():
                 #print(e) #Uncomment this line to show error message when the user enters an invalid option
                 print("Invalid selection, try again")
 
-class port():
-    def __init__(self,name:str,ships:list[ship]):
+class Ship():
+    def __init__(self,name:str,health_current:int = 100,health_max:int = 100,cargo_max_weight:int = 1000):
+        self.name = name
+        self.health_current = health_current
+        self.health_max = health_max
+        self.cargo_max_weight = cargo_max_weight
+        self.cargo_weight = 0
+        self.storage = Storage(f"{name} Cargo", cargo_max_weight)
+
+class Warehouse():
+    def __init__(self,name:str,max_weight:int = 10000):
+        self.name = name
+        self.max_weight = max_weight
+        self.storage = Storage(f"{name} Warehouse",self.max_weight)
+
+class Port():
+    def __init__(self,name:str,ships:list[Ship],warehouses:list[Warehouse]=[]):
         self.ships = ships
         self.name = name
         self.ship_names = []
+        self.warehouses = warehouses
+    def transfer_goods(self,from_storage:Storage,to_storage:Storage):
+        while True:
+            try:
+                clear_terminal()
+                moving_cargo = from_storage.cargo[from_storage.select_from_invent() -1] #Select the cargo that will be moved
+            except Exception:
+                break
+            if not from_storage.remove_cargo(moving_cargo):
+                print("There was a problem moving that cargo")
+                time.sleep(1)
+            else:
+                if not to_storage.add_to_cargo(moving_cargo):
+                    # add failed → return the crate back
+                    from_storage.add_to_cargo(moving_cargo)
+                    print("There was a problem moving that cargo")
+                    time.sleep(1)
+                else:
+                    print("Cargo moved!")
+                    time.sleep(1)
     def manageGoods(self):
         while True:
             self.ship_names = []
+            self.warehouse_names = []
+            for warehouse in self.warehouses:
+                self.warehouse_names.append(warehouse.name)
             for ship in self.ships:
                 self.ship_names.append(ship.name)
             clear_terminal()
             print(f"Welcome to {self.name}")
             try:
-                selected_ship:ship = self.ships[menu("Owned ships",self.ship_names,return_option=True) -1] #Select a ship to manage\
+                selected_ship:Ship = self.ships[menu("Owned ships",self.ship_names,return_option=True) -1] #Select a ship to manage\
             except Exception:
                 break
             while True:
@@ -139,25 +177,16 @@ class port():
                 match action:
                     case 1:
                         clear_terminal()
-                        selected_ship_from:ship = self.ships[menu("Load from",self.ship_names) -1] #Get the ship we are moving from
-                        while True:
-                            try:
+                        answer = menu("Load from",["Warehouse","Another ship"])
+                        match answer:
+                            case 1:
                                 clear_terminal()
-                                moving_cargo = selected_ship_from.storage.cargo[selected_ship_from.storage.select_from_invent() -1] #Select the cargo that will be moved
-                            except Exception:
-                                break
-                            if not selected_ship_from.storage.remove_cargo(moving_cargo):
-                                print("There was a problem moving that cargo")
-                                time.sleep(1)
-                            else:
-                                if not selected_ship.storage.add_to_cargo(moving_cargo):
-                                    # add failed → return the crate back
-                                    selected_ship_from.storage.add_to_cargo(moving_cargo)
-                                    print("There was a problem moving that cargo")
-                                    time.sleep(1)
-                                else:
-                                    print("Cargo moved!")
-                                    time.sleep(1)
+                                from_storage:Storage = self.warehouses[menu("Load from",self.warehouse_names) -1].storage #Get the warehouse we are moving from
+                                self.transfer_goods(from_storage,selected_ship.storage)
+                            case 2:
+                                clear_terminal()
+                                from_storage:Storage = self.ships[menu("Load from",self.ship_names) -1].storage #Get the ship we are moving from
+                                self.transfer_goods(from_storage,selected_ship.storage)
                     case 2:
                         pass
                     case 3:
@@ -168,22 +197,22 @@ class port():
                         new_name = input("Enter new name:")
                         selected_ship.name = new_name
                         print("Name changed!")
-                    case 5:
+                    case _:
                         break
 
 
-class fleet():
-    def __init__(self,ships:list[ship]):
+class Fleet():
+    def __init__(self,ships:list[Ship]):
         self.ships = ships
 
-class player():
-    def __init__(self,gold:int,reputation:int,fleet:fleet):
+class Player():
+    def __init__(self,gold:int,reputation:int,fleet:Fleet):
         self.gold = gold
         self.reputation = reputation
         self.fleet = fleet
 
-class exchange():
+class Exchange():
     def __init__(self,name):
         self.name = name
-    def start_exchange(self,player:player):
+    def start_exchange(self,player:Player):
         print(f"Welcome to the {self.name} exchange!")
