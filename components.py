@@ -120,10 +120,11 @@ class port():
         self.ships = ships
         self.name = name
         self.ship_names = []
-        for ship in ships:
-            self.ship_names.append(ship.name)
     def manageGoods(self):
         while True:
+            self.ship_names = []
+            for ship in self.ships:
+                self.ship_names.append(ship.name)
             clear_terminal()
             print(f"Welcome to {self.name}")
             try:
@@ -163,6 +164,12 @@ class port():
                         clear_terminal()
                         selected_ship.storage.show_invent()
                         input("Press enter to go back")
+                    case 4:
+                        new_name = input("Enter new name:")
+                        selected_ship.name = new_name
+                        print("Name changed!")
+                    case 5:
+                        break
 
 
 class fleet():
