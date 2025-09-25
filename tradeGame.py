@@ -6,7 +6,7 @@ theSliver.storage.add_to_cargo(gold,100)
 theSplinter = components.Ship("the Splinter")
 theSplinter.storage.add_to_cargo(gold,100)
 theHold = components.Warehouse("the Hold")
-theHold.storage.add_to_cargo(gold,100)
+theHold.storage.add_to_cargo(gold,10000)
 portGrandure = components.Port("port Grandure",[theSliver,theSplinter],[theHold])
 
 day = 0

@@ -58,7 +58,7 @@ def menu(name:str,list_options:list,return_option=False,horizontal_sign="_",vert
             #print(e) #Uncomment this line to show error message when the user enters an invalid option
             print("Invalid selection, try again")
 
-class Good():
+class Good:
     def __init__(self,name:str,description:str,value:int,weight:int):
         self.name = name
         self.description = description
@@ -129,7 +129,7 @@ class Storage:
                 #print(e) #Uncomment this line to show error message when the user enters an invalid option
                 print("Invalid selection, try again")
 
-class Ship():
+class Ship:
     def __init__(self,name:str,health_current:int = 100,health_max:int = 100,cargo_max_weight:int = 1000):
         self.name = name
         self.health_current = health_current
@@ -138,13 +138,13 @@ class Ship():
         self.cargo_weight = 0
         self.storage = Storage(f"{name} Cargo", cargo_max_weight)
 
-class Warehouse():
+class Warehouse:
     def __init__(self,name:str,max_weight:int = 10000):
         self.name = name
         self.max_weight = max_weight
         self.storage = Storage(f"{name} Warehouse",self.max_weight)
 
-class Port():
+class Port:
     def __init__(self,name:str,ships:list[Ship],warehouses:list[Warehouse]=[]):
         self.ships = ships
         self.name = name
@@ -225,18 +225,30 @@ class Port():
                     case _:
                         break
 
-
-class Fleet():
+class Fleet:
     def __init__(self,ships:list[Ship]):
         self.ships = ships
 
-class Player():
-    def __init__(self,gold:int,reputation:int,fleet:Fleet):
-        self.gold = gold
+class Player:
+    def __init__(self,storage:Storage,reputation:int,fleet:Fleet):
+        self.storage = storage
         self.reputation = reputation
         self.fleet = fleet
+    def view_stats(self):
+        print(f"Reputation: {self.reputation}")
+        print(f"Fleet size: {len(self.fleet.ships)}")
+        self.storage.show_invent()
 
-class Exchange():
+class Contract:
+    def __init__(self,description:str,reward_type:Good,reward_amount:int,deadline:int,goods:Good,amount:int):
+        self.description = description
+        self.reward_type = reward_type
+        self.reward_amount = reward_amount
+        self.deadline = deadline
+        self.goods = goods
+        self.amount = amount
+
+class Exchange:
     def __init__(self,name):
         self.name = name
     def start_exchange(self,player:Player):
