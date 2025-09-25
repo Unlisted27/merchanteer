@@ -72,8 +72,8 @@ class Crate():
         self.weight = good.weight*amount
 
 class Storage():
-    def __init__(self,name:str,cargo_max_weight:int = 1000,cargo: list[Crate] | None = None):
-        self.cargo = cargo or []
+    def __init__(self,name:str,cargo_max_weight:int = 1000,cargo:dict = {}):
+        self.cargo = cargo
         self.name = name
         self.cargo_max_weight = cargo_max_weight
         self.cargo_weight = 0
