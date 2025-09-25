@@ -1,4 +1,4 @@
-import os, time
+import os, time, random
 
 def clear_terminal():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -57,6 +57,46 @@ def menu(name:str,list_options:list,return_option=False,horizontal_sign="_",vert
         except Exception as e:
             #print(e) #Uncomment this line to show error message when the user enters an invalid option
             print("Invalid selection, try again")
+
+#This whole thing was AI generated. Im not making logic like ts
+def gen_contract(good_list: list, max_cargo_weight: float = 50):
+    """
+    Generates a contract with random goods and a reward proportional to value,
+    ensuring the total weight is under max_cargo_weight.
+    """
+
+    # pick a random good to deliver
+    good = random.choice(good_list)
+
+    # calculate max amount that fits under weight limit
+    max_amount = int(max_cargo_weight / good.weight)
+    if max_amount < 1:
+        max_amount = 1
+
+    # choose a random amount up to max
+    amount = random.randint(1, max_amount)
+
+    # pick a reward good (can be the same or different)
+    reward_type = random.choice(good_list)
+
+    # calculate reward proportional to total value of delivered goods
+    total_value = good.value * amount
+    reward_amount = max(1, int(total_value * random.uniform(0.8, 1.2)))  # ±20% variability
+
+    # pick a deadline (arbitrary units, e.g., hours)
+    deadline = random.randint(1, 5) * 24  # 1–5 days
+
+    # create the contract
+    contract = Contract(
+        reward_type=reward_type,
+        reward_amount=reward_amount,
+        deadline=deadline,
+        goods=good,
+        amount=amount
+    )
+
+    return contract
+
 
 class Good:
     def __init__(self,name:str,description:str,value:int,weight:int):
@@ -240,8 +280,7 @@ class Player:
         self.storage.show_invent()
 
 class Contract:
-    def __init__(self,description:str,reward_type:Good,reward_amount:int,deadline:int,goods:Good,amount:int):
-        self.description = description
+    def __init__(self,reward_type:Good,reward_amount:int,deadline:int,goods:Good,amount:int):
         self.reward_type = reward_type
         self.reward_amount = reward_amount
         self.deadline = deadline
@@ -249,7 +288,9 @@ class Contract:
         self.amount = amount
 
 class Exchange:
-    def __init__(self,name):
+    def __init__(self,name:str,contracts:list[Contract]=[]):
         self.name = name
     def start_exchange(self,player:Player):
         print(f"Welcome to the {self.name} exchange!")
+        print("Here are the available contracts")
+        

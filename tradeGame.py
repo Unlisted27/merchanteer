@@ -1,6 +1,8 @@
 import components
 
 gold = components.Good("gold","shiny",1,0.1)
+silver = components.Good("silver","shiny",0.5,0.1)
+
 theSliver = components.Ship("the Sliver")
 theSliver.storage.add_to_cargo(gold,100)
 theSplinter = components.Ship("the Splinter")
