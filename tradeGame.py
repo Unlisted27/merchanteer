@@ -1,15 +1,12 @@
 import components
 
 gold = components.Good("gold","shiny",1,0.1)
-lead = components.Good("lead","dull",0.5,10)
-lead_brick = components.Crate(lead,100)
-gold_chest = components.Crate(gold,100)
 theSliver = components.Ship("the Sliver")
-theSliver.storage.add_to_cargo(gold_chest)
+theSliver.storage.add_to_cargo(gold,100)
 theSplinter = components.Ship("the Splinter")
-theSplinter.storage.add_to_cargo(gold_chest)
+theSplinter.storage.add_to_cargo(gold,100)
 theHold = components.Warehouse("the Hold")
-theHold.storage.add_to_cargo(lead_brick)
+theHold.storage.add_to_cargo(gold,100)
 portGrandure = components.Port("port Grandure",[theSliver,theSplinter],[theHold])
 
 day = 0

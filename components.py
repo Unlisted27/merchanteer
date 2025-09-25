@@ -65,43 +65,57 @@ class Good():
         self.value = value
         self.weight = weight
 
-class Crate():
-    def __init__(self,good:Good,amount:int):
-        self.amount = amount
-        self.good = good
-        self.weight = good.weight*amount
-
-class Storage():
-    def __init__(self,name:str,cargo_max_weight:int = 1000,cargo:dict = {}):
+class Storage:
+    def __init__(self, name: str, cargo_max_weight: int = 1000, cargo: dict | None = None):
+        if cargo is None:
+            cargo = {}        # create a fresh dict for this instance
         self.cargo = cargo
         self.name = name
         self.cargo_max_weight = cargo_max_weight
         self.cargo_weight = 0
+
     def calc_cargo(self):
         self.cargo_weight = 0
-        for crate in self.cargo:
-            self.cargo_weight += crate.weight
+        for good,amount in self.cargo.items():
+            self.cargo_weight += self.get_crate_weight(good,amount)
+    def get_crate_weight(self,good:Good,amount:int):
+        return good.weight*amount
     def show_invent(self):
         self.calc_cargo()
         print(f"|{self.name} inventory | {self.cargo_weight}lbs/{self.cargo_max_weight}lbs |")
-        i=1
-        for crate in self.cargo:
-            print(f"[{i}] | Crate of {crate.good.name} | Amount: {crate.amount} | Value: ${crate.good.value*crate.amount} | Weight: {crate.weight}")
-            i+=1
-    def add_to_cargo(self,new_crate:Crate):
+        for i, (good, amount) in enumerate(self.cargo.items(), start=1):
+            print(
+            f"[{i}] | Crate of {good.name} | "
+            f"Amount: {amount} | "
+            f"Value: ${good.value * amount} | "
+            f"Weight: {self.get_crate_weight(good, amount)}lbs |"
+            )
+    def add_to_cargo(self,new_good:Good,amount:int=1):
         self.calc_cargo()
-        if self.cargo_weight + new_crate.weight <= self.cargo_max_weight:
-            self.cargo.append(new_crate)
+        if self.cargo_weight + self.get_crate_weight(new_good,amount) <= self.cargo_max_weight:
+            for good in self.cargo:
+                if good.name == new_good.name:        # find existing by name
+                    self.cargo[good] += amount
+                    break
+            else:                               # not found -> create
+                self.cargo[new_good] = amount
+            self.calc_cargo()
             return True
         else:
             return False
-    def remove_cargo(self,crate_to_remove:Crate):
-        try:
-            self.cargo.remove(crate_to_remove)
-            self.calc_cargo()
-            return True          
-        except ValueError:
-            return False         
+    def remove_cargo(self, good_to_remove: Good, amount: int=1):
+        for good in list(self.cargo):              # loop over keys safely
+            if good.name == good_to_remove.name:   # match by name
+                if self.cargo[good] >= amount:     # enough to remove?
+                    self.cargo[good] -= amount     # just subtract
+                    if self.cargo[good] <= 0:      # remove empty crates
+                        del self.cargo[good]
+                else:
+                    return False           # Not enough to remove
+                self.calc_cargo()
+                return True
+        return False  # not found
+        
     def select_from_invent(self):
         self.calc_cargo()
         self.show_invent()
@@ -140,16 +154,25 @@ class Port():
         while True:
             try:
                 clear_terminal()
-                moving_cargo = from_storage.cargo[from_storage.select_from_invent() -1] #Select the cargo that will be moved
+                index = from_storage.select_from_invent() - 1
+                goods_list = list(from_storage.cargo.keys())
+                moving_cargo: Good = goods_list[index]    # the Good object selected
             except Exception:
                 break
-            if not from_storage.remove_cargo(moving_cargo):
+            while True:
+                try:
+                    print(f"How much {moving_cargo.name} would you like to move?")
+                    amount = int(input("|:"))
+                    break
+                except Exception:
+                    print("Invalid amount, try again")
+            if not from_storage.remove_cargo(moving_cargo,amount):
                 print("There was a problem moving that cargo")
                 time.sleep(1)
             else:
-                if not to_storage.add_to_cargo(moving_cargo):
-                    # add failed → return the crate back
-                    from_storage.add_to_cargo(moving_cargo)
+                if not to_storage.add_to_cargo(moving_cargo,amount):
+                    # add failed -> return the goods back
+                    from_storage.add_to_cargo(moving_cargo,amount)
                     print("There was a problem moving that cargo")
                     time.sleep(1)
                 else:
@@ -179,10 +202,12 @@ class Port():
                         clear_terminal()
                         answer = menu("Load from",["Warehouse","Another ship"])
                         match answer:
+                            #Warehouse loading logic
                             case 1:
                                 clear_terminal()
                                 from_storage:Storage = self.warehouses[menu("Load from",self.warehouse_names) -1].storage #Get the warehouse we are moving from
                                 self.transfer_goods(from_storage,selected_ship.storage)
+                            #Another ship loading logic
                             case 2:
                                 clear_terminal()
                                 from_storage:Storage = self.ships[menu("Load from",self.ship_names) -1].storage #Get the ship we are moving from
