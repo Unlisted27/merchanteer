@@ -284,7 +284,7 @@ class Port:
             while True:
                 clear_terminal()
                 print(f"|{selected_ship.name}|")
-                action = menu("Actions",["Load","Unload","view inventory","Change name"],True)
+                action = menu("Actions",["Load","view inventory","Change name"],True)
                 #Loading logic
                 match action:
                     case 1:
@@ -302,8 +302,6 @@ class Port:
                                 from_storage:Storage = self.ships[menu("Load from",self.ship_names) -1].storage #Get the ship we are moving from
                                 self.transfer_goods(from_storage,selected_ship.storage)
                     case 2:
-                        pass
-                    case 3:
                         clear_terminal()
                         selected_ship.storage.show_invent()
                         input("Press enter to go back")
@@ -400,7 +398,3 @@ class Exchange:
             except Exception as e:
                 #print(e) #Uncomment this line to show error message when the user enters an invalid option
                 print("Invalid selection, try again")
-
-
-
-
