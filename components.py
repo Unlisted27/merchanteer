@@ -58,8 +58,39 @@ def menu(name:str,list_options:list,return_option=False,horizontal_sign="_",vert
             #print(e) #Uncomment this line to show error message when the user enters an invalid option
             print("Invalid selection, try again")
 
-#This whole thing was AI generated. Im not making logic like ts
-def gen_contract(good_list: list, max_cargo_weight: float = 50):
+#AI generated table printing function
+def print_table(headers: list[str], rows: list[list], sep: str = "  "):
+    """
+    Print a text table with columns sized to fit their contents.
+
+    headers : list of column titles
+    rows    : list of lists; each inner list is a row of values
+    sep     : spacing string between columns (default: two spaces)
+    """
+    # Convert everything to string for measuring
+    str_rows = [[str(c) for c in row] for row in rows]
+    str_headers = [str(h) for h in headers]
+
+    # Find max width of each column
+    widths = [
+        max(len(h), max(len(row[i]) for row in str_rows) if str_rows else 0)
+        for i, h in enumerate(str_headers)
+    ]
+
+    # Format pattern
+    pattern = sep.join("{:<" + str(w) + "}" for w in widths)
+
+    # Print header
+    print(pattern.format(*str_headers))
+    print(sep.join("-" * w for w in widths))
+
+    # Print rows
+    for row in str_rows:
+        print(pattern.format(*row))
+
+
+#This whole thing was AI generated and tweaked by me. Im not making logic like ts
+def gen_contract(good_list: list,reward_list:list, current_day, max_cargo_weight: int = 1000):
     """
     Generates a contract with random goods and a reward proportional to value,
     ensuring the total weight is under max_cargo_weight.
@@ -74,17 +105,17 @@ def gen_contract(good_list: list, max_cargo_weight: float = 50):
         max_amount = 1
 
     # choose a random amount up to max
-    amount = random.randint(1, max_amount)
+    amount = random.randint(int(max_amount/8), max_amount)
 
     # pick a reward good (can be the same or different)
-    reward_type = random.choice(good_list)
+    reward_type = random.choice(reward_list)
 
     # calculate reward proportional to total value of delivered goods
     total_value = good.value * amount
     reward_amount = max(1, int(total_value * random.uniform(0.8, 1.2)))  # ±20% variability
 
     # pick a deadline (arbitrary units, e.g., hours)
-    deadline = random.randint(1, 5) * 24  # 1–5 days
+    deadline = current_day + random.randint(10, 20)  # 10-20 days from now
 
     # create the contract
     contract = Contract(
@@ -97,6 +128,20 @@ def gen_contract(good_list: list, max_cargo_weight: float = 50):
 
     return contract
 
+class GameTime:
+    def __init__(self):
+        self.day = 0
+        self.observers = []   # anything that needs to react to time passing
+
+    def register(self, obj):
+        """Register an object that has an `on_day_passed(days:int)` method."""
+        self.observers.append(obj)
+
+    def advance(self, days=1):
+        """Advance the global clock and notify observers."""
+        self.day += days
+        for o in self.observers:
+            o.on_day_passed(self.day)
 
 class Good:
     def __init__(self,name:str,description:str,value:int,weight:int):
@@ -177,6 +222,9 @@ class Ship:
         self.cargo_max_weight = cargo_max_weight
         self.cargo_weight = 0
         self.storage = Storage(f"{name} Cargo", cargo_max_weight)
+    def on_day_passed(self, days):
+        if days == -1: #not dping anything ATM
+            self.name = "Hello World"
 
 class Warehouse:
     def __init__(self,name:str,max_weight:int = 10000):
@@ -190,6 +238,7 @@ class Port:
         self.name = name
         self.ship_names = []
         self.warehouses = warehouses
+        self.location=""
     def transfer_goods(self,from_storage:Storage,to_storage:Storage):
         while True:
             try:
@@ -269,16 +318,6 @@ class Fleet:
     def __init__(self,ships:list[Ship]):
         self.ships = ships
 
-class Player:
-    def __init__(self,storage:Storage,reputation:int,fleet:Fleet):
-        self.storage = storage
-        self.reputation = reputation
-        self.fleet = fleet
-    def view_stats(self):
-        print(f"Reputation: {self.reputation}")
-        print(f"Fleet size: {len(self.fleet.ships)}")
-        self.storage.show_invent()
-
 class Contract:
     def __init__(self,reward_type:Good,reward_amount:int,deadline:int,goods:Good,amount:int):
         self.reward_type = reward_type
@@ -286,11 +325,82 @@ class Contract:
         self.deadline = deadline
         self.goods = goods
         self.amount = amount
+        self.expired = False
+    def on_day_passed(self, day):
+        if self.deadline < day:
+            self.expired = True
+
+class Player:
+    def __init__(self,storage:Storage,reputation:int,fleet:Fleet,contracts:list[Contract]=[]):
+        self.storage = storage
+        self.reputation = reputation
+        self.fleet = fleet
+        self.contracts = []
+        self.location=""
+        self.contracts = contracts
+    def view_stats(self):
+        print(f"Reputation: {self.reputation}")
+        print(f"Fleet size: {len(self.fleet.ships)}")
+        self.storage.show_invent()
+    def view_contracts(self):
+        headers = ["ID", "Amount", "Goods", "Reward", "Status"]
+        rows = []
+        for i, c in enumerate(self.contracts, start=1):
+            status = "Expired" if c.expired else f"Due day {c.deadline}"
+            reward = f"{c.reward_amount} {c.reward_type.name}"
+            rows.append([i, c.amount, c.goods.name, reward, status])
+        print_table(headers, rows)
+    def player_actions(self):
+        answer = menu("Actions",["View stats","View contracts"],True)
+        match answer:
+            case 1:
+                clear_terminal()
+                self.view_stats()
+                input("Press enter to go back")
+            case 2:
+                clear_terminal()
+                self.view_contracts()
+                input("Press enter to go back")
+            case _:
+                pass
 
 class Exchange:
-    def __init__(self,name:str,contracts:list[Contract]=[]):
+    def __init__(self,name:str,location="",contracts:list[Contract]=[],good_list:list[Good]=[],reward_list:list[Good]=[],game_time:GameTime=None,max_cargo_weight:int=1000):
         self.name = name
-    def start_exchange(self,player:Player):
-        print(f"Welcome to the {self.name} exchange!")
-        print("Here are the available contracts")
-        
+        self.location = location
+        self.contracts = contracts
+        self.good_list = good_list
+        self.reward_list = reward_list  
+        self.game_time = game_time
+        self.max_cargo_weight = max_cargo_weight
+        self.location=""
+        if len(self.contracts) == 0 or self.contracts is None:
+            self.gen_daily_contracts()
+    def gen_daily_contracts(self):
+        if len(self.good_list) == 0 or len(self.reward_list) == 0 or self.game_time is None:
+            raise ValueError("If no contracts are provided, good_list, reward_list, and GameTime must be provided. Also, make sure the day value is accurate")
+        for i in range(random.randint(3,5)):
+            self.contracts.append(gen_contract(self.good_list,self.reward_list,self.game_time.day,self.max_cargo_weight)) #We can GameTime.register contracts that are selected, dont need to do it when they are generated
+    def show_contracts(self):
+        headers = ["ID", "Amount", "Goods", "Reward", "Status"]
+        rows = []
+        for i, c in enumerate(self.contracts, start=1):
+            status = "Expired" if c.expired else f"Due day {c.deadline}"
+            reward = f"{c.reward_amount} {c.reward_type.name}"
+            rows.append([i, c.amount, c.goods.name, reward, status])
+        print_table(headers, rows)
+    def select_contract(self):
+        print("(Enter 0 to go back)")
+        self.show_contracts()
+        while True:
+            try:
+                answer = int(input(f"|:"))
+                if answer <= (len(self.contracts)+1):
+                    return self.contracts[int(answer)-1] if answer != 0 else "Go back"
+            except Exception as e:
+                #print(e) #Uncomment this line to show error message when the user enters an invalid option
+                print("Invalid selection, try again")
+
+
+
+

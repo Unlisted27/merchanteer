@@ -1,29 +1,45 @@
-import components
+import components,building_blocks
 
-gold = components.Good("gold","shiny",1,0.1)
-silver = components.Good("silver","shiny",0.5,0.1)
 
-theSliver = components.Ship("the Sliver")
-theSliver.storage.add_to_cargo(gold,100)
-theSplinter = components.Ship("the Splinter")
-theSplinter.storage.add_to_cargo(gold,100)
-theHold = components.Warehouse("the Hold")
-theHold.storage.add_to_cargo(gold,10000)
-portGrandure = components.Port("port Grandure",[theSliver,theSplinter],[theHold])
+player = components.Player(components.Storage("Player Inventory",100),0,None)
+theBarganHouse = components.Exchange("the Bargan House",good_list=building_blocks.all_goods,reward_list=building_blocks.currency_goods,game_time=building_blocks.game_time)
+portGrandure = components.Port("port Grandure",[building_blocks.theSilver,building_blocks.theSplinter],[building_blocks.theHold])
 
-day = 0
+def start_exchange(exchange:components.Exchange,player:components.Player):
+    components.clear_terminal()
+    while True:
+        components.clear_terminal()
+        print(f"Welcome to {exchange.name}, here you can take contracts to earn money.")
+        answer = components.menu("Exchange Menu",["View available contracts"],True) 
+        match answer:                           # <─ use match instead of “case answer:”
+            case 1:                              # option 1
+                components.clear_terminal()
+                contract = exchange.select_contract()
+                if type(contract) is components.Contract:
+                    building_blocks.game_time.register(contract)
+                    player.contracts.append(contract)
+            case _:                              # option 2
+                break                             # assuming this is inside a loop
 
-#Game loop
+
 while True:
     components.clear_terminal()
-    print(f"Day {day}")
-    answer = components.menu("Main Menu",["Manage goods at port","Next day","Quit game"]) 
+    print(f"Day {building_blocks.game_time.day}")
+    answer = components.menu("Main Menu",["Player actions","Bargain house","Port","Next day","Quit game"]) 
     match answer:                           # <─ use match instead of “case answer:”
-        case 1:                              # option 1
+        case 1:      
+            components.clear_terminal()                        # option 1
+            player.player_actions()
+        case 2: 
+            components.clear_terminal()
+            start_exchange(theBarganHouse,player)
+        case 3:
+            components.clear_terminal()
             portGrandure.manageGoods()
-        case 2:                              # option 2
+        case 4:   
+            components.clear_terminal()                           
             print("A new day begins...")
-            day += 1
-        case 3:                              # option 3
+            building_blocks.game_time.advance()
+        case 5:                             
             print("Thanks for playing!")
             break                             # assuming this is inside a loop
