@@ -90,7 +90,7 @@ def print_table(headers: list[str], rows: list[list], sep: str = "  "):
 
 
 #This whole thing was AI generated and tweaked by me. Im not making logic like ts
-def gen_contract(good_list: list,reward_list:list, current_day, max_cargo_weight: int = 1000):
+def gen_contract(good_list: list,reward_list:list, current_day, current_location, world, max_cargo_weight: int = 1000):
     """
     Generates a contract with random goods and a reward proportional to value,
     ensuring the total weight is under max_cargo_weight.
@@ -117,13 +117,29 @@ def gen_contract(good_list: list,reward_list:list, current_day, max_cargo_weight
     # pick a deadline (arbitrary units, e.g., hours)
     deadline = current_day + random.randint(10, 20)  # 10-20 days from now
 
+    possible_destinations = []
+    for location in world.locations:
+        if location != current_location:
+            possible_destinations.append(location)
+    destination_location = random.choice(possible_destinations) if len(possible_destinations) > 0 else None
+    #print(f"Possible destinations: {[loc.name for loc in possible_destinations]}")
+    #print(f"Chosen destination: {destination_location.name if destination_location else 'None'}")
+    #print(f"destination_location ports: {[port.name for port in destination_location.ports] if destination_location else 'N/A'}")
+    #input()
+    destination_port=random.choice(destination_location.ports) if len(destination_location.ports) > 0 else input("Found an error here") #This logic needs to be fixed to allow for multiple ports per location
+    if destination_port and len(destination_port.warehouses) > 0:
+        destination_storage = random.choice(destination_port.warehouses).storage 
+    else:
+        return  #no valid destination found
     # create the contract
     contract = Contract(
         reward_type=reward_type,
         reward_amount=reward_amount,
         deadline=deadline,
-        goods=good,
-        amount=amount
+        good=good,
+        amount=amount,
+        destination_port=destination_port,
+        destination_storage=destination_storage
     )
 
     return contract
@@ -142,6 +158,10 @@ class GameTime:
         self.day += days
         for o in self.observers:
             o.on_day_passed(self.day)
+
+class World:
+    def __init__(self,locations:list[object]):
+        self.locations = locations
 
 class Good:
     def __init__(self,name:str,description:str,value:int,weight:int):
@@ -233,12 +253,14 @@ class Warehouse:
         self.storage = Storage(f"{name} Warehouse",self.max_weight)
 
 class Port:
-    def __init__(self,name:str,ships:list[Ship],warehouses:list[Warehouse]=[]):
-        self.ships = ships
+    def __init__(self, name: str, ships: list[Ship] | None = None, location=None, warehouses: list[Warehouse] | None = None):
         self.name = name
+        self.ships = list(ships) if ships is not None else []
         self.ship_names = []
-        self.warehouses = warehouses
-        self.location=""
+        self.warehouses = list(warehouses) if warehouses is not None else []
+        self.location = location
+        if self.location is not None:
+            self.location.add_port(self)
     def transfer_goods(self,from_storage:Storage,to_storage:Storage):
         while True:
             try:
@@ -317,28 +339,34 @@ class Fleet:
         self.ships = ships
 
 class Contract:
-    def __init__(self,reward_type:Good,reward_amount:int,deadline:int,goods:Good,amount:int):
+    def __init__(self,reward_type:Good,reward_amount:int,deadline:int,good:Good,amount:int,destination_port:Port,destination_storage:Storage):
         self.reward_type = reward_type
         self.reward_amount = reward_amount
         self.deadline = deadline
-        self.goods = goods
+        self.good = good
         self.amount = amount
+        self.destination_port = destination_port
+        self.destination_storage = destination_storage
         self.expired = False
+    def check_completion(self):
+        if self.destination_storage.cargo.get(self.good,0) >= self.amount:
+            return True
     def on_day_passed(self, day):
         if self.deadline < day:
             self.expired = True
+        if self.check_completion(self):
+            pass #Complete contract logic here
 
 class Player:
-    def __init__(self,storage:Storage,reputation:int,fleet:Fleet,contracts:list[Contract]=[]):
+    def __init__(self, storage: Storage, reputation: int, fleet: Fleet | None = None, contracts: list[Contract] | None = None):
         self.storage = storage
         self.reputation = reputation
         self.fleet = fleet
-        self.contracts = []
-        self.location=""
-        self.contracts = contracts
+        self.contracts = list(contracts) if contracts is not None else []
+        #self.location = ""
     def view_stats(self):
         print(f"Reputation: {self.reputation}")
-        print(f"Fleet size: {len(self.fleet.ships)}")
+        print(f"Fleet size: {len(self.fleet.ships) if self.fleet else 0}")
         self.storage.show_invent()
     def view_contracts(self):
         headers = ["ID", "Amount", "Goods", "Reward", "Status"]
@@ -346,7 +374,7 @@ class Player:
         for i, c in enumerate(self.contracts, start=1):
             status = "Expired" if c.expired else f"Due day {c.deadline}"
             reward = f"{c.reward_amount} {c.reward_type.name}"
-            rows.append([i, c.amount, c.goods.name, reward, status])
+            rows.append([i, c.amount, c.good.name, reward, status])
         print_table(headers, rows)
     def player_actions(self):
         answer = menu("Actions",["View stats","View contracts"],True)
@@ -363,29 +391,36 @@ class Player:
                 pass
 
 class Exchange:
-    def __init__(self,name:str,location="",contracts:list[Contract]=[],good_list:list[Good]=[],reward_list:list[Good]=[],game_time:GameTime=None,max_cargo_weight:int=1000):
+    def __init__(self, name: str, location, game_time: GameTime, world: World,
+                 contracts: list[Contract] | None = None, good_list: list[Good] | None = None,
+                 reward_list: list[Good] | None = None, max_cargo_weight: int = 1000):
         self.name = name
         self.location = location
-        self.contracts = contracts
-        self.good_list = good_list
-        self.reward_list = reward_list  
         self.game_time = game_time
+        self.world = world
+        # defensive copies: new list for each instance
+        self.contracts = list(contracts) if contracts is not None else []
+        self.good_list = list(good_list) if good_list is not None else []
+        self.reward_list = list(reward_list) if reward_list is not None else []
         self.max_cargo_weight = max_cargo_weight
-        self.location=""
-        if len(self.contracts) == 0 or self.contracts is None:
+        if self.location is not None:
+            self.location.add_exchange(self)
+        if not self.contracts:   # safer check for empty list
             self.gen_daily_contracts()
+
     def gen_daily_contracts(self):
         if len(self.good_list) == 0 or len(self.reward_list) == 0 or self.game_time is None:
-            raise ValueError("If no contracts are provided, good_list, reward_list, and GameTime must be provided. Also, make sure the day value is accurate")
+            raise ValueError("If no contracts are provided, good_list, reward_list, and GameTime must be provided. Also, make sure the day value is accurate.")
         for i in range(random.randint(3,5)):
-            self.contracts.append(gen_contract(self.good_list,self.reward_list,self.game_time.day,self.max_cargo_weight)) #We can GameTime.register contracts that are selected, dont need to do it when they are generated
+            self.contracts.append(gen_contract(self.good_list,self.reward_list,self.game_time.day,self.location,self.world,self.max_cargo_weight)) #We can GameTime.register contracts that are selected, dont need to do it when they are generated
     def show_contracts(self):
-        headers = ["ID", "Amount", "Goods", "Reward", "Status"]
+        #input(self.contracts)
+        headers = ["ID", "Amount", "Good", "Reward", "Destination", "Status"]
         rows = []
         for i, c in enumerate(self.contracts, start=1):
             status = "Expired" if c.expired else f"Due day {c.deadline}"
             reward = f"{c.reward_amount} {c.reward_type.name}"
-            rows.append([i, c.amount, c.goods.name, reward, status])
+            rows.append([i, c.amount, c.good.name, reward, c.destination_port.location.name, status])
         print_table(headers, rows)
     def select_contract(self):
         print("(Enter 0 to go back)")
@@ -398,3 +433,16 @@ class Exchange:
             except Exception as e:
                 #print(e) #Uncomment this line to show error message when the user enters an invalid option
                 print("Invalid selection, try again")
+
+class Location:
+    def __init__(self,name:str,description:str="",ports:list[Port]=None,exchanges:list[Exchange]=None):
+        self.name = name
+        self.description = description
+        self.ports = ports if ports is not None else []
+        self.exchanges = exchanges if exchanges is not None else []
+    def add_port(self, port):
+        if port not in self.ports:
+            self.ports.append(port)
+    def add_exchange(self, exchange):
+        if exchange not in self.exchanges:
+            self.exchanges.append(exchange)

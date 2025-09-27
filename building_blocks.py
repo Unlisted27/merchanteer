@@ -1,7 +1,12 @@
-import components
+import components,random
+
+#Locations
+grandure = components.Location("Grandure","A bustling trade city with a large port.")
+clammer = components.Location("Clammer","A small fishing village known for its seafood.")
 
 #world things
 game_time = components.GameTime()
+world = components.World([grandure,clammer])
 
 #Currency goods
 gold = components.Good("gold","shiny",1,0.1)
@@ -24,3 +29,19 @@ theHold = components.Warehouse("the Hold")
 all_goods = [gold,silver,bread,fish,wood,cloth,rice]
 trade_goods = [bread,fish,wood,cloth,rice]
 currency_goods = [gold,silver]
+
+#Other
+player = components.Player(components.Storage("Player Inventory",100),0)
+
+#Port creation
+portClammer = components.Port("port Clammer",[],clammer,[theHold])
+portGrandure = components.Port("port Grandure",[theSilver,theSplinter],grandure,[theHold])
+
+#Clammer
+theFishermansWharf = components.Exchange("the Fisherman's Wharf",clammer,game_time, world,good_list=all_goods,reward_list=currency_goods)
+#Grandure
+theBargainHouse = components.Exchange("the Bargan House",grandure,game_time, world,good_list=all_goods,reward_list=currency_goods)
+
+
+
+print(random.choice(clammer.ports).name)

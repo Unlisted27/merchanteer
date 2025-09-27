@@ -1,9 +1,9 @@
 import components,building_blocks
 
 
-player = components.Player(components.Storage("Player Inventory",100),0,None)
-theBarganHouse = components.Exchange("the Bargan House",good_list=building_blocks.all_goods,reward_list=building_blocks.currency_goods,game_time=building_blocks.game_time)
-portGrandure = components.Port("port Grandure",[building_blocks.theSilver,building_blocks.theSplinter],[building_blocks.theHold])
+player = building_blocks.player
+theBargainHouse = building_blocks.theBargainHouse
+portGrandure = building_blocks.portGrandure
 
 def start_exchange(exchange:components.Exchange,player:components.Player):
     components.clear_terminal()
@@ -32,7 +32,7 @@ while True:
             player.player_actions()
         case 2: 
             components.clear_terminal()
-            start_exchange(theBarganHouse,player)
+            start_exchange(theBargainHouse,player)
         case 3:
             components.clear_terminal()
             portGrandure.manageGoods()
@@ -42,4 +42,4 @@ while True:
             building_blocks.game_time.advance()
         case 5:                             
             print("Thanks for playing!")
-            break                             # assuming this is inside a loop
+            break
