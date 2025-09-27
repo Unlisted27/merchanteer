@@ -45,13 +45,13 @@ def menu(name:str,list_options:list,return_option=False,horizontal_sign="_",vert
             if return_tuple:
                 if return_option:
                     if int(answer) == 1:
-                        return ("Go back","Go back")
+                        return (None,"Go back")
                     return (int(answer)-1,selected)
                 return (int(answer),selected)
             else:
                 if return_option:
                     if int(answer) == 1:
-                        return "Go back"
+                        return None
                     return int(answer)-1
                 return int(answer)
         except Exception as e:
@@ -253,7 +253,7 @@ class Warehouse:
         self.storage = Storage(f"{name} Warehouse",self.max_weight)
 
 class Port:
-    def __init__(self, name: str, ships: list[Ship] | None = None, location=None, warehouses: list[Warehouse] | None = None):
+    def __init__(self, name: str, location:object,ships: list[Ship] | None = None, warehouses: list[Warehouse] | None = None):
         self.name = name
         self.ships = list(ships) if ships is not None else []
         self.ship_names = []
@@ -358,11 +358,12 @@ class Contract:
             pass #Complete contract logic here
 
 class Player:
-    def __init__(self, storage: Storage, reputation: int, fleet: Fleet | None = None, contracts: list[Contract] | None = None):
+    def __init__(self, storage: Storage, reputation: int, fleet: Fleet | None = None, contracts: list[Contract] | None = None, warehouses: list[Warehouse] | None = None):
         self.storage = storage
         self.reputation = reputation
         self.fleet = fleet
         self.contracts = list(contracts) if contracts is not None else []
+        self.warehouses = list(warehouses) if warehouses is not None else []
         #self.location = ""
     def view_stats(self):
         print(f"Reputation: {self.reputation}")
@@ -422,17 +423,38 @@ class Exchange:
             reward = f"{c.reward_amount} {c.reward_type.name}"
             rows.append([i, c.amount, c.good.name, reward, c.destination_port.location.name, status])
         print_table(headers, rows)
-    def select_contract(self):
-        print("(Enter 0 to go back)")
-        self.show_contracts()
+    def select_contract(self,player:Player):
         while True:
+            clear_terminal()
+            self.show_contracts()
+            print("(Enter 0 to go back)")
             try:
                 answer = int(input(f"|:"))
-                if answer <= (len(self.contracts)+1):
-                    return self.contracts[int(answer)-1] if answer != 0 else "Go back"
-            except Exception as e:
-                #print(e) #Uncomment this line to show error message when the user enters an invalid option
+            except Exception:# as e:
                 print("Invalid selection, try again")
+            if answer <= (len(self.contracts)+1):
+                if answer != 0:
+                    chosen_contract = self.contracts[int(answer)-1] 
+                    while True:
+                        clear_terminal()
+                        warehouse_names = []
+                        for warehouse in player.warehouses:
+                            warehouse_names.append(warehouse.name)
+                        answer:int = (menu("Where would you like to store these goods?",warehouse_names,True))
+                        if answer is None:
+                            break
+                        answer -= 1
+                        selected_warehouse:Warehouse = player.warehouses[answer] 
+                        if selected_warehouse.storage.add_to_cargo(chosen_contract.good,chosen_contract.amount):
+                            input("Contract accepted! (press enter to continue)")
+                            return self.contracts[int(answer)-1]
+                        else:
+                            input("That warehouse cannot hold that much cargo, choose another (press enter to continue)")
+                else:
+                    return None
+            #except Exception as e:
+                #print(e) #Uncomment this line to show error message when the user enters an invalid option
+                #print("Invalid selection, try again")
 
 class Location:
     def __init__(self,name:str,description:str="",ports:list[Port]=None,exchanges:list[Exchange]=None):

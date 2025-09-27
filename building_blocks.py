@@ -31,11 +31,13 @@ trade_goods = [bread,fish,wood,cloth,rice]
 currency_goods = [gold,silver]
 
 #Other
-player = components.Player(components.Storage("Player Inventory",100),0)
+player = components.Player(components.Storage("Player Inventory",100),0,warehouses=[theHold])
+theHold.storage.add_to_cargo(gold,100000)
+print(theHold.storage.show_invent())
 
 #Port creation
-portClammer = components.Port("port Clammer",[],clammer,[theHold])
-portGrandure = components.Port("port Grandure",[theSilver,theSplinter],grandure,[theHold])
+portClammer = components.Port("port Clammer",clammer,warehouses=[theHold])
+portGrandure = components.Port("port Grandure",grandure,[theSilver,theSplinter],[theHold])
 
 #Clammer
 theFishermansWharf = components.Exchange("the Fisherman's Wharf",clammer,game_time, world,good_list=all_goods,reward_list=currency_goods)
