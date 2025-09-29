@@ -40,7 +40,7 @@ while True:
             start_exchange(theBargainHouse,player)
         case 3:
             components.clear_terminal()
-            portGrandure.manageGoods()
+            portGrandure.manage_ships()
         case 4:   
             components.clear_terminal()                           
             print("A new day begins...")

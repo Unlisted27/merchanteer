@@ -20,10 +20,13 @@ rice = components.Good("rice","staple food",0.2,1)
 
 #ships and warehouses
 theSilver = components.Ship("the Silver")
+game_time.register(theSilver) #Register ship to game time so it can track travel time
 theSilver.storage.add_to_cargo(gold,100)
 theSplinter = components.Ship("the Splinter")
 theSplinter.storage.add_to_cargo(gold,100)
+game_time.register(theSplinter) #Register ship to game time so it can track travel time
 theHold = components.Warehouse("the Hold")
+clammer_warehouse = components.Warehouse("Clammer Warehouse")
 
 #lists
 all_goods = [gold,silver,bread,fish,wood,cloth,rice]
@@ -32,12 +35,11 @@ currency_goods = [gold,silver]
 
 #Other
 player = components.Player(components.Storage("Player Inventory",100),0,warehouses=[theHold])
-theHold.storage.add_to_cargo(gold,100000)
 print(theHold.storage.show_invent())
 
 #Port creation
-portClammer = components.Port("port Clammer",clammer,warehouses=[theHold])
-portGrandure = components.Port("port Grandure",grandure,[theSilver,theSplinter],[theHold])
+portClammer = components.Port("port Clammer",clammer,world,warehouses=[clammer_warehouse])
+portGrandure = components.Port("port Grandure",grandure,world,[theSilver,theSplinter],[theHold])
 
 #Clammer
 theFishermansWharf = components.Exchange("the Fisherman's Wharf",clammer,game_time, world,good_list=all_goods,reward_list=currency_goods)

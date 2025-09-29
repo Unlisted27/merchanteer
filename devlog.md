@@ -44,10 +44,29 @@
         -Contains list of location bound objects (ports and exchanges)  
         -Items put themselves on that list, so locations can be defined before the ports that are in them  
   
-# 0.0.2 
+# 0.0.2 The sailing update
+## Added features  
 -Added game title art  
--Added warehouses list to player objects
--Exchanges will now place contract goods into one of the player's owned warehouses (selected by the player)
--Exchanges will now only put items into a warehouse if there is space
--Added back button to warehouse selection
--Changed Go Back option return type of menu function from str"Go back" to None, and tuple option: (None,"Go back)
+-Contracts will now deposite their goods in a player chosen warehouse  
+-Ships can now sail to other ports, where they will automatically deposite all goods  
+  
+## Player notes  
+-Contract rewards have yet to be implemented, so you don't get a payout on completion
+  
+## Bug fixes
+-Fixed bug where the wrong contract is added once selected  
+  
+## Dev notes  
+-Added warehouses list to player objects  
+-Exchanges will now place contract goods into one of the player's owned warehouses (selected by the player)  
+-Exchanges will now only put items into a warehouse if there is space  
+-Added back button to warehouse selection  
+-Changed Go Back option return type of menu function from str"Go back" to None, and tuple option: (None,"Go back)  
+-Added coordinates to Location objects, now we can use math that I learned in school (for the first time ever) to get the distance between these points  
+-Changed manageGoods function to manage_ships because it is now basically the main function of the port  
+-World object is now a requirement of port objects  
+-Ships now have a dispatched property (bool) and other properties for determining their target for depositing goods and travel time  
+-Added some other things to contracts and ships to build shipping system  
+-Sailded FIRST FUNCTIONING VOYAGE! The silver (should have been Sliver, but whatever) left port Grandure carrying silver, sailed 2 days to port Clammer, deposited it's silver, and returned to port Grandure within 4 days of it's departure!  
+-Ships cannot be accesed while sailing  
+-Ships will become available uppon return to port  
