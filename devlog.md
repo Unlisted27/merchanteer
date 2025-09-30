@@ -70,3 +70,8 @@
 -Sailded FIRST FUNCTIONING VOYAGE! The silver (should have been Sliver, but whatever) left port Grandure carrying silver, sailed 2 days to port Clammer, deposited it's silver, and returned to port Grandure within 4 days of it's departure!  
 -Ships cannot be accesed while sailing  
 -Ships will become available uppon return to port  
+
+# 0.0.3
+
+## Added features
+- Added artist's signature to all artwork  
