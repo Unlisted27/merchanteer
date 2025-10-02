@@ -18,11 +18,34 @@ wood = components.Good("wood","building material",0.5,2)
 cloth = components.Good("cloth","fabric material",0.3,0.1)
 rice = components.Good("rice","staple food",0.2,1)
 
+#Events
+event_list = []
+
+class BadWind(components.ShipEvent):
+    def __init__(self):
+        super().__init__("Bad Wind")
+    
+    def run_event(self,ship:components.Ship):
+        ship.day_of_arrival += 1
+        ship.day_of_return += 1
+        #input(f"Bad wind event occured on {ship.name}")
+event_list.append(BadWind())
+
+class GoodWind(components.ShipEvent):
+    def __init__(self):
+        super().__init__("Good Wind")
+    
+    def run_event(self,ship:components.Ship):
+        ship.day_of_arrival -= 1
+        ship.day_of_return -= 1
+        #input(f"Good wind event occured on {ship.name}")
+event_list.append(GoodWind())
+
 #ships and warehouses
-theSilver = components.Ship("the Silver")
-game_time.register(theSilver) #Register ship to game time so it can track travel time
-theSilver.storage.add_to_cargo(gold,100)
-theSplinter = components.Ship("the Splinter")
+theSliver = components.Ship("the Sliver",event_list=event_list)
+game_time.register(theSliver) #Register ship to game time so it can track travel time
+theSliver.storage.add_to_cargo(gold,100)
+theSplinter = components.Ship("the Splinter",event_list=event_list)
 theSplinter.storage.add_to_cargo(gold,100)
 game_time.register(theSplinter) #Register ship to game time so it can track travel time
 theHold = components.Warehouse("the Hold")
@@ -39,7 +62,7 @@ print(theHold.storage.show_invent())
 
 #Port creation
 portClammer = components.Port("port Clammer",clammer,world,warehouses=[clammer_warehouse])
-portGrandure = components.Port("port Grandure",grandure,world,[theSilver,theSplinter],[theHold])
+portGrandure = components.Port("port Grandure",grandure,world,[theSliver,theSplinter],[theHold])
 
 #Clammer
 theFishermansWharf = components.Exchange("the Fisherman's Wharf",clammer,game_time, world,good_list=all_goods,reward_list=currency_goods)

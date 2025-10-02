@@ -5,7 +5,10 @@
     COMPLETE b. Dispatches will be handled by Port objects, which will be tied to the World object, which will contain all of the ports in the world
     COMPLETE c. exchanges will handle placing items into warehouses
     COMPLETE d. PRIORITY Locations have coordinates, randomly generated, determine their distances from eachother (finaly I use the math I learned in school lol)
-    e. Travel time variation
+    COMPLETE e. Travel time variation
+        COMPLETE i. Travel events
+        COMPLETE ii. Events cause time changes
+        COMPLETE iii. Events have an effect on the ship properties
 3. Contract stuff  
     COMPLETE a. Contracts have a destination  
     COMPLETE b. Contracts simply check the destination warehouse storage every day to see if the goods have been delivered.    

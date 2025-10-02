@@ -1,4 +1,5 @@
 import os, time, random, math
+from abc import ABC, abstractmethod
 
 def clear_terminal():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -234,13 +235,25 @@ class Storage:
                 #print(e) #Uncomment this line to show error message when the user enters an invalid option
                 print("Invalid selection, try again")
 
+#This class is abstract, meaning it cannot be instantiated without being inherited from, and any class that inherits from it must implement run_event
+class ShipEvent(ABC):
+    def __init__(self,name:str):
+        self.name = name
+
+    @abstractmethod
+    def run_event(self,ship:"Ship"):
+        pass
+
 class Ship:
-    def __init__(self,name:str,health_current:int = 100,health_max:int = 100,cargo_max_weight:int = 1000):
+    def __init__(self,name:str,health_current:int = 100,health_max:int = 100,cargo_max_weight:int = 1000,event_list=list[ShipEvent]):
         self.name = name
         self.health_current = health_current
         self.health_max = health_max
         self.cargo_max_weight = cargo_max_weight
         self.cargo_weight = 0
+        self.event_list = list(event_list) if event_list is not None else []
+        self.ships_log = []
+        #Affectable ship properties
         self.storage = Storage(f"{name} Cargo", cargo_max_weight)
         self.is_dispatched = False
         self.day_of_arrival = 0
@@ -249,11 +262,21 @@ class Ship:
         self.returning_port:Port = None
     def on_day_passed(self, days):
         #Remember, this function runs every new day
+        #Daily checks when dispatched
         if self.is_dispatched:
+            #Event logic
+            event_roll = random.randint(1,4) #Decide if an event happens today
+            if event_roll == 1 and len(self.event_list) > 0: #If an event is to happen, and there are events to happen
+                event:ShipEvent = random.choice(self.event_list) #Select a random event from the list
+                event.run_event(self) #Run the event, passing in the ship as a parameter
+                self.ships_log.append(f"Day {days}: {event.name} event occurred.")
+            #Check for arrival at foreign port
             if days == self.day_of_arrival:
+                #Empty cargo into target warehouse
                 for good, amount in list(self.storage.cargo.items()):  # <-- iterate over a copy
                     self.target_warehouse.storage.add_to_cargo(good, amount)
                     self.storage.remove_cargo(good, amount)
+            #Check for return to home port
             if days == self.day_of_return:
                 self.is_dispatched = False
                 self.day_of_arrival = 0
@@ -324,7 +347,7 @@ class Port:
             while True:
                 clear_terminal()
                 print(f"|{selected_ship.name}|")
-                action = menu("Actions",["Load","view inventory","Dispatch ship","Change name"],True)
+                action = menu("Actions",["Load","view inventory","Dispatch ship","Change name","View event log"],True)
                 #Loading logic
                 match action:
                     case 1:
@@ -369,16 +392,23 @@ class Port:
                         selected_ship.day_of_arrival = travel_time
                         selected_ship.day_of_return = travel_time*2
                         selected_ship.returning_port = self
+                        selected_ship.ships_log.append(f"-----Dispatched to {destination.name}-----")
                         self.ships.remove(selected_ship) #Remove the ship from the port while it is dispatched
                         print(f"{selected_ship.name} has been dispatched to {destination.name}!")
-                        print(f"It will take {travel_time} days to get there.")
-                        print(f"It will return in {travel_time*2} days.")
+                        print(f"It will take aproximately {travel_time} days to get there.")
+                        print(f"It will return in aproximately {travel_time*2} days.")
                         input("Press enter to continue")
                         break
                     case 4:
                         new_name = input("Enter new name:")
                         selected_ship.name = new_name
                         print("Name changed!")
+                    case 5:
+                        clear_terminal()
+                        print(f"Event log for {selected_ship.name} ({len(selected_ship.ships_log)}):")
+                        for log_entry in selected_ship.ships_log:
+                            print(log_entry)
+                        input("Press enter to go back")
                     case _:
                         break
 

@@ -1,3 +1,10 @@
+# Versioning scheme  
+  0    .    0    .    0    -    s
+MAJOR     MINOR     PATCH    SPECIAL
+
+## Special legend
+
+
 # up to 0.0.1 Contracts rework #1 and locations
 -Created the following objects:  
     1. GameTime  
@@ -49,7 +56,9 @@
 -Added game title art  
 -Contracts will now deposite their goods in a player chosen warehouse  
 -Ships can now sail to other ports, where they will automatically deposite all goods  
-  
+-Added event system, events will randomly occur and change the travel time of the ship
+-Added ships log, you can now see why your lazy crew took so long
+
 ## Player notes  
 -Contract rewards have yet to be implemented, so you don't get a payout on completion
   
@@ -70,3 +79,9 @@
 -Sailded FIRST FUNCTIONING VOYAGE! The silver (should have been Sliver, but whatever) left port Grandure carrying silver, sailed 2 days to port Clammer, deposited it's silver, and returned to port Grandure within 4 days of it's departure!  
 -Ships cannot be accesed while sailing  
 -Ships will become available uppon return to port  
+-ShipEvent class created  
+-To make a ShipEvent, create a class that inherits it  
+-All ShipEvent classes must have a run_event() function, and must initialise the parent: super().__init__("Event Name")  
+-Ship events occur randomly when a ship is dispatched  
+-Added ship log, just a list.  
+-All events are shown in the ship log  
