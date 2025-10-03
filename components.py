@@ -364,10 +364,12 @@ class Port:
                                 clear_terminal()
                                 from_storage:Storage = self.ships[menu("Load from",self.ship_names) -1].storage #Get the ship we are moving from
                                 self.transfer_goods(from_storage,selected_ship.storage)
+                    #Show invent
                     case 2:
                         clear_terminal()
                         selected_ship.storage.show_invent()
                         input("Press enter to go back")
+                    #Dispatch ship
                     case 3:
                         clear_terminal()
                         location_names = []
@@ -399,9 +401,11 @@ class Port:
                         print(f"It will return in aproximately {travel_time*2} days.")
                         input("Press enter to continue")
                         break
+                    #Rename ship
                     case 4:
                         new_name = input("Enter new name:")
                         selected_ship.name = new_name
+                        selected_ship.storage.name = f"{new_name} Cargo"
                         print("Name changed!")
                     case 5:
                         clear_terminal()
