@@ -14,7 +14,7 @@ def start_exchange(exchange:components.Exchange,player:components.Player):
     while True:
         components.clear_terminal()
         print(f"Welcome to {exchange.name}, here you can take contracts to earn money.")
-        answer = components.menu("Exchange Menu",["View available contracts"],True) 
+        answer = components.menu("Exchange Menu",["View available contracts","Cashout contracts"],True) 
         match answer:                           # <─ use match instead of “case answer:”
             case 1:                              # option 1
                 components.clear_terminal()
@@ -22,6 +22,8 @@ def start_exchange(exchange:components.Exchange,player:components.Player):
                 if type(contract) is components.Contract:
                     building_blocks.game_time.register(contract)
                     player.contracts.append(contract)
+            case 2:                              # option 2
+                exchange.cashout_contracts(player)
             case _:                              # option 2
                 break                             # assuming this is inside a loop
 components.clear_terminal()

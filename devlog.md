@@ -85,3 +85,11 @@ MAJOR     MINOR     PATCH    SPECIAL
 -Ship events occur randomly when a ship is dispatched  
 -Added ship log, just a list.  
 -All events are shown in the ship log  
+
+# 0.0.3  
+## Added features 
+ - Mail system, basically a delay on contract completion   
+## Player notes  
+- Contracts now take between 2 and 5 days from their completion for the exchange to recieve notice of their completion  
+## Dev notes  
+- Contracts now check for completion BEFORE checking for expiry

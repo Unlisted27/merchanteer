@@ -427,16 +427,20 @@ class Contract:
         self.destination_storage = destination_storage
         self.expired = False
         self.complete = False
+        self.complete_notice = False
     def check_completion(self):
         if self.destination_storage.cargo.get(self.good,0) >= self.amount:
             return True
     def on_day_passed(self, day):
+        contract_travel_time = None
+        if self.check_completion(): #Check if contract is complete
+            if not self.complete: #Check if it was already complete
+                contract_travel_time = day + random.randint(2,5) #Random travel time for reward delivery
+                self.complete = True
+        if day == contract_travel_time and self.complete is True and self.complete_notice is False:
+            self.complete_notice = True
         if self.deadline < day and self.complete is False:
             self.expired = True
-        if self.check_completion():
-            if not self.complete:
-                input("CONTRACT COMPLETED!")
-                self.complete = True
 
 class Player:
     def __init__(self, storage: Storage, reputation: int, fleet: Fleet | None = None, contracts: list[Contract] | None = None, warehouses: list[Warehouse] | None = None):
@@ -536,6 +540,36 @@ class Exchange:
             #except Exception as e:
                 #print(e) #Uncomment this line to show error message when the user enters an invalid option
                 #print("Invalid selection, try again")
+    def cashout_contracts(self,player:Player):
+        while True:
+            clear_terminal()
+            player.view_contracts()
+            print("(Enter 0 to go back)")
+            try:
+                answer = int(input(f"|:"))
+                if answer == 0:
+                    break
+                chosen_contract:Contract = player.contracts[answer-1] 
+                if chosen_contract.complete_notice:
+                    warehouse_names = []
+                    for warehouse in player.warehouses:
+                        warehouse_names.append(warehouse.name)
+                    try:
+                        answer = int(menu("Where would you like to store these goods?",warehouse_names,True))-1
+                    except Exception:
+                        break
+                    selected_warehouse:Warehouse = player.warehouses[answer] 
+                    if selected_warehouse.storage.add_to_cargo(chosen_contract.reward_type,chosen_contract.reward_amount):
+                        input("Contract cashed out! (press enter to continue)")
+                        player.contracts.remove(chosen_contract)
+                        del chosen_contract
+                    else:
+                        input("That warehouse cannot hold that much cargo, choose another (press enter to continue)")
+                else:
+                    input("This contract is not yet ready to be cashed out. (press enter to continue)")
+            except Exception:# as e:
+                #print(e) #Uncomment this line to show error message when the user enters an invalid option
+                print("Invalid selection, try again")
 
 class Location:
     def __init__(self,name:str,description:str | None = None,coordinates:tuple[int,int] | None = None, ports:list[Port] | None = None,exchanges:list[Exchange] | None = None):
