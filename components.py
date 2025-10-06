@@ -262,6 +262,20 @@ class Ship:
         self.returning_port:Port = None
     def on_day_passed(self, days):
         #Remember, this function runs every new day
+        if days == self.day_of_arrival:
+                #Empty cargo into target warehouse
+                for good, amount in list(self.storage.cargo.items()):  # <-- iterate over a copy
+                    self.target_warehouse.storage.add_to_cargo(good, amount)
+                    self.storage.remove_cargo(good, amount)
+        #Check for return to home port
+        if days == self.day_of_return:
+            self.is_dispatched = False
+            self.day_of_arrival = 0
+            self.day_of_return = 0
+            self.target_warehouse:Warehouse = None
+            self.returning_port.ships.append(self) #Return the ship to the port
+            print(f"{self.name} has returned from its journey!")
+            input("Press enter to continue")
         #Daily checks when dispatched
         if self.is_dispatched:
             #Event logic
@@ -271,20 +285,7 @@ class Ship:
                 event.run_event(self) #Run the event, passing in the ship as a parameter
                 self.ships_log.append(f"Day {days}: {event.name} event occurred.")
             #Check for arrival at foreign port
-            if days == self.day_of_arrival:
-                #Empty cargo into target warehouse
-                for good, amount in list(self.storage.cargo.items()):  # <-- iterate over a copy
-                    self.target_warehouse.storage.add_to_cargo(good, amount)
-                    self.storage.remove_cargo(good, amount)
-            #Check for return to home port
-            if days == self.day_of_return:
-                self.is_dispatched = False
-                self.day_of_arrival = 0
-                self.day_of_return = 0
-                self.target_warehouse:Warehouse = None
-                self.returning_port.ships.append(self) #Return the ship to the port
-                print(f"{self.name} has returned from its journey!")
-                input("Press enter to continue")
+            
 
 class Warehouse:
     def __init__(self,name:str,max_weight:int = 10000):
