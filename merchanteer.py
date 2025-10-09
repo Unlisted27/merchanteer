@@ -45,8 +45,8 @@ while True:
             portGrandure.manage_ships()
         case 4:   
             components.clear_terminal()                           
-            print("A new day begins...")
             building_blocks.game_time.advance()
+            print("A new day begins...")
         case 5:                             
             print("Thanks for playing!")
             break

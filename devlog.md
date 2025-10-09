@@ -91,5 +91,8 @@ MAJOR     MINOR     PATCH    SPECIAL
  - Mail system, basically a delay on contract completion   
 ## Player notes  
 - Contracts now take between 2 and 5 days from their completion for the exchange to recieve notice of their completion  
+## Bug fixes
+- Fixed the bug where ships would often not return to port, the issue was that we were storing time from 0 instead of from the current day :facepalm
 ## Dev notes  
 - Contracts now check for completion BEFORE checking for expiry
+- Port objects now require GameTime on creation

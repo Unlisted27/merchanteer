@@ -272,7 +272,7 @@ class Ship:
             self.is_dispatched = False
             self.day_of_arrival = 0
             self.day_of_return = 0
-            self.target_warehouse:Warehouse = None
+            self.target_warehouse = None
             self.returning_port.ships.append(self) #Return the ship to the port
             print(f"{self.name} has returned from its journey!")
             input("Press enter to continue")
@@ -294,10 +294,11 @@ class Warehouse:
         self.storage = Storage(f"{name} Warehouse",self.max_weight)
 
 class Port:
-    def __init__(self, name: str, location:object,world:World,ships: list[Ship] | None = None, warehouses: list[Warehouse] | None = None):
+    def __init__(self, name: str, location:object,world:World,game_time:GameTime,ships: list[Ship] | None = None, warehouses: list[Warehouse] | None = None):
         self.name = name
         self.location:Location = location
         self.world = world
+        self.game_time = game_time
         self.ships = list(ships) if ships is not None else []
         self.ship_names = []
         self.warehouses = list(warehouses) if warehouses is not None else []
@@ -392,8 +393,8 @@ class Port:
                             break
                         travel_time = round(math.sqrt((self.location.coordinates[0] - destination.coordinates[0])**2 + (self.location.coordinates[1] - destination.coordinates[1])**2) / 100) #The formula I learned in school, forgot, and then searched up when I needed it. Thanks grade 10 advanced math, you helped, a little, kinda, thanks, a little. Thanks google.
                         selected_ship.is_dispatched = True
-                        selected_ship.day_of_arrival = travel_time
-                        selected_ship.day_of_return = travel_time*2
+                        selected_ship.day_of_arrival = self.game_time.day + travel_time
+                        selected_ship.day_of_return = self.game_time.day + travel_time*2
                         selected_ship.returning_port = self
                         selected_ship.ships_log.append(f"-----Dispatched to {destination.name}-----")
                         self.ships.remove(selected_ship) #Remove the ship from the port while it is dispatched

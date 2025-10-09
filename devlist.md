@@ -22,4 +22,4 @@
     b. Once the exchange gets the mail, they will allow you to deposite completed contract payouts
 
 5. Bugs to fix
-    Bug discovered, something to do with ships not getting back to port. To reproduce, send a ship out twice, try different cargo loads as well.
+    FIXED Bug discovered, something to do with ships not getting back to port. To reproduce, send a ship out twice, try different cargo loads as well.

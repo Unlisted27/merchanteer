@@ -36,8 +36,8 @@ class GoodWind(components.ShipEvent):
         super().__init__("Good Wind")
     
     def run_event(self,ship:components.Ship):
-        ship.day_of_arrival -= 1
         ship.day_of_return -= 1
+        ship.day_of_arrival -= 1
         #input(f"Good wind event occured on {ship.name}")
 event_list.append(GoodWind())
 
@@ -61,8 +61,8 @@ player = components.Player(components.Storage("Player Inventory",100),0,warehous
 print(theHold.storage.show_invent())
 
 #Port creation
-portClammer = components.Port("port Clammer",clammer,world,warehouses=[clammer_warehouse])
-portGrandure = components.Port("port Grandure",grandure,world,[theSliver,theSplinter],[theHold])
+portClammer = components.Port("port Clammer",clammer,world,game_time,warehouses=[clammer_warehouse])
+portGrandure = components.Port("port Grandure",grandure,world,game_time,[theSliver,theSplinter],[theHold])
 
 #Clammer
 theFishermansWharf = components.Exchange("the Fisherman's Wharf",clammer,game_time, world,good_list=all_goods,reward_list=currency_goods)
