@@ -93,6 +93,8 @@ MAJOR     MINOR     PATCH    SPECIAL
 - Contracts now take between 2 and 5 days from their completion for the exchange to recieve notice of their completion  
 ## Bug fixes
 - Fixed the bug where ships would often not return to port, the issue was that we were storing time from 0 instead of from the current day :facepalm
+- Fixed bug when going trhough available contracts in the Bargain house, entering no value will now just redo the prompt, rather than crashing the app.
+- Fixed ship not returning bug (AGAIN). Had to check for the ship's return before and after event roll, incase the event pushed the return date to the currect date.
 ## Dev notes  
 - Contracts now check for completion BEFORE checking for expiry
 - Port objects now require GameTime on creation

@@ -260,7 +260,7 @@ class Ship:
         self.day_of_return = 0
         self.target_warehouse:Warehouse = None
         self.returning_port:Port = None
-    def on_day_passed(self, days):
+    def check_arrival(self, days:int):
         #Remember, this function runs every new day
         if days == self.day_of_arrival:
                 #Empty cargo into target warehouse
@@ -276,6 +276,8 @@ class Ship:
             self.returning_port.ships.append(self) #Return the ship to the port
             print(f"{self.name} has returned from its journey!")
             input("Press enter to continue")
+    def on_day_passed(self, days):
+        self.check_arrival(days)
         #Daily checks when dispatched
         if self.is_dispatched:
             #Event logic
@@ -284,9 +286,9 @@ class Ship:
                 event:ShipEvent = random.choice(self.event_list) #Select a random event from the list
                 event.run_event(self) #Run the event, passing in the ship as a parameter
                 self.ships_log.append(f"Day {days}: {event.name} event occurred.")
+            self.check_arrival(days)
             #Check for arrival at foreign port
             
-
 class Warehouse:
     def __init__(self,name:str,max_weight:int = 10000):
         self.name = name
@@ -521,31 +523,28 @@ class Exchange:
             print("(Enter 0 to go back)")
             try:
                 answer = int(input(f"|:"))
+                if answer <= (len(self.contracts)+1):
+                    if answer != 0:
+                        chosen_contract = self.contracts[answer-1] 
+                        while True:
+                            clear_terminal()
+                            warehouse_names = []
+                            for warehouse in player.warehouses:
+                                warehouse_names.append(warehouse.name)
+                            try:
+                                answer = int(menu("Where would you like to store these goods?",warehouse_names,True))-1
+                            except Exception:
+                                break
+                            selected_warehouse:Warehouse = player.warehouses[answer] 
+                            if selected_warehouse.storage.add_to_cargo(chosen_contract.good,chosen_contract.amount):
+                                input("Contract accepted! (press enter to continue)")
+                                return chosen_contract
+                            else:
+                                input("That warehouse cannot hold that much cargo, choose another (press enter to continue)")
+                    else:
+                        return None
             except Exception:# as e:
                 print("Invalid selection, try again")
-            if answer <= (len(self.contracts)+1):
-                if answer != 0:
-                    chosen_contract = self.contracts[answer-1] 
-                    while True:
-                        clear_terminal()
-                        warehouse_names = []
-                        for warehouse in player.warehouses:
-                            warehouse_names.append(warehouse.name)
-                        try:
-                            answer = int(menu("Where would you like to store these goods?",warehouse_names,True))-1
-                        except Exception:
-                            break
-                        selected_warehouse:Warehouse = player.warehouses[answer] 
-                        if selected_warehouse.storage.add_to_cargo(chosen_contract.good,chosen_contract.amount):
-                            input("Contract accepted! (press enter to continue)")
-                            return chosen_contract
-                        else:
-                            input("That warehouse cannot hold that much cargo, choose another (press enter to continue)")
-                else:
-                    return None
-            #except Exception as e:
-                #print(e) #Uncomment this line to show error message when the user enters an invalid option
-                #print("Invalid selection, try again")
     def cashout_contracts(self,player:Player):
         while True:
             clear_terminal()
