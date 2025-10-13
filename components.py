@@ -436,16 +436,17 @@ class Contract:
         self.expired = False
         self.complete = False
         self.complete_notice = False
+        self.contract_travel_time = None
     def check_completion(self):
         if self.destination_storage.cargo.get(self.good,0) >= self.amount:
             return True
+        return False
     def on_day_passed(self, day):
-        contract_travel_time = None
         if self.check_completion(): #Check if contract is complete
             if not self.complete: #Check if it was already complete
-                contract_travel_time = day + random.randint(2,5) #Random travel time for reward delivery
+                self.contract_travel_time = day + random.randint(2,5) #Random travel time for reward delivery
                 self.complete = True
-        if day == contract_travel_time and self.complete is True and self.complete_notice is False:
+        if day == self.contract_travel_time and self.complete is True and self.complete_notice is False:
             self.complete_notice = True
         if self.deadline < day and self.complete is False:
             self.expired = True
