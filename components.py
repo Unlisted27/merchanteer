@@ -293,7 +293,7 @@ class Ship:
                 event.run_event(self) #Run the event, passing in the ship as a parameter
                 self.ships_log.append(f"Day {days}: {event.name} event occurred.")
             msg = self.check_arrival(days)
-        msg = null
+        msg = None
         return msg if msg else None
             #Check for arrival at foreign port
             
