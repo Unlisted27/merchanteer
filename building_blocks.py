@@ -44,15 +44,15 @@ event_list.append(GoodWind())
 #ships and warehouses
 theSliver = components.Ship("the Sliver",event_list=event_list)
 game_time.register(theSliver) #Register ship to game time so it can track travel time
-theSliver.storage.add_to_cargo(gold,100)
+#theSliver.storage.add_to_cargo(gold,100)
 theSplinter = components.Ship("the Splinter",event_list=event_list)
-theSplinter.storage.add_to_cargo(gold,100)
+#theSplinter.storage.add_to_cargo(gold,100)
 game_time.register(theSplinter) #Register ship to game time so it can track travel time
 theHold = components.Warehouse("the Hold")
 clammer_warehouse = components.Warehouse("Clammer Warehouse")
 
 #lists
-all_goods = [gold,silver,bread,fish,wood,cloth,rice]
+all_goods = [gold,silver,bread,fish,wood,cloth,rice,gold,silver]
 trade_goods = [bread,fish,wood,cloth,rice]
 currency_goods = [gold,silver]
 

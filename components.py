@@ -89,7 +89,6 @@ def print_table(headers: list[str], rows: list[list], sep: str = "  "):
     for row in str_rows:
         print(pattern.format(*row))
 
-
 #This whole thing was AI generated and tweaked by me. Im not making logic like ts
 def gen_contract(good_list: list,reward_list:list, current_day, current_location, world, max_cargo_weight: int = 1000):
     """
@@ -155,10 +154,17 @@ class GameTime:
         self.observers.append(obj)
 
     def advance(self, days=1):
+        notices = []
         """Advance the global clock and notify observers."""
         self.day += days
         for o in self.observers:
-            o.on_day_passed(self.day)
+            msg = o.on_day_passed(self.day)
+            if msg:
+                notices.append(msg)
+        print(f"--Day [{self.day}] notices--")
+        for notice in notices:
+            print(notice)
+        input("Press enter to continue")
 
 class World:
     def __init__(self,locations:list[object]):
@@ -174,7 +180,7 @@ class Good:
 class Storage:
     def __init__(self, name: str, cargo_max_weight: int = 1000, cargo: dict | None = None):
         if cargo is None:
-            cargo = {}        # create a fresh dict for this instance
+            cargo: dict[Good, int] = {}        # create a fresh dict for this instance
         self.cargo = cargo
         self.name = name
         self.cargo_max_weight = cargo_max_weight
@@ -242,7 +248,7 @@ class ShipEvent(ABC):
 
     @abstractmethod
     def run_event(self,ship:"Ship"):
-        pass
+        pass #This function is meant to be overridden by child classes, it will run the event's effects on the ship that is passed in as a parameter
 
 class Ship:
     def __init__(self,name:str,health_current:int = 100,health_max:int = 100,cargo_max_weight:int = 1000,event_list=list[ShipEvent]):
@@ -274,19 +280,20 @@ class Ship:
             self.day_of_return = 0
             self.target_warehouse = None
             self.returning_port.ships.append(self) #Return the ship to the port
-            print(f"{self.name} has returned from its journey!")
-            input("Press enter to continue")
+            return f"{self.name} has returned from its journey!"
+            #input("Press enter to continue")
     def on_day_passed(self, days):
-        self.check_arrival(days)
         #Daily checks when dispatched
         if self.is_dispatched:
+            msg = self.check_arrival(days) #Need to check for arrival before running events, otherwise events could run on the on the day the ship arrives and cause it to not be registered as arriving (arrival day = 10, its day 10 but good wind so arrival day now day 9, the ship is never returned)
             #Event logic
             event_roll = random.randint(1,4) #Decide if an event happens today
             if event_roll == 1 and len(self.event_list) > 0: #If an event is to happen, and there are events to happen
                 event:ShipEvent = random.choice(self.event_list) #Select a random event from the list
                 event.run_event(self) #Run the event, passing in the ship as a parameter
                 self.ships_log.append(f"Day {days}: {event.name} event occurred.")
-            self.check_arrival(days)
+            msg = self.check_arrival(days)
+        return msg if msg else None
             #Check for arrival at foreign port
             
 class Warehouse:
@@ -318,8 +325,12 @@ class Port:
                 break
             while True:
                 try:
-                    print(f"How much {moving_cargo.name} would you like to move?")
-                    amount = int(input("|:"))
+                    print(f"Enter amount of {moving_cargo.name} to move (Enter 'all' to move everything)")
+                    amount = input("|:")
+                    if amount.lower().strip() == "all":
+                        amount = from_storage.cargo[moving_cargo]  # move all available, this logic works because its getting the value of the key 'Good', which is the amount fo that good in the inventory
+                    else:
+                        amount = int(amount)
                     break
                 except Exception:
                     print("Invalid amount, try again")
@@ -448,6 +459,7 @@ class Contract:
                 self.complete = True
         if day == self.contract_travel_time and self.complete is True and self.complete_notice is False:
             self.complete_notice = True
+            return f"Contract for {self.amount} {self.good.name} is ready to be cashed out!"
         if self.deadline < day and self.complete is False:
             self.expired = True
 
@@ -539,6 +551,7 @@ class Exchange:
                             selected_warehouse:Warehouse = player.warehouses[answer] 
                             if selected_warehouse.storage.add_to_cargo(chosen_contract.good,chosen_contract.amount):
                                 input("Contract accepted! (press enter to continue)")
+                                self.contracts.remove(chosen_contract) #Remove the contract from the exchange's list of contracts
                                 return chosen_contract
                             else:
                                 input("That warehouse cannot hold that much cargo, choose another (press enter to continue)")
@@ -561,7 +574,7 @@ class Exchange:
                     for warehouse in player.warehouses:
                         warehouse_names.append(warehouse.name)
                     try:
-                        answer = int(menu("Where would you like to store these goods?",warehouse_names,True))-1
+                        answer = int(menu("Where would you like to store the reward?",warehouse_names,True))-1
                     except Exception:
                         break
                     selected_warehouse:Warehouse = player.warehouses[answer] 

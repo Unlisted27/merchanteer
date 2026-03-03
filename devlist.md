@@ -13,15 +13,18 @@
     COMPLETE a. Contracts have a destination  
     COMPLETE b. Contracts simply check the destination warehouse storage every day to see if the goods have been delivered.    
     COMPLETE c. Player has a list of owned warehouses
-    d. Contract payouts  
-        i. Contracts can only get cashed once word of the completion has reached the home port  
+    COMPLETE d. Contract payouts  
+        COMPLETE i. Contracts can only get cashed once word of the completion has reached the home port  
         COMPLETE ii. This means adding a mail system...  
 4. Mail system
     REWORKED a. Mail of contract payouts takes a short time to reach home, usually half the time it takes a ship  
     COMPLETE |-> a. REWORK: Mail takes between 2 to 5 days to arrive at the home port.
-    b. Once the exchange gets the mail, they will allow you to deposite completed contract payouts
+    COMPLETE b. Once the exchange gets the mail, they will allow you to deposite completed contract payouts
 
 5. Bugs to fix
     FIXED - Bug discovered, something to do with ships not getting back to port. To reproduce, send a ship out twice, try different cargo loads as well.
-    - Bug discovered, contracts not being recorded as complete
+    FIX: it is possible for events to occur on the day the ship returns, and since the return logic checks if the ship return day is the current day, and event that makes the return day lower than the current day will cause the ship to never be registered as returning. The fix was to check for return to port before running events.
+    
+    UNKOWN? - Bug discovered, contracts not being recorded as complete
+    info: Bug has not re-apeared in a long time, possibly fixed and undocumented?
     

@@ -15,7 +15,7 @@ def start_exchange(exchange:components.Exchange,player:components.Player):
         components.clear_terminal()
         print(f"Welcome to {exchange.name}, here you can take contracts to earn money.")
         answer = components.menu("Exchange Menu",["View available contracts","Cashout contracts"],True) 
-        match answer:                           # <─ use match instead of “case answer:”
+        match answer:
             case 1:                              # option 1
                 components.clear_terminal()
                 contract = exchange.select_contract(player)

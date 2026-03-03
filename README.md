@@ -9,8 +9,7 @@ How to run:
 1. Clone this repo (run where you want the files to end up)  
 `git clone https://github.com/Unlisted27/merchanteer`  
 2. Go to the correct folder   
-On linux: `cd merchanteer`  
-On windows: figure it out
+`cd merchanteer`  
 3. Run merchanteer.py  
 `python3 merchanteer.py`  
 
