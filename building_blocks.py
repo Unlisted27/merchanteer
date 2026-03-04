@@ -67,7 +67,7 @@ portGrandure = components.Port("port Grandure",grandure,world,game_time,[theSliv
 #Clammer
 theFishermansWharf = components.Exchange("the Fisherman's Wharf",clammer,game_time, world,good_list=all_goods,reward_list=currency_goods)
 #Grandure
-theBargainHouse = components.Exchange("the Bargan House",grandure,game_time, world,good_list=all_goods,reward_list=currency_goods)
+theBargainHouse = components.Exchange("the Bargain House",grandure,game_time, world,good_list=trade_goods,reward_list=currency_goods)
 
 
 
