@@ -7,6 +7,7 @@ MAJOR     MINOR     PATCH    SPECIAL
 a - Alpha (internal testing)  
 b - Beta  (external testing)  
 p - pre-release (available for download but not most stable verion)
+d - in-development version, not meant to be played, likely very unstable
 
 # up to 0.0.1a Contracts rework #1 and locations
 -Created the following objects:  
@@ -117,3 +118,4 @@ p - pre-release (available for download but not most stable verion)
 - Storage.select_from_invent() now returns the list index of the item selected
 ## Other notes
 - Removed artist tag on ASCII art (per their request), will be added back when credits added
+- More art added to the art.py file, but not yet implemented in the game

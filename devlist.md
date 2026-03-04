@@ -1,3 +1,4 @@
+# before 0.0.3a
 1. Add location system  
     COMPLETE a. Every building (port, exchange) is tied to a location  
 2. Add ship travel  
@@ -28,3 +29,6 @@
     UNKOWN? - Bug discovered, contracts not being recorded as complete
     info: Bug has not re-apeared in a long time, possibly fixed and undocumented?
     
+
+# 0.0.4a
+1. Add orders system to allow ships to go to multiple ports and deposite set numbers of resources.
