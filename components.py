@@ -1,3 +1,6 @@
+# Code by Unlisted_dev
+# This is the back end, really complicated stuff so be ware. 
+# If you want to mod the game, or understand how this is all implemented, check out building_blocks.py
 import os, time, random, math
 from abc import ABC, abstractmethod
 

@@ -1,3 +1,5 @@
+Communication: https://discord.gg/PZ89zdd7
+
 Project description:  
 A CLI based game about ancient seas and trade. Have you ever been bored in a console? If you're anything like me, you sure have, but all of the console games are too basic or too complex. I aim for a happy medium: an enjoyably challenging game about networks, something we devs sure enjoy (I see u Factorio players).
 
