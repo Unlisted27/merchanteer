@@ -119,3 +119,19 @@ d - in-development version, not meant to be played, likely very unstable
 ## Other notes
 - Removed artist tag on ASCII art (per their request), will be added back when credits added
 - More art added to the art.py file, but not yet implemented in the game
+
+# 0.0.4a 
+## Added features
+### Major added features
+### Minor added features
+## Player notes
+- Exchanges now refresh contracts daily
+## Bug fixes
+- Fixed back option displaying above inventory header while loading a ship
+## Dev notes
+- Added some type hints in Exchange
+- Added error handling for the case where an Exchange is created without a valid Location
+- Added on_day_passed() function to Exchange
+- Exchange must now be registerd with GameTime (GameTime.register(Exchange))
+- Storage.show_invent(self,back_option=False) now has a back option and removed the starting index option
+## Other notes

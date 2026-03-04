@@ -31,4 +31,6 @@
     
 
 # 0.0.4a
-1. Add orders system to allow ships to go to multiple ports and deposite set numbers of resources.
+1. Make contracts in the exchange restock daily
+2. Add orders system to allow ships to go to multiple ports and deposite set numbers of resources.
+ a. Tie contract to a ship, then when the ship reaches its destination it deposites the contract amount of resources into the contract target warehouse

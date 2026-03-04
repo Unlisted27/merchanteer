@@ -194,7 +194,6 @@ class Storage:
         return good.weight*amount
     def get_invent(self,starting_index = 1):
         self.calc_cargo()
-        print(f"|{self.name} | {self.cargo_weight}lbs/{self.cargo_max_weight}lbs |")
         to_return = ""
         for i, (good, amount) in enumerate(self.cargo.items(), start=starting_index):
             to_return += (
@@ -204,8 +203,10 @@ class Storage:
             f"Weight: {round(self.get_crate_weight(good, amount), 2)}lbs |\n"
             )
         return to_return
-    def show_invent(self,starting_index = 1):
-        print(self.get_invent(starting_index))
+    def show_invent(self,back_option=False):
+        print(f"|{self.name} | {self.cargo_weight}lbs/{self.cargo_max_weight}lbs |")
+        if back_option: print("[1] | Go back")
+        print(self.get_invent(2 if back_option else 1))
     def add_to_cargo(self,new_good:Good,amount:int=1):
         self.calc_cargo()
         if self.cargo_weight + self.get_crate_weight(new_good,amount) <= self.cargo_max_weight:
@@ -235,8 +236,7 @@ class Storage:
     def select_from_invent(self) -> int | None:
         """Displays the inventory in a menu format and allows the user to select an item by number.\n
         returns the list index of the selected item (1st item = 0)"""
-        print(f"[1] | Go back")
-        self.show_invent(starting_index=2)
+        self.show_invent(back_option=True)
         while True:
             try:
                 answer = int(input(f"|:"))
@@ -510,7 +510,7 @@ class Player:
                 pass
 
 class Exchange:
-    def __init__(self, name: str, location, game_time: GameTime, world: World,
+    def __init__(self, name: str, location:Location, game_time: GameTime, world: World,
                  contracts: list[Contract] | None = None, good_list: list[Good] | None = None,
                  reward_list: list[Good] | None = None, max_cargo_weight: int = 1000):
         self.name = name
@@ -522,16 +522,23 @@ class Exchange:
         self.good_list = list(good_list) if good_list is not None else []
         self.reward_list = list(reward_list) if reward_list is not None else []
         self.max_cargo_weight = max_cargo_weight
-        if self.location is not None:
+        if self.location is not None and type(self.location) is Location:
             self.location.add_exchange(self)
+        else:
+            raise ValueError("Exchange must have a valid Location")
         if not self.contracts:   # safer check for empty list
             self.gen_daily_contracts()
-
+    
     def gen_daily_contracts(self):
         if len(self.good_list) == 0 or len(self.reward_list) == 0 or self.game_time is None:
             raise ValueError("If no contracts are provided, good_list, reward_list, and GameTime must be provided. Also, make sure the day value is accurate.")
         for i in range(random.randint(3,5)):
             self.contracts.append(gen_contract(self.good_list,self.reward_list,self.game_time.day,self.location,self.world,self.max_cargo_weight)) #We can GameTime.register contracts that are selected, dont need to do it when they are generated
+    
+    def on_day_passed(self, days):
+        self.contracts = []
+        self.gen_daily_contracts()
+
     def show_contracts(self):
         #input(self.contracts)
         headers = ["ID", "Amount", "Good", "Reward", "Destination", "Status"]

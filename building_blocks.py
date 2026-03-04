@@ -64,10 +64,11 @@ print(theHold.storage.show_invent())
 portClammer = components.Port("port Clammer",clammer,world,game_time,warehouses=[clammer_warehouse])
 portGrandure = components.Port("port Grandure",grandure,world,game_time,[theSliver,theSplinter],[theHold])
 
-#Clammer
+#Exchanges
 theFishermansWharf = components.Exchange("the Fisherman's Wharf",clammer,game_time, world,good_list=all_goods,reward_list=currency_goods)
-#Grandure
 theBargainHouse = components.Exchange("the Bargain House",grandure,game_time, world,good_list=trade_goods,reward_list=currency_goods)
+game_time.register(theFishermansWharf)
+game_time.register(theBargainHouse)
 
 
 
