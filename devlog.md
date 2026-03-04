@@ -1,11 +1,14 @@
 # Versioning scheme  
+```
   0    .    0    .    0    -    s
 MAJOR     MINOR     PATCH    SPECIAL
+```
+### Special legend
+a - Alpha (internal testing)  
+b - Beta  (external testing)  
+p - pre-release (available for download but not most stable verion)
 
-## Special legend
-
-
-# up to 0.0.1 Contracts rework #1 and locations
+# up to 0.0.1a Contracts rework #1 and locations
 -Created the following objects:  
     1. GameTime  
         -Tracks time, and updates different objects based on the current day  
@@ -51,7 +54,7 @@ MAJOR     MINOR     PATCH    SPECIAL
         -Contains list of location bound objects (ports and exchanges)  
         -Items put themselves on that list, so locations can be defined before the ports that are in them  
   
-# 0.0.2 The sailing update
+# 0.0.2a The sailing update
 ## Added features  
 -Added game title art  
 -Contracts will now deposite their goods in a player chosen warehouse  
@@ -86,7 +89,7 @@ MAJOR     MINOR     PATCH    SPECIAL
 -Added ship log, just a list.  
 -All events are shown in the ship log  
 
-# 0.0.3 Contracts rework #2
+# 0.0.3a Contracts rework #2
 ## Added features 
 ### Major added features
  - Mail system, basically a delay on contract completion 
@@ -94,6 +97,7 @@ MAJOR     MINOR     PATCH    SPECIAL
 ### Minor added features
  - Added ability to cancel name change when changing ship name
  - Currencies no longer listed as transportable items in the bargain house
+ - Back button when selecting from inventory is now 1 rather than the final option
 ## Player notes  
 - Contracts now take between 2 and 5 days from their completion for the exchange to recieve notice of their completion  
 - At the start of a new day you will get a list of events that have occured (ships returning to port, contracts completed, etc)
@@ -109,5 +113,7 @@ MAJOR     MINOR     PATCH    SPECIAL
 - Contracts now check for completion BEFORE checking for expiry
 - Port objects now require GameTime on creation
 - on_day_passed function of objects registered with game time can now return a string that will be added to the daily notices
+- Storage.get_invent(self, starting_index) function added. This returns the inventory in nicely formatted text
+- Storage.select_from_invent() now returns the list index of the item selected
 ## Other notes
 - Removed artist tag on ASCII art (per their request), will be added back when credits added

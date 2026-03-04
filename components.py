@@ -192,16 +192,20 @@ class Storage:
             self.cargo_weight += self.get_crate_weight(good,amount)
     def get_crate_weight(self,good:Good,amount:int):
         return good.weight*amount
-    def show_invent(self):
+    def get_invent(self,starting_index = 1):
         self.calc_cargo()
         print(f"|{self.name} | {self.cargo_weight}lbs/{self.cargo_max_weight}lbs |")
-        for i, (good, amount) in enumerate(self.cargo.items(), start=1):
-            print(
+        to_return = ""
+        for i, (good, amount) in enumerate(self.cargo.items(), start=starting_index):
+            to_return += (
             f"[{i}] | Crate of {good.name} | "
             f"Amount: {amount} | "
             f"Value: ${round(good.value * amount, 2)} | "
-            f"Weight: {round(self.get_crate_weight(good, amount), 2)}lbs |"
+            f"Weight: {round(self.get_crate_weight(good, amount), 2)}lbs |\n"
             )
+        return to_return
+    def show_invent(self,starting_index = 1):
+        print(self.get_invent(starting_index))
     def add_to_cargo(self,new_good:Good,amount:int=1):
         self.calc_cargo()
         if self.cargo_weight + self.get_crate_weight(new_good,amount) <= self.cargo_max_weight:
@@ -228,15 +232,18 @@ class Storage:
                 return True
         return False  # not found
         
-    def select_from_invent(self):
-        self.calc_cargo()
-        self.show_invent()
-        print(f"[{len(self.cargo)+1}] | Go back")
+    def select_from_invent(self) -> int | None:
+        """Displays the inventory in a menu format and allows the user to select an item by number.\n
+        returns the list index of the selected item (1st item = 0)"""
+        print(f"[1] | Go back")
+        self.show_invent(starting_index=2)
         while True:
             try:
                 answer = int(input(f"|:"))
+                if answer == 1:
+                    return None
                 if answer <= (len(self.cargo)+1) and answer > 0:
-                    return int(answer)
+                    return int(answer)-2
             except Exception as e:
                 #print(e) #Uncomment this line to show error message when the user enters an invalid option
                 print("Invalid selection, try again")
@@ -319,7 +326,7 @@ class Port:
         while True:
             try:
                 clear_terminal()
-                index = from_storage.select_from_invent() - 1
+                index = from_storage.select_from_invent()
                 goods_list = list(from_storage.cargo.keys())
                 moving_cargo: Good = goods_list[index]    # the Good object selected
             except Exception:
