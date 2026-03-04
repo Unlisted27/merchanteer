@@ -128,6 +128,7 @@ d - in-development version, not meant to be played, likely very unstable
 - Exchanges now refresh contracts daily
 ## Bug fixes
 - Fixed back option displaying above inventory header while loading a ship
+- Fixed crash with type hint pointing to a class that hadnt been declared (Exchange pointing at Location)
 ## Dev notes
 - Added some type hints in Exchange
 - Added error handling for the case where an Exchange is created without a valid Location

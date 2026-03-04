@@ -513,7 +513,7 @@ class Player:
                 pass
 
 class Exchange:
-    def __init__(self, name: str, location:Location, game_time: GameTime, world: World,
+    def __init__(self, name: str, location:'Location', game_time: GameTime, world: World,
                  contracts: list[Contract] | None = None, good_list: list[Good] | None = None,
                  reward_list: list[Good] | None = None, max_cargo_weight: int = 1000):
         self.name = name
