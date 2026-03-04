@@ -194,13 +194,13 @@ class Storage:
         return good.weight*amount
     def show_invent(self):
         self.calc_cargo()
-        print(f"|{self.name} inventory | {self.cargo_weight}lbs/{self.cargo_max_weight}lbs |")
+        print(f"|{self.name} | {self.cargo_weight}lbs/{self.cargo_max_weight}lbs |")
         for i, (good, amount) in enumerate(self.cargo.items(), start=1):
             print(
             f"[{i}] | Crate of {good.name} | "
             f"Amount: {amount} | "
-            f"Value: ${good.value * amount} | "
-            f"Weight: {self.get_crate_weight(good, amount)}lbs |"
+            f"Value: ${round(good.value * amount, 2)} | "
+            f"Weight: {round(self.get_crate_weight(good, amount), 2)}lbs |"
             )
     def add_to_cargo(self,new_good:Good,amount:int=1):
         self.calc_cargo()
@@ -418,7 +418,11 @@ class Port:
                         break
                     #Rename ship
                     case 4:
-                        new_name = input("Enter new name:")
+                        new_name = input("Enter new name (press [ENTER] to cancel): ")
+                        if new_name.strip() == "":
+                            print("Name change cancelled.")
+                            input("Press enter to continue")
+                            break
                         selected_ship.name = new_name
                         selected_ship.storage.name = f"{new_name} Cargo"
                         print("Name changed!")

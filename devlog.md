@@ -88,8 +88,11 @@ MAJOR     MINOR     PATCH    SPECIAL
 
 # 0.0.3 Contracts rework #2
 ## Added features 
+### Major added features
  - Mail system, basically a delay on contract completion 
  - Notices system, every new day will present the player with certain event notices  
+### Minor added features
+ - Added ability to cancel name change when changing ship name
 ## Player notes  
 - Contracts now take between 2 and 5 days from their completion for the exchange to recieve notice of their completion  
 - At the start of a new day you will get a list of events that have occured (ships returning to port, contracts completed, etc)
@@ -99,6 +102,7 @@ MAJOR     MINOR     PATCH    SPECIAL
 - Fixed bug when going trhough available contracts in the Bargain house, entering no value will now just redo the prompt, rather than crashing the app.
 - Fixed ship not returning bug (AGAIN). Had to check for the ship's return before and after event roll, incase the event pushed the return date to the currect date.
 - Fixed contracts remaining in the exchange even after being selected and loaded to a ship
+- Fixed inventories displaying as "inventory inventory" by removing the code that appended "inventory" to storage names
 ## Dev notes  
 - Contracts now check for completion BEFORE checking for expiry
 - Port objects now require GameTime on creation
