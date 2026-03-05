@@ -36,7 +36,7 @@ def menu(
             raise TypeError("Items in list must be type str")
         items.append(f"{vertical_sign}[{i}] {item}")
 
-    length = max(len(name) + 1, *(len(i) for i in items))
+    length = max(len(name) + 1, *(len(i) for i in items)) #Calculate menu width based on longest line
 
     # Build menu block
     menu_lines = []
@@ -54,24 +54,24 @@ def menu(
     total_height = max(len(menu_lines), len(art_lines))
 
     # Pad blocks
+    menu_lines.append("_"*length)
+    menu_lines.append(f"{vertical_sign}:")
+    menu_lines.append("‾"*length)
     while len(menu_lines) < total_height:
-        menu_lines.insert(0,"")
+        menu_lines.append("")
 
     while len(art_lines) < total_height:
         art_lines.append("")
 
     # Print side-by-side
-    gap = "   "
+    gap = "  |  "
     for m, a in zip(menu_lines, art_lines):
         print(m.ljust(length) + gap + a)
-
+    print(f"\033[{total_height-len(menu_lines)-3}A", end="", flush=True)
+    print("\033[3C", end="", flush=True)
     # Input loop
     while True:
         try:
-            print("_"*shutil.get_terminal_size().columns)
-            print(f"{vertical_sign}:")
-            print("‾"*shutil.get_terminal_size().columns)
-            print("\033[2A\033[3C", end="", flush=True)
             answer = input()
             selected = options[int(answer) - 1]
 
