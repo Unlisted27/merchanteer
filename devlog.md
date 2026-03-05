@@ -120,7 +120,7 @@ d - in-development version, not meant to be played, likely very unstable
 - Removed artist tag on ASCII art (per their request), will be added back when credits added
 - More art added to the art.py file, but not yet implemented in the game
 
-# 0.0.4a 
+# 0.0.4a
 ## Added features
 ### Major added features
 - voyage planning has replaced simply dispatching a ship. The player must now add destinations and contracts before dispatching a ship
