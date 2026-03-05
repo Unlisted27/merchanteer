@@ -274,26 +274,29 @@ class Ship:
         self.is_dispatched = False
         self.day_of_arrival = 0
         self.day_of_return = 0
-        self.target_warehouse:Warehouse = None
+        self.contracts:list[Contract] = []
         self.returning_port:Port = None
     def check_arrival(self, days:int):
-        #Remember, this function runs every new day
+        # Check for arrival at foreign port
+        # Remember, this function runs every new day
         if days == self.day_of_arrival:
-                #Empty cargo into target warehouse
-                for good, amount in list(self.storage.cargo.items()):  # <-- iterate over a copy
-                    self.target_warehouse.storage.add_to_cargo(good, amount)
+                #Empty cargo into target storage
+                for good, amount in list(self.storage.cargo.items()):  # <-- iterate over a copy # the list() is necessary because we are modifying the dict while iterating
+                    self.target_storage.add_to_cargo(good, amount) # The target warehouse is assigned when the ship is dispatched
                     self.storage.remove_cargo(good, amount)
         #Check for return to home port
         if days == self.day_of_return:
             self.is_dispatched = False
             self.day_of_arrival = 0
             self.day_of_return = 0
-            self.target_warehouse = None
+            self.target_storage = None
             self.returning_port.ships.append(self) #Return the ship to the port
+            self.ships_log.append(f"-----Returned to {self.returning_port.name}-----")
             return f"{self.name} has returned from its journey!"
             #input("Press enter to continue")
     def on_day_passed(self, days):
         #Daily checks when dispatched
+        msg = None
         if self.is_dispatched:
             msg = self.check_arrival(days) #Need to check for arrival before running events, otherwise events could run on the on the day the ship arrives and cause it to not be registered as arriving (arrival day = 10, its day 10 but good wind so arrival day now day 9, the ship is never returned)
             #Event logic
@@ -303,8 +306,7 @@ class Ship:
                 event.run_event(self) #Run the event, passing in the ship as a parameter
                 self.ships_log.append(f"Day {days}: {event.name} event occurred.")
             msg = self.check_arrival(days)
-        msg = None
-        return msg if msg else None
+        return msg
             #Check for arrival at foreign port
             
 class Warehouse:
@@ -314,7 +316,7 @@ class Warehouse:
         self.storage = Storage(f"{name} Warehouse",self.max_weight)
 
 class Port:
-    def __init__(self, name: str, location:object,world:World,game_time:GameTime,ships: list[Ship] | None = None, warehouses: list[Warehouse] | None = None):
+    def __init__(self, name: str, location:object,world:World,game_time:GameTime,player:'Player',ships: list[Ship] | None = None, warehouses: list[Warehouse] | None = None):
         self.name = name
         self.location:Location = location
         self.world = world
@@ -322,6 +324,7 @@ class Port:
         self.ships = list(ships) if ships is not None else []
         self.ship_names = []
         self.warehouses = list(warehouses) if warehouses is not None else []
+        self.player = player
         if self.location is not None:
             self.location.add_port(self)
 
@@ -398,35 +401,55 @@ class Port:
                     #Dispatch ship
                     case 3:
                         clear_terminal()
-                        location_names = []
-                        available_locations = []
-                        for location in self.world.locations:
-                            if location != self.location:
-                                available_locations.append(location)
-                                location_names.append(location.name)
-                        try:
-                            answer = (menu("Select destination",location_names,True)-1)
-                        except Exception:
-                            break
-                        destination:Location = available_locations[answer]
-                        try:
-                            selected_ship.target_warehouse = destination.ports[0].warehouses[0] #Select the first warehouse in the location
-                        except Exception:
-                            print("That location has no warehouses, cannot dispatch there")
+                        destination:Location = None
+                        answer = menu("Dispatch with contract?",["Yes","No"],True)
+                        match answer:
+                            case 1:
+                                clear_terminal()
+                                contract_names = []
+                                for contract in self.player.contracts:
+                                    contract_names.append(f"{contract.amount} {contract.good.name} to {contract.destination_port.name}")
+                                try:
+                                    answer = menu("Select contract to dispatch with",contract_names,True)-1
+                                except Exception:
+                                    break
+                                selected_contract:Contract = self.player.contracts[answer]
+                                try:
+                                    selected_ship.target_storage = selected_contract.destination_storage # Select the correct storage
+                                    destination = selected_contract.destination_port.location # Select the correct location
+                                except Exception as e:
+                                    print("There was an error selecting contract")
+                                    ans = input("Press enter to continue (e for error details) ")
+                                    if ans.lower() == "e": input(e)
+                                    break
+                            case 2:
+                                clear_terminal()
+                                location_names = []
+                                available_locations = []
+                                for location in self.world.locations:
+                                    if location != self.location:
+                                        available_locations.append(location)
+                                        location_names.append(location.name)
+                                try:
+                                    answer = menu("Select destination",location_names,True)
+                                except Exception:
+                                    break
+                                destination = available_locations[answer]
+                            case _:
+                                break
+                        if destination is not None:
+                            travel_time = round(math.sqrt((self.location.coordinates[0] - destination.coordinates[0])**2 + (self.location.coordinates[1] - destination.coordinates[1])**2) / 100) #The formula I learned in school, forgot, and then searched up when I needed it. Thanks grade 10 advanced math, you helped, a little, kinda, thanks, a little. Thanks google.
+                            selected_ship.is_dispatched = True
+                            selected_ship.day_of_arrival = self.game_time.day + travel_time
+                            selected_ship.day_of_return = self.game_time.day + travel_time*2
+                            selected_ship.returning_port = self
+                            selected_ship.ships_log.append(f"-----Dispatched to {destination.name}-----")
+                            self.ships.remove(selected_ship) #Remove the ship from the port while it is dispatched
+                            print(f"{selected_ship.name} has been dispatched to {destination.name}!")
+                            print(f"It will take aproximately {travel_time} days to get there.")
+                            print(f"It will return in aproximately {travel_time*2} days.")
                             input("Press enter to continue")
                             break
-                        travel_time = round(math.sqrt((self.location.coordinates[0] - destination.coordinates[0])**2 + (self.location.coordinates[1] - destination.coordinates[1])**2) / 100) #The formula I learned in school, forgot, and then searched up when I needed it. Thanks grade 10 advanced math, you helped, a little, kinda, thanks, a little. Thanks google.
-                        selected_ship.is_dispatched = True
-                        selected_ship.day_of_arrival = self.game_time.day + travel_time
-                        selected_ship.day_of_return = self.game_time.day + travel_time*2
-                        selected_ship.returning_port = self
-                        selected_ship.ships_log.append(f"-----Dispatched to {destination.name}-----")
-                        self.ships.remove(selected_ship) #Remove the ship from the port while it is dispatched
-                        print(f"{selected_ship.name} has been dispatched to {destination.name}!")
-                        print(f"It will take aproximately {travel_time} days to get there.")
-                        print(f"It will return in aproximately {travel_time*2} days.")
-                        input("Press enter to continue")
-                        break
                     #Rename ship
                     case 4:
                         new_name = input("Enter new name (press [ENTER] to cancel): ")

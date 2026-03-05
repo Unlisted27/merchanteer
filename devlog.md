@@ -126,13 +126,17 @@ d - in-development version, not meant to be played, likely very unstable
 ### Minor added features
 ## Player notes
 - Exchanges now refresh contracts daily
+- When dispatching a ship, you can now choose whether to send that ship with a contract or not. Sending a ship with a contract will automatically grab the correct destination
 ## Bug fixes
 - Fixed back option displaying above inventory header while loading a ship
 - Fixed crash with type hint pointing to a class that hadnt been declared (Exchange pointing at Location)
+- Fixed ships returning from journey not being displayed in daily log
 ## Dev notes
 - Added some type hints in Exchange
 - Added error handling for the case where an Exchange is created without a valid Location
 - Added on_day_passed() function to Exchange
 - Exchange must now be registerd with GameTime (GameTime.register(Exchange))
 - Storage.show_invent(self,back_option=False) now has a back option and removed the starting index option
+- Port now requires Player on creation
+- Ship objects now have target_storage rather than target_warehouse
 ## Other notes

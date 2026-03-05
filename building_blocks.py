@@ -61,8 +61,8 @@ player = components.Player(components.Storage("Player Inventory",100),0,warehous
 print(theHold.storage.show_invent())
 
 #Port creation
-portClammer = components.Port("port Clammer",clammer,world,game_time,warehouses=[clammer_warehouse])
-portGrandure = components.Port("port Grandure",grandure,world,game_time,[theSliver,theSplinter],[theHold])
+portClammer = components.Port("port Clammer",clammer,world,game_time,player,warehouses=[clammer_warehouse])
+portGrandure = components.Port("port Grandure",grandure,world,game_time,player,[theSliver,theSplinter],[theHold])
 
 #Exchanges
 theFishermansWharf = components.Exchange("the Fisherman's Wharf",clammer,game_time, world,good_list=all_goods,reward_list=currency_goods)
