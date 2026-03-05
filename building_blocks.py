@@ -27,7 +27,6 @@ class BadWind(components.ShipEvent):
     
     def run_event(self,ship:components.Ship):
         ship.day_of_arrival += 1
-        ship.day_of_return += 1
         #input(f"Bad wind event occured on {ship.name}")
 event_list.append(BadWind())
 
@@ -36,7 +35,6 @@ class GoodWind(components.ShipEvent):
         super().__init__("Good Wind")
     
     def run_event(self,ship:components.Ship):
-        ship.day_of_return -= 1
         ship.day_of_arrival -= 1
         #input(f"Good wind event occured on {ship.name}")
 event_list.append(GoodWind())

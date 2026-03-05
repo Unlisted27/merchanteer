@@ -123,6 +123,13 @@ d - in-development version, not meant to be played, likely very unstable
 # 0.0.4a 
 ## Added features
 ### Major added features
+- voyage planning has replaced simply dispatching a ship. The player must now add destinations and contracts before dispatching a ship
+    a. This means that ships can now travel to multiple locations
+        i. Once dispatched, a ship will travel to all assigned locations in order of assignment before returning to its port of origin
+    b. Ships now deposite goods based on the contracts assigned to that ship
+        i. When arriving at a new port, the ship will check if any of its assigned contracts are set to deposite there
+        ii. If one is, it will deposite no more than the contract's required amount of that good at that port (it will deposite as much as possible if it doesent have enough)
+        iii. You can check the ships log when it is at the same port as you to see success or failure of contract completion.
 ### Minor added features
 ## Player notes
 - Exchanges now refresh contracts daily
@@ -139,4 +146,6 @@ d - in-development version, not meant to be played, likely very unstable
 - Storage.show_invent(self,back_option=False) now has a back option and removed the starting index option
 - Port now requires Player on creation
 - Ship objects now have target_storage rather than target_warehouse
+- Ship objects now have a current_port value that is set when a port object is initialised with ships assigned, or when Port.add_ship() is run.
+- All ships being added to ports should be added with the Port.add_ship() method to correctly make the ship's current_port correct
 ## Other notes

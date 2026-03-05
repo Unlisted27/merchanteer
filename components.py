@@ -170,7 +170,7 @@ class GameTime:
         input("Press enter to continue")
 
 class World:
-    def __init__(self,locations:list[object]):
+    def __init__(self,locations:list['Location']):
         self.locations = locations
 
 class Good:
@@ -273,41 +273,71 @@ class Ship:
         self.storage = Storage(f"{name} Cargo", cargo_max_weight)
         self.is_dispatched = False
         self.day_of_arrival = 0
-        self.day_of_return = 0
+        self.destinations:list[Location] = []
+        self.current_destination:Location = None
         self.contracts:list[Contract] = []
-        self.returning_port:Port = None
+        self.current_port:Port = None
+    def initial_dispatch(self, destinations:Location, game_time:GameTime):
+        self.destinations = destinations
+        self.destinations.append(self.current_port.location) #Add the current location as the final destination so the ship returns home after its route is complete
+        self.dispatch(self.destinations[0],game_time)
+    def dispatch(self, destination:Location, game_time:GameTime):
+        travel_time = round(math.sqrt((self.current_port.location.coordinates[0] - destination.coordinates[0])**2 + (self.current_port.location.coordinates[1] - destination.coordinates[1])**2) / 100) #The formula I learned in school, forgot, and then searched up when I needed it. Thanks grade 10 advanced math, you helped, a little, kinda, thanks, a little. Thanks google.
+        self.day_of_arrival = game_time.day + travel_time
+        self.ships_log.append(f"-----Dispatched to {destination.name}-----")
+        self.current_destination = destination
+        self.destinations.remove(destination) #Remove the current destination from the ship's list of possible destinations (this only removes the first instance of that destination)
+        self.current_port.ships.remove(self) #Remove the ship from the port while it is dispatched
+        self.current_port = None
+        self.is_dispatched = True
     def check_arrival(self, days:int):
-        # Check for arrival at foreign port
-        # Remember, this function runs every new day
-        if days == self.day_of_arrival:
-                #Empty cargo into target storage
-                for good, amount in list(self.storage.cargo.items()):  # <-- iterate over a copy # the list() is necessary because we are modifying the dict while iterating
-                    self.target_storage.add_to_cargo(good, amount) # The target warehouse is assigned when the ship is dispatched
-                    self.storage.remove_cargo(good, amount)
-        #Check for return to home port
-        if days == self.day_of_return:
-            self.is_dispatched = False
-            self.day_of_arrival = 0
-            self.day_of_return = 0
-            self.target_storage = None
-            self.returning_port.ships.append(self) #Return the ship to the port
-            self.ships_log.append(f"-----Returned to {self.returning_port.name}-----")
-            return f"{self.name} has returned from its journey!"
-            #input("Press enter to continue")
-    def on_day_passed(self, days):
-        #Daily checks when dispatched
-        msg = None
+        # check_arrival() function layout
+        # First step is checking if the ship is dispatched, we dispatch to next destination if it isnt
+        # Check for arrival at a port
+        # If we arrived at a port, we need to empty cargo acording to any contracts assosiated with that port
+        # Then we dispatch to the next desitnation if there is one
         if self.is_dispatched:
-            msg = self.check_arrival(days) #Need to check for arrival before running events, otherwise events could run on the on the day the ship arrives and cause it to not be registered as arriving (arrival day = 10, its day 10 but good wind so arrival day now day 9, the ship is never returned)
-            #Event logic
+            # Check for arrival at a port
+            if days == self.day_of_arrival:
+                self.current_port = self.current_destination.ports[0] #This logic needs to be fixed to allow for multiple ports per location
+                self.current_port.add_ship(self) #Add the ship to the port's list of ships
+                self.ships_log.append(f"Arrived at {self.current_port.name} on day {days}!") #Log arrival at port
+                #Empty cargo into target storage
+                for contract in self.contracts:
+                    if contract.destination_port.location == self.current_destination: #Check if this contract is for the port we just arrived at
+                        if contract.good in self.storage.cargo: #Check if we have any of the contracted good in storage
+                            amount_to_deposite = min(contract.amount, self.storage.cargo.get(contract.good, 0)) #Calculate how much of the contracted good we can actually deposite based on how much we have in storage and how much the contract requires
+                            contract.destination_storage.add_to_cargo(contract.good,amount_to_deposite) #Add the goods for this contract to the destination storage
+                            self.storage.remove_cargo(contract.good,amount_to_deposite) #Remove the goods for this contract from the ship's storage
+                        if contract.check_completion():
+                            self.ships_log.append(f"Contract for {contract.amount} {contract.good.name} completed!")
+                        else:
+                            self.ships_log.append(f"Contract for {contract.amount} {contract.good.name} was NOT completed!")
+                        self.contracts.remove(contract) #Remove the contract from the ship's list of contracts, even if it wasnt completed cause the ship is out of that Good anyways
+                if len(self.destinations) > 0:
+                    self.dispatch(self.destinations[0],self.current_port.game_time) #Dispatch to the next destination in the list (this only dispatches to the first instance of that destination)
+                else:
+                    self.is_dispatched = False
+                    self.current_destination = None
+                    self.day_of_arrival = None #Make this None so it throws errors if anything tries to interact with it, helps with pinpointing lost ship bugs
+                    self.ships_log.append(f"No more destinations, {self.name} is now idle.")
+                    return f"{self.name} has arrived at {self.current_port.name} and has no more destinations, it is now idle."
+        return None
+    def run_events(self,days:int):
+        #Event logic
+        if self.is_dispatched:
             event_roll = random.randint(1,4) #Decide if an event happens today
             if event_roll == 1 and len(self.event_list) > 0: #If an event is to happen, and there are events to happen
                 event:ShipEvent = random.choice(self.event_list) #Select a random event from the list
                 event.run_event(self) #Run the event, passing in the ship as a parameter
                 self.ships_log.append(f"Day {days}: {event.name} event occurred.")
-            msg = self.check_arrival(days)
+    def on_day_passed(self, days:int):
+        #Daily checks when dispatched
+        msg = None
+        msg = self.check_arrival(days)
+        self.run_events(days)
+        msg = self.check_arrival(days)
         return msg
-            #Check for arrival at foreign port
             
 class Warehouse:
     def __init__(self,name:str,max_weight:int = 10000):
@@ -327,7 +357,13 @@ class Port:
         self.player = player
         if self.location is not None:
             self.location.add_port(self)
-
+        if self.ships is not None:
+            for ship in self.ships:
+                ship.current_port = self
+        self.planned_destinations:list[Location] = []
+    def add_ship(self, ship: Ship):
+        self.ships.append(ship)
+        ship.current_port = self
     def transfer_goods(self,from_storage:Storage,to_storage:Storage):
         while True:
             try:
@@ -364,6 +400,7 @@ class Port:
         while True:
             self.ship_names = []
             self.warehouse_names = []
+            self.planned_destinations:list[Location] = []
             for warehouse in self.warehouses:
                 self.warehouse_names.append(warehouse.name)
             for ship in self.ships:
@@ -376,12 +413,12 @@ class Port:
             while True:
                 clear_terminal()
                 print(f"|{selected_ship.name}|")
-                action = menu("Actions",["Load","view inventory","Dispatch ship","Change name","View event log"],True)
+                action = menu("Ship actions",["Load","view inventory","Plan voyage","Change name","View event log"],True)
                 #Loading logic
                 match action:
                     case 1:
                         clear_terminal()
-                        answer = menu("Load from",["Warehouse","Another ship"])
+                        answer = menu("Load from",["Warehouse","Another ship"],True)
                         match answer:
                             #Warehouse loading logic
                             case 1:
@@ -393,6 +430,8 @@ class Port:
                                 clear_terminal()
                                 from_storage:Storage = self.ships[menu("Load from",self.ship_names) -1].storage #Get the ship we are moving from
                                 self.transfer_goods(from_storage,selected_ship.storage)
+                            case _:
+                                break
                     #Show invent
                     case 2:
                         clear_terminal()
@@ -400,56 +439,52 @@ class Port:
                         input("Press enter to go back")
                     #Dispatch ship
                     case 3:
-                        clear_terminal()
-                        destination:Location = None
-                        answer = menu("Dispatch with contract?",["Yes","No"],True)
-                        match answer:
-                            case 1:
-                                clear_terminal()
-                                contract_names = []
-                                for contract in self.player.contracts:
-                                    contract_names.append(f"{contract.amount} {contract.good.name} to {contract.destination_port.name}")
-                                try:
-                                    answer = menu("Select contract to dispatch with",contract_names,True)-1
-                                except Exception:
+                        while True:
+                            clear_terminal()
+                            answer = menu("Route planning",["Add contracts","Add destinations","Dispatch"],True)
+                            match answer:
+                                # Dispatch with contract logic
+                                case 1:
+                                    clear_terminal()
+                                    contract_names = []
+                                    for contract in self.player.contracts:
+                                        contract_names.append(f"{contract.amount} {contract.good.name} to {contract.destination_port.name}")
+                                    try:
+                                        answer = menu("Select contracts to add (order does not matter)",contract_names,True)-1
+                                    except Exception:
+                                        break
+                                    selected_contract:Contract = self.player.contracts[answer]
+                                    try:
+                                        selected_ship.contracts.append(selected_contract) #Add the contract to the ship's list of contracts
+                                    except Exception as e:
+                                        print("There was an error selecting contract")
+                                        ans = input("Press enter to continue (e for error details) ")
+                                        if ans.lower() == "e": input(e)
+                                        break
+                                case 2:
+                                    clear_terminal()
+                                    location_names = []
+                                    available_locations = []
+                                    for location in self.world.locations:
+                                        if location != self.location:
+                                            available_locations.append(location)
+                                            location_names.append(location.name)
+                                    while True:
+                                        try:
+                                            answer = menu("Select destinations (Order matters!)",location_names,True)
+                                            self.planned_destinations.append(available_locations[answer-1])
+                                        except Exception:
+                                            break
+                                case 3:
+                                    if len(self.planned_destinations) >= 1:
+                                        selected_ship.initial_dispatch(self.planned_destinations,self.game_time)
+                                        print(f"{selected_ship.name} has been dispatched!")
+                                        input("Press enter to continue")
+                                        break
+                                    else:
+                                        input("You must add at least one destination before dispatching (Press enter to continue)")
+                                case _:
                                     break
-                                selected_contract:Contract = self.player.contracts[answer]
-                                try:
-                                    selected_ship.target_storage = selected_contract.destination_storage # Select the correct storage
-                                    destination = selected_contract.destination_port.location # Select the correct location
-                                except Exception as e:
-                                    print("There was an error selecting contract")
-                                    ans = input("Press enter to continue (e for error details) ")
-                                    if ans.lower() == "e": input(e)
-                                    break
-                            case 2:
-                                clear_terminal()
-                                location_names = []
-                                available_locations = []
-                                for location in self.world.locations:
-                                    if location != self.location:
-                                        available_locations.append(location)
-                                        location_names.append(location.name)
-                                try:
-                                    answer = menu("Select destination",location_names,True)
-                                except Exception:
-                                    break
-                                destination = available_locations[answer]
-                            case _:
-                                break
-                        if destination is not None:
-                            travel_time = round(math.sqrt((self.location.coordinates[0] - destination.coordinates[0])**2 + (self.location.coordinates[1] - destination.coordinates[1])**2) / 100) #The formula I learned in school, forgot, and then searched up when I needed it. Thanks grade 10 advanced math, you helped, a little, kinda, thanks, a little. Thanks google.
-                            selected_ship.is_dispatched = True
-                            selected_ship.day_of_arrival = self.game_time.day + travel_time
-                            selected_ship.day_of_return = self.game_time.day + travel_time*2
-                            selected_ship.returning_port = self
-                            selected_ship.ships_log.append(f"-----Dispatched to {destination.name}-----")
-                            self.ships.remove(selected_ship) #Remove the ship from the port while it is dispatched
-                            print(f"{selected_ship.name} has been dispatched to {destination.name}!")
-                            print(f"It will take aproximately {travel_time} days to get there.")
-                            print(f"It will return in aproximately {travel_time*2} days.")
-                            input("Press enter to continue")
-                            break
                     #Rename ship
                     case 4:
                         new_name = input("Enter new name (press [ENTER] to cancel): ")
