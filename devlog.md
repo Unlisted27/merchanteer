@@ -131,6 +131,9 @@ d - in-development version, not meant to be played, likely very unstable
         ii. If one is, it will deposite no more than the contract's required amount of that good at that port (it will deposite as much as possible if it doesent have enough)
         iii. You can check the ships log when it is at the same port as you to see success or failure of contract completion.
 ### Minor added features
+- Main menu
+- Credits sequence
+- Art can now be found in some menus
 ## Player notes
 - Exchanges now refresh contracts daily
 - When dispatching a ship, you can now choose whether to send that ship with a contract or not. Sending a ship with a contract will automatically grab the correct destination
@@ -150,4 +153,6 @@ d - in-development version, not meant to be played, likely very unstable
 - Ship objects now have a current_port value that is set when a port object is initialised with ships assigned, or when Port.add_ship() is run.
 - All ships being added to ports should be added with the Port.add_ship() method to correctly make the ship's current_port correct
 - player in building_blocks.py now initialises with a Fleet object, this doesent change anything and I might remove fleet in the future, or keep it, depending on the existence of non-player-owned ships
+- menus can now accept art as one of their arguments and will display the art alongside the menu
+- art.py renamed to game_art.py
 ## Other notes

@@ -1,7 +1,31 @@
 #All art created by definetlynotapickle
 #Thanks for learning ASCII art for me
+import time,shutil
 
-sinking_ship = r"""
+def super_center_block(text: str):
+    width = shutil.get_terminal_size().columns
+    lines = text.splitlines()
+
+    block_width = max(len(line) for line in lines)
+    left_padding = (width - block_width) // 2
+
+    return "\n".join(" " * left_padding + line for line in lines)
+
+def slow_print(text: str, delay: float = 0.1):
+    for line in text.splitlines():
+        print(line)
+        time.sleep(delay)
+
+class Art:
+    def __init__(self,art:str):
+        self.art = art
+    def slow_print(self):
+        slow_print(self.art)
+    def center_print(self):
+        super_center_block(self.art)
+    def __str__(self):
+        return self.art
+sinking_ship = Art(r"""
               /+         |A                                   
              / / \+    |   >                             
      |>     //    \ \ |   >                             
@@ -14,9 +38,9 @@ sinking_ship = r"""
            _______#     O        O  \_  /
    ______##   O    O                 /
 ,--**__,--**__,--**__,--**__,--**__,--**__      
-"""
+""")
 
-title = r"""
+title = Art(r"""
                                                            \./
                                                   \./                     
    ___ ___    ___  ____      __  __ __   ____  ____   __||__    ___    ___  ____    
@@ -30,9 +54,9 @@ title = r"""
    /—----\_-]   ||        _[::]_    || \\          // || \\  |()()|    // || \\ 
  ^-|       ;*   ||    ...[__]{  }   ||  \\        //  ||  \\  llll    //  ||  \\     
 =====================================================================================
-"""
+""")
 
-ship_1=r"""
+ship_1=Art(r"""
                   {[]}
        o     .-''__||___
       _|--'''    : || :\
@@ -44,28 +68,28 @@ ship_1=r"""
    \  []     ****__||______/:::""
    /|=-=-=-=-=-=-=-=-=-=-=/
   |_|"=,_______________,="
-"""
+""")
 
-port_birds_eye = r"""
+port_birds_eye = Art(r"""
        ____0___        _____
        \=======\/_    /    //              ==__{}     
-             \/   \  /    //4               |  ==__='==_                  
+             \/   \  /    //\               |  ==__='==_                  
              /\   /|/    //                --__    |  _=|                
-           /____ ///    //4                  0 |--__='_='                     
+           /____ ///    //\                  0 |--__='_='                     
          / __  / //    //                  /    _='_='                            
-        / / / /o//    //4                 |__ ="_='                             
+        / / / /o//    //\                 |__ ="_='                             
         "...="\//    //                  /.__ ='                          
-         *-\--*/    //4                                      __..--.
+         *-\--*/    //\                                      __..--.
          _____/_   //__                              __..--""       |
  .------/      /^.     ""--..__              __..--""       __..--""\\
 /      /_____ /  /\            ""--..__..--""       __..--""  \\
 ------/  ___  ^./  \                        __::==""  \\
  0  0 \ \    \  \  /                        |\\
 \ 0 \\ \ \ ** \  \/                          |         
-"""
+""")
 
 #This one all just concept art, prob never gonna be implemented, artist thought he was lead game design making this one LMAO
-map=r"""
+map=Art(r"""
 ############/                                                   /########/
 ############\                                                  |##########\
 #############|                                                /#########[LOCKED]
@@ -79,7 +103,7 @@ map=r"""
 ########/                                         \#      /####################\
 #####/                                                   |######################|
 ###/                                                  [PORT]
-"""
+""")
 print(title)
 print(sinking_ship)
 print(map)

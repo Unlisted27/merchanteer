@@ -1,65 +1,97 @@
 # Code by Unlisted_dev
 # This is the back end, really complicated stuff so be ware. 
 # If you want to mod the game, or understand how this is all implemented, check out building_blocks.py
-import os, time, random, math
+import os, time, random, math, shutil, game_art
 from abc import ABC, abstractmethod
 
 def clear_terminal():
     os.system('cls' if os.name == 'nt' else 'clear')
 
-def menu(name:str,list_options:list,return_option=False,horizontal_sign="_",vertical_sign="|",return_tuple:bool=False):
-    '''Displays a menu of the paramater options.
-    -
-    Selected option returned as string
-    -
-    ex: menu("Choose",["a","b","c"]) 
-    --> choice (say the player chose [1] (a), 1 (integer) would be returned)
-    
-    -horizontal_sign and vertical_sign are characters that will make up the border of the menu
-    -return_tuple if set to True will return the string selected as well as it's number
-        ex: in the previous example, (1,"a") would be returned'''
-    length = 1
-    i=1
+def menu(
+    name: str,
+    list_options: list,
+    return_option=False,
+    art: str | game_art.Art | None = None,
+    horizontal_sign="_",
+    vertical_sign="|",
+    return_tuple: bool = False
+):
+    """Displays a menu with optional ASCII art beside it."""
+    if art is not None:
+        if isinstance(art, str):
+            art = art
+        elif isinstance(art, game_art.Art):
+            art = art.__str__()
+        else:
+            raise TypeError("Art must be a string or an Art object")
     options = []
-    items = []
     if return_option:
         options.append("Go back")
-    for each in list_options:
-        options.append(each)
-    for item in options:
-        if type(item) != str:
+    options.extend(list_options)
+
+    # Build menu items
+    items = []
+    for i, item in enumerate(options, start=1):
+        if not isinstance(item, str):
             raise TypeError("Items in list must be type str")
-        else:
-            items.append(f"{vertical_sign}[{i}]{item}")
-            i+=1
+        items.append(f"{vertical_sign}[{i}] {item}")
+
+    length = max(len(name) + 1, *(len(i) for i in items))
+
+    # Build menu block
+    menu_lines = []
+    menu_lines.append(horizontal_sign * length)
+    menu_lines.append(name + " " * (length - len(name)))
     for thing in items:
-        if len(thing) > length:
-            length = len(thing)
-    print(horizontal_sign*length)
-    print(name + " "*(length - 1 - len(name)))
-    #print(f"|\033[4m{name + " "*(length - 1 - len(name))}\033[0m")#The funny characters are the underlined escape sequence in python
-    for thing in items:
-        print(thing)
+        menu_lines.append(thing)
+
+    # Prepare art block
+    art_lines = []
+    if art:
+        art_lines = art.splitlines()
+
+    # Determine total height
+    total_height = max(len(menu_lines), len(art_lines))
+
+    # Pad blocks
+    while len(menu_lines) < total_height:
+        menu_lines.insert(0,"")
+
+    while len(art_lines) < total_height:
+        art_lines.append("")
+
+    # Print side-by-side
+    gap = "   "
+    for m, a in zip(menu_lines, art_lines):
+        print(m.ljust(length) + gap + a)
+
+    # Input loop
     while True:
         try:
-            answer = input(f"{vertical_sign}:")
-            selected = options[int(answer)-1]
+            print("_"*shutil.get_terminal_size().columns)
+            print(f"{vertical_sign}:")
+            print("‾"*shutil.get_terminal_size().columns)
+            print("\033[2A\033[3C", end="", flush=True)
+            answer = input()
+            selected = options[int(answer) - 1]
+
             if answer == "0":
                 raise Exception
+
             if return_tuple:
                 if return_option:
                     if int(answer) == 1:
-                        return (None,"Go back")
-                    return (int(answer)-1,selected)
-                return (int(answer),selected)
+                        return (None, "Go back")
+                    return (int(answer) - 1, selected)
+                return (int(answer), selected)
             else:
                 if return_option:
                     if int(answer) == 1:
                         return None
-                    return int(answer)-1
+                    return int(answer) - 1
                 return int(answer)
-        except Exception as e:
-            #print(e) #Uncomment this line to show error message when the user enters an invalid option
+
+        except Exception:
             print("Invalid selection, try again")
 
 #AI generated table printing function
@@ -407,13 +439,13 @@ class Port:
                 self.ship_names.append(ship.name)
             clear_terminal()
             try:
-                selected_ship:Ship = self.ships[menu("Owned ships",self.ship_names,return_option=True) -1] #Select a ship to manage\
+                selected_ship:Ship = self.ships[menu(f"Port {self.name}",self.ship_names,return_option=True,art=game_art.port_birds_eye) -1] #Select a ship to manage\
             except Exception:
                 break
             while True:
                 clear_terminal()
                 print(f"|{selected_ship.name}|")
-                action = menu("Ship actions",["Load","view inventory","Plan voyage","Change name","View event log"],True)
+                action = menu("Ship actions",["Load","view inventory","Plan voyage","Change name","View event log"],True,art=game_art.ship_1)
                 #Loading logic
                 match action:
                     case 1:
