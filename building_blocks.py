@@ -46,6 +46,9 @@ game_time.register(theSliver) #Register ship to game time so it can track travel
 theSplinter = components.Ship("the Splinter",event_list=event_list)
 #theSplinter.storage.add_to_cargo(gold,100)
 game_time.register(theSplinter) #Register ship to game time so it can track travel time
+player_fleet = components.Fleet([theSliver,theSplinter])
+
+#Warehouses
 theHold = components.Warehouse("the Hold")
 clammer_warehouse = components.Warehouse("Clammer Warehouse")
 
@@ -55,7 +58,7 @@ trade_goods = [bread,fish,wood,cloth,rice]
 currency_goods = [gold,silver]
 
 #Other
-player = components.Player(components.Storage("Player Inventory",100),0,warehouses=[theHold])
+player = components.Player(components.Storage("Player Inventory",100),0,fleet=player_fleet,warehouses=[theHold])
 print(theHold.storage.show_invent())
 
 #Port creation

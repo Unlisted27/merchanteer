@@ -138,6 +138,7 @@ d - in-development version, not meant to be played, likely very unstable
 - Fixed back option displaying above inventory header while loading a ship
 - Fixed crash with type hint pointing to a class that hadnt been declared (Exchange pointing at Location)
 - Fixed ships returning from journey not being displayed in daily log
+- Fixed fatal error with Location being referenced in ship before being defined
 ## Dev notes
 - Added some type hints in Exchange
 - Added error handling for the case where an Exchange is created without a valid Location
@@ -148,4 +149,5 @@ d - in-development version, not meant to be played, likely very unstable
 - Ship objects now have target_storage rather than target_warehouse
 - Ship objects now have a current_port value that is set when a port object is initialised with ships assigned, or when Port.add_ship() is run.
 - All ships being added to ports should be added with the Port.add_ship() method to correctly make the ship's current_port correct
+- player in building_blocks.py now initialises with a Fleet object, this doesent change anything and I might remove fleet in the future, or keep it, depending on the existence of non-player-owned ships
 ## Other notes

@@ -277,11 +277,11 @@ class Ship:
         self.current_destination:Location = None
         self.contracts:list[Contract] = []
         self.current_port:Port = None
-    def initial_dispatch(self, destinations:Location, game_time:GameTime):
+    def initial_dispatch(self, destinations:'Location', game_time:GameTime):
         self.destinations = destinations
         self.destinations.append(self.current_port.location) #Add the current location as the final destination so the ship returns home after its route is complete
         self.dispatch(self.destinations[0],game_time)
-    def dispatch(self, destination:Location, game_time:GameTime):
+    def dispatch(self, destination:'Location', game_time:GameTime):
         travel_time = round(math.sqrt((self.current_port.location.coordinates[0] - destination.coordinates[0])**2 + (self.current_port.location.coordinates[1] - destination.coordinates[1])**2) / 100) #The formula I learned in school, forgot, and then searched up when I needed it. Thanks grade 10 advanced math, you helped, a little, kinda, thanks, a little. Thanks google.
         self.day_of_arrival = game_time.day + travel_time
         self.ships_log.append(f"-----Dispatched to {destination.name}-----")
