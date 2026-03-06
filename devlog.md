@@ -134,6 +134,8 @@ d - in-development version, not meant to be played, likely very unstable
 - Main menu
 - Credits sequence
 - Art can now be found in some menus
+- Menu function changed to display a row of Xs on incorrect input
+- Menu function now has a box to enter text in
 ## Player notes
 - Exchanges now refresh contracts daily
 - When dispatching a ship, you can now choose whether to send that ship with a contract or not. Sending a ship with a contract will automatically grab the correct destination
@@ -155,4 +157,5 @@ d - in-development version, not meant to be played, likely very unstable
 - player in building_blocks.py now initialises with a Fleet object, this doesent change anything and I might remove fleet in the future, or keep it, depending on the existence of non-player-owned ships
 - menus can now accept art as one of their arguments and will display the art alongside the menu
 - art.py renamed to game_art.py
+- Added and later removed Curses as a requirement
 ## Other notes

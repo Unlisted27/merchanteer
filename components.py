@@ -1,7 +1,7 @@
 # Code by Unlisted_dev
 # This is the back end, really complicated stuff so be ware. 
 # If you want to mod the game, or understand how this is all implemented, check out building_blocks.py
-import os, time, random, math, shutil, game_art
+import os, time, random, math, shutil, game_art, style
 from abc import ABC, abstractmethod
 
 def clear_terminal():
@@ -54,23 +54,25 @@ def menu(
     total_height = max(len(menu_lines), len(art_lines))
 
     # Pad blocks
-    menu_lines.append("_"*length)
-    menu_lines.append(f"{vertical_sign}:")
-    menu_lines.append("‾"*length)
     while len(menu_lines) < total_height:
         menu_lines.append("")
 
     while len(art_lines) < total_height:
         art_lines.append("")
-
-    # Print side-by-side
-    gap = "  |  "
-    for m, a in zip(menu_lines, art_lines):
-        print(m.ljust(length) + gap + a)
-    print(f"\033[{total_height-len(menu_lines)-3}A", end="", flush=True)
-    print("\033[3C", end="", flush=True)
-    # Input loop
+    
     while True:
+        clear_terminal()
+        # Print side-by-side
+        gap = "  |  "
+        for m, a in zip(menu_lines, art_lines):
+            print(m.ljust(length) + gap + a)
+
+        print(("_"*(length+2))+"|") #Top border
+        print("|:"+ " " * (length) + "|")
+        print("‾"*(length+2)) #Bottom border
+        print("\033[2A\033[3C", end="", flush=True)
+        # Input loop
+        
         try:
             answer = input()
             selected = options[int(answer) - 1]
@@ -92,7 +94,8 @@ def menu(
                 return int(answer)
 
         except Exception:
-            print("Invalid selection, try again")
+            print(f"\033[1A{style.RED}XXXXXXXXXXXXXXXXXXXXXXXX{style.RESET}")
+            time.sleep(0.2)
 
 #AI generated table printing function
 def print_table(headers: list[str], rows: list[list], sep: str = "  "):
@@ -493,6 +496,7 @@ class Port:
                                         ans = input("Press enter to continue (e for error details) ")
                                         if ans.lower() == "e": input(e)
                                         break
+                                    
                                 case 2:
                                     clear_terminal()
                                     location_names = []

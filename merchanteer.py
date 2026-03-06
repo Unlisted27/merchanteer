@@ -35,7 +35,7 @@ match answer:
         while True:
             components.clear_terminal()
             print(f"Day {building_blocks.game_time.day}")
-            answer = components.menu("Game menu",["Player actions","Bargain house","Port","Next day","Quit game"]) 
+            answer = components.menu("Game menu",["Player actions","Bargain house","Port","Next day","Quit game"],art = game_art.title) 
             match answer:                           # <─ use match instead of “case answer:”
                 case 1:      
                     components.clear_terminal()                        # option 1

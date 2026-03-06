@@ -12,9 +12,7 @@ How to run:
 `git clone https://github.com/Unlisted27/merchanteer`  
 2. Go to the correct folder   
 `cd merchanteer`  
-3. Install requirements (WINDOWS USERS ONLY)
-`pip install -r requirements.txt`
-4. Run merchanteer.py  
+3. Run merchanteer.py  
 `python3 merchanteer.py`  
 
 
