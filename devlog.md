@@ -120,7 +120,7 @@ d - in-development version, not meant to be played, likely very unstable
 - Removed artist tag on ASCII art (per their request), will be added back when credits added
 - More art added to the art.py file, but not yet implemented in the game
 
-# 0.0.4a
+# 0.0.4a The sailing rework, art, and UI update
 ## Added features
 ### Major added features
 - voyage planning has replaced simply dispatching a ship. The player must now add destinations and contracts before dispatching a ship
@@ -130,10 +130,10 @@ d - in-development version, not meant to be played, likely very unstable
         i. When arriving at a new port, the ship will check if any of its assigned contracts are set to deposite there
         ii. If one is, it will deposite no more than the contract's required amount of that good at that port (it will deposite as much as possible if it doesent have enough)
         iii. You can check the ships log when it is at the same port as you to see success or failure of contract completion.
+- Art can now be found in some menus
 ### Minor added features
 - Main menu
 - Credits sequence
-- Art can now be found in some menus
 - Menu function changed to display a row of Xs on incorrect input
 - Menu function now has a box to enter text in
 ## Player notes
@@ -144,6 +144,7 @@ d - in-development version, not meant to be played, likely very unstable
 - Fixed crash with type hint pointing to a class that hadnt been declared (Exchange pointing at Location)
 - Fixed ships returning from journey not being displayed in daily log
 - Fixed fatal error with Location being referenced in ship before being defined
+- Fixed menu skipping when going back from adding contracts in route planning
 ## Dev notes
 - Added some type hints in Exchange
 - Added error handling for the case where an Exchange is created without a valid Location
@@ -158,4 +159,5 @@ d - in-development version, not meant to be played, likely very unstable
 - menus can now accept art as one of their arguments and will display the art alongside the menu
 - art.py renamed to game_art.py
 - Added and later removed Curses as a requirement
+- Added style.py to store ANSI escape codes for formatting text
 ## Other notes

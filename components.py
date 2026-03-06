@@ -484,18 +484,19 @@ class Port:
                                     contract_names = []
                                     for contract in self.player.contracts:
                                         contract_names.append(f"{contract.amount} {contract.good.name} to {contract.destination_port.name}")
-                                    try:
-                                        answer = menu("Select contracts to add (order does not matter)",contract_names,True)-1
-                                    except Exception:
-                                        break
-                                    selected_contract:Contract = self.player.contracts[answer]
-                                    try:
-                                        selected_ship.contracts.append(selected_contract) #Add the contract to the ship's list of contracts
-                                    except Exception as e:
-                                        print("There was an error selecting contract")
-                                        ans = input("Press enter to continue (e for error details) ")
-                                        if ans.lower() == "e": input(e)
-                                        break
+                                    while True:
+                                        try:
+                                            answer = menu("Select contracts to add (order does not matter)",contract_names,True)-1
+                                        except Exception:
+                                            break
+                                        selected_contract:Contract = self.player.contracts[answer]
+                                        try:
+                                            selected_ship.contracts.append(selected_contract) #Add the contract to the ship's list of contracts
+                                        except Exception as e:
+                                            print("There was an error selecting contract")
+                                            ans = input("Press enter to continue (e for error details) ")
+                                            if ans.lower() == "e": input(e)
+                                            break
                                     
                                 case 2:
                                     clear_terminal()
