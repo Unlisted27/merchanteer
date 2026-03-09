@@ -160,4 +160,5 @@ d - in-development version, not meant to be played, likely very unstable
 - art.py renamed to game_art.py
 - Added and later removed Curses as a requirement
 - Added style.py to store ANSI escape codes for formatting text
+- reformated the switch case statements under components.Port into functions rather than nested statements for readability.
 ## Other notes

@@ -34,3 +34,4 @@
 COMPLETE 1. Make contracts in the exchange restock daily
 COMPLETE 2. Add orders system to allow ships to go to multiple ports and deposite set numbers of resources.
  COMPLETE a. Tie contract to a ship, then when the ship reaches its destination it deposites the contract amount of resources into the contract target storage
+COMPLETE 3. Reformat switch cases to avoid nested statements and implement higher levels of functionalisation.
