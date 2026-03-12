@@ -14,7 +14,8 @@ def menu(
     art: str | game_art.Art | None = None,
     horizontal_sign="_",
     vertical_sign="|",
-    return_tuple: bool = False
+    return_tuple: bool = False,
+    table:dict | None = None
 ):
     """Displays a menu with optional ASCII art beside it."""
     if art is not None:
@@ -50,8 +51,11 @@ def menu(
     if art:
         art_lines = art.splitlines()
 
+    table_lines = []
+    if table:
+        table_lines = get_table(table).splitlines()
     # Determine total height
-    total_height = max(len(menu_lines), len(art_lines))
+    total_height = max(len(menu_lines), len(art_lines),len(table_lines))
 
     # Pad blocks
     while len(menu_lines) < total_height:
@@ -59,14 +63,25 @@ def menu(
 
     while len(art_lines) < total_height:
         art_lines.append("")
+
+    while len(table_lines) < total_height:
+        table_lines.append("")
     
     while True:
         clear_terminal()
         # Print side-by-side
         gap = "  |  "
-        for m, a in zip(menu_lines, art_lines):
-            print(m.ljust(length) + gap + a)
+        for m, a, t in zip(menu_lines, art_lines, table_lines):
+            line = m.ljust(length)
+            if a:
+                line += gap + a
+            if t:
+                line += gap + t
+            if not a and not t:
+                line += gap
+            print(line)
 
+        # User input box
         print(("_"*(length+2))+"|") #Top border
         print("|:"+ " " * (length) + "|")
         print("‾"*(length+2)) #Bottom border
@@ -98,17 +113,40 @@ def menu(
             time.sleep(0.2)
 
 #AI generated table printing function
-def print_table(headers: list[str], rows: list[list], sep: str = "  "):
+def get_table(data:dict|list, sep: str = "  "):
     """
-    Print a text table with columns sized to fit their contents.
+    get_table(data, sep="  "): str
+    ---
+    Print a text table with columns sized to fit their contents. 
+    \n
+    data:
+        Pass list for single column table (list)  
+        Pass dict{str:dict} for multi column table (dict)  
+    \n
+    sep: spacing string between columns (default: two spaces)
+    """
+    rows:list = []
+    headers:list = []
+    if isinstance(data, list):
+        if len(data) <= 1:
+            if len(data) <= 1:
+                header = data[0] if data else ""
+                return f"{header}\n{'-'*len(str(header))}\nNo data to display"
+        headers = data[0]
+        rows = data[1:]
 
-    headers : list of column titles
-    rows    : list of lists; each inner list is a row of values
-    sep     : spacing string between columns (default: two spaces)
-    """
-    # Convert everything to string for measuring
-    str_rows = [[str(c) for c in row] for row in rows]
-    str_headers = [str(h) for h in headers]
+        str_headers = [data[0]]
+        str_rows = [row for row in rows]
+    elif isinstance(data, dict):
+        headers:list = ["Item"] + list(next(iter(data.values())).keys())
+        for item, properties in data.items():
+            row = [item] + list(properties.values())
+            rows.append(row)
+        # Convert everything to string for measuring
+        str_rows = [[str(c) for c in row] for row in rows]
+        str_headers = [str(h) for h in headers]
+    else:
+        raise TypeError("Data must be a list of str or a dictionary")
 
     # Find max width of each column
     widths = [
@@ -119,13 +157,18 @@ def print_table(headers: list[str], rows: list[list], sep: str = "  "):
     # Format pattern
     pattern = sep.join("{:<" + str(w) + "}" for w in widths)
 
-    # Print header
-    print(pattern.format(*str_headers))
-    print(sep.join("-" * w for w in widths))
+    # make headers
+    block = """"""
+    block += pattern.format(*str_headers) + "\n"
+    block += sep.join("-" * w for w in widths) + "\n"
 
-    # Print rows
+    # make rows
     for row in str_rows:
-        print(pattern.format(*row))
+        if isinstance(row, str):        # single-column case
+            row = [row]                 # wrap in list
+        block += pattern.format(*row) + "\n"
+
+    return block
 
 #This whole thing was AI generated and tweaked by me. Im not making logic like ts
 def gen_contract(good_list: list,reward_list:list, current_day, current_location, world, max_cargo_weight: int = 1000):
@@ -450,12 +493,23 @@ class Port:
                     contract_names = []
                     for contract in self.player.contracts:
                         contract_names.append(f"{contract.amount} {contract.good.name} to {contract.destination_port.name}")
+                    contract_names.append("clear all")
+                    selected_contract_names = ["Selected Contracts"]
                     while True:
                         try:
-                            answer = menu("Select contracts to add (order does not matter)",contract_names,True)-1
+                            answer = menu("Select contracts to add (order does not matter)",contract_names,True,table=selected_contract_names)
+                            if answer == len(contract_names): #Clear all option
+                                selected_contract_names = ["Selected Contracts"]
+                                for contract in self.player.contracts:
+                                    if contract in selected_ship.contracts:
+                                        selected_ship.contracts.remove(contract) #Remove the contract from the ship if its currently selected
+                                continue
+                            selected_contract_names.append(contract_names[answer-1])
                         except Exception:
+                            #input("BREAKED" + e)
                             break
-                        selected_contract:Contract = self.player.contracts[answer]
+                        selected_contract:Contract = self.player.contracts[answer-1]
+                        
                         try:
                             selected_ship.contracts.append(selected_contract) #Add the contract to the ship's list of contracts
                         except Exception as e:
@@ -472,10 +526,17 @@ class Port:
                         if location != self.location:
                             available_locations.append(location)
                             location_names.append(location.name)
+                    location_names.append("Clear all")
+                    selected_destination_names = ["Selected Destinations"]
                     while True:
                         try:
-                            answer = menu("Select destinations (Order matters!)",location_names,True)
+                            answer = menu("Select destinations (Order matters!)",location_names,True,table=selected_destination_names)
+                            if answer == len(location_names): #Clear all option
+                                self.planned_destinations = []
+                                selected_destination_names = ["Selected Destinations"]
+                                continue
                             self.planned_destinations.append(available_locations[answer-1])
+                            selected_destination_names.append(available_locations[answer-1].name)
                         except Exception:
                             break
                 case 3:
@@ -588,7 +649,7 @@ class Contract:
             if not self.complete: #Check if it was already complete
                 self.contract_travel_time = day + random.randint(2,5) #Random travel time for reward delivery
                 self.complete = True
-        if day == self.contract_travel_time and self.complete is True and self.complete_notice is False:
+        if day == self.contract_travel_time and self.complete is True and self.complete_notice is False and self.expired is False: #Check if reward should be delivered
             self.complete_notice = True
             return f"Contract for {self.amount} {self.good.name} is ready to be cashed out!"
         if self.deadline < day and self.complete is False:
@@ -607,13 +668,22 @@ class Player:
         print(f"Fleet size: {len(self.fleet.ships) if self.fleet else 0}")
         self.storage.show_invent()
     def view_contracts(self):
-        headers = ["ID", "Amount", "Goods", "Reward", "Status"]
-        rows = []
+        table_data = {}
+
         for i, c in enumerate(self.contracts, start=1):
             status = "Expired" if c.expired else f"Due day {c.deadline}"
             reward = f"{c.reward_amount} {c.reward_type.name}"
-            rows.append([i, c.amount, c.good.name, reward, status])
-        print_table(headers, rows)
+
+            # Use i as the key for each contract
+            table_data[i] = {
+                "ID": i,
+                "Amount": c.amount,
+                "Good": c.good.name,
+                "Reward": reward,
+                "Destination": c.destination_port.location.name,
+                "Status": status
+            }
+        print(get_table(table_data))
     def player_actions(self):
         answer = menu("Actions",["View stats","View contracts"],True)
         match answer:
@@ -659,14 +729,22 @@ class Exchange:
         self.gen_daily_contracts()
 
     def show_contracts(self):
-        #input(self.contracts)
-        headers = ["ID", "Amount", "Good", "Reward", "Destination", "Status"]
-        rows = []
+        table_data = {}
+
         for i, c in enumerate(self.contracts, start=1):
             status = "Expired" if c.expired else f"Due day {c.deadline}"
             reward = f"{c.reward_amount} {c.reward_type.name}"
-            rows.append([i, c.amount, c.good.name, reward, c.destination_port.location.name, status])
-        print_table(headers, rows)
+
+            # Use i as the key for each contract
+            table_data[i] = {
+                "ID": i,
+                "Amount": c.amount,
+                "Good": c.good.name,
+                "Reward": reward,
+                "Destination": c.destination_port.location.name,
+                "Status": status
+            }
+        print(get_table(table_data))
     def select_contract(self,player:Player):
         while True:
             clear_terminal()

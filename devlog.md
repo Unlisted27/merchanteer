@@ -162,3 +162,20 @@ d - in-development version, not meant to be played, likely very unstable
 - Added style.py to store ANSI escape codes for formatting text
 - reformated the switch case statements under components.Port into functions rather than nested statements for readability.
 ## Other notes
+
+# 0.0.5a More menu info
+## Added features
+### Major added features
+- Data tables can now be found in some menus
+- Data tables allow for it to be more obvious that the player has selected something if returning to the same menu once the selection is complete
+### Minor added features
+## Player notes
+- Some menus have been updated with more information on side tables (ex: ship destination and contract selection menu now displays selected contracts and destinations)
+## Bug fixes
+- Bug that would cause contracts to be announced as being able to be cashed out even if they had already expired has been patched
+## Dev notes
+- Added __main__() method in merchanteer.py
+- Added table:dict | list    to menu() function. This wil allow a table to be displayed with the other content
+- print_table() has now been replaced with get_table()
+- get_table() can now take a dict for full table displays, or a list[str] for single column tables (lists)
+## Other notes

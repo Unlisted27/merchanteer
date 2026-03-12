@@ -25,53 +25,57 @@ def start_exchange(exchange:components.Exchange,player:components.Player):
                 exchange.cashout_contracts(player)
             case _:                              # option 2
                 break                             # assuming this is inside a loop
-components.clear_terminal()
-print(title)
-input("Press Enter to begin...")
-components.clear_terminal()
-answer = components.menu("Main Menu",["Start new game","Load save","Settings","Credits","Quit game"])
-match answer:
-    case 1:
-        while True:
+
+def __main__():
+    components.clear_terminal()
+    print(title)
+    input("Press Enter to begin...")
+    components.clear_terminal()
+    answer = components.menu("Main Menu",["Start new game","Load save","Settings","Credits","Quit game"])
+    match answer:
+        case 1:
+            while True:
+                components.clear_terminal()
+                print(f"Day {building_blocks.game_time.day}")
+                answer = components.menu("Game menu",["Player actions","Bargain house","Port","Next day","Quit game"],art = game_art.title) 
+                match answer:                           # <─ use match instead of “case answer:”
+                    case 1:      
+                        components.clear_terminal()                        # option 1
+                        player.player_actions()
+                    case 2: 
+                        components.clear_terminal()
+                        start_exchange(theBargainHouse,player)
+                    case 3:
+                        components.clear_terminal()
+                        portGrandure.manage_ships()
+                    case 4:   
+                        components.clear_terminal()                           
+                        building_blocks.game_time.advance()
+                        print("A new day begins...")
+                    case 5:                             
+                        print("Thanks for playing!")
+                        break
+        case 2:
+            print("Load save feature coming soon!")
+        case 3:
+            print("Settings menu coming soon!")
+        case 4:
             components.clear_terminal()
-            print(f"Day {building_blocks.game_time.day}")
-            answer = components.menu("Game menu",["Player actions","Bargain house","Port","Next day","Quit game"],art = game_art.title) 
-            match answer:                           # <─ use match instead of “case answer:”
-                case 1:      
-                    components.clear_terminal()                        # option 1
-                    player.player_actions()
-                case 2: 
-                    components.clear_terminal()
-                    start_exchange(theBargainHouse,player)
-                case 3:
-                    components.clear_terminal()
-                    portGrandure.manage_ships()
-                case 4:   
-                    components.clear_terminal()                           
-                    building_blocks.game_time.advance()
-                    print("A new day begins...")
-                case 5:                             
-                    print("Thanks for playing!")
-                    break
-    case 2:
-        print("Load save feature coming soon!")
-    case 3:
-        print("Settings menu coming soon!")
-    case 4:
-        components.clear_terminal()
-        game_art.slow_print(game_art.super_center_block(game_art.title.art),0.3)
-        game_art.slow_print(game_art.super_center_block("""
-============CREDITS============
-          Game design
-          Unlisted_dev
-                            
-             Code
-          Unlisted_dev
+            game_art.slow_print(game_art.super_center_block(game_art.title.art),0.3)
+            game_art.slow_print(game_art.super_center_block("""
+    ============CREDITS============
+            Game design
+            Unlisted_dev
+                                
+                Code
+            Unlisted_dev
 
-              Art
-      DefinitelyNotAPickle
+                Art
+        DefinitelyNotAPickle
 
-     Thank you for playing!
-"""),0.3)
-    case 5:
-        print("Thanks for playing!")
+        Thank you for playing!
+    """),0.3)
+        case 5:
+            print("Thanks for playing!")
+
+__main__()
