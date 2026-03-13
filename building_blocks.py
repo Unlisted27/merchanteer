@@ -3,10 +3,11 @@ import components,random
 #Locations
 grandure = components.Location("Grandure","A bustling trade city with a large port.")
 clammer = components.Location("Clammer","A small fishing village known for its seafood.")
+old_cove = components.Location("Old Cove","One of the first foreign settlements, old cove has survived through it all.")
 
 #world things
 game_time = components.GameTime()
-world = components.World([grandure,clammer])
+world = components.World([grandure,clammer,old_cove])
 
 #Currency goods
 gold = components.Good("gold","shiny",1,0.1)
@@ -39,7 +40,7 @@ class GoodWind(components.ShipEvent):
         #input(f"Good wind event occured on {ship.name}")
 event_list.append(GoodWind())
 
-#ships and warehouses
+#ships
 theSliver = components.Ship("the Sliver",event_list=event_list)
 game_time.register(theSliver) #Register ship to game time so it can track travel time
 #theSliver.storage.add_to_cargo(gold,100)
@@ -51,6 +52,7 @@ player_fleet = components.Fleet([theSliver,theSplinter])
 #Warehouses
 theHold = components.Warehouse("the Hold")
 clammer_warehouse = components.Warehouse("Clammer Warehouse")
+old_cove_warehouse = components.Warehouse("Old Cove Warehouse")
 
 #lists
 all_goods = [gold,silver,bread,fish,wood,cloth,rice,gold,silver]
@@ -59,18 +61,13 @@ currency_goods = [gold,silver]
 
 #Other
 player = components.Player(components.Storage("Player Inventory",100),0,fleet=player_fleet,warehouses=[theHold])
-print(theHold.storage.show_invent())
 
 #Port creation
 portClammer = components.Port("port Clammer",clammer,world,game_time,player,warehouses=[clammer_warehouse])
 portGrandure = components.Port("port Grandure",grandure,world,game_time,player,[theSliver,theSplinter],[theHold])
-
+portOldCove = components.Port("Old Cove Port",old_cove,world,game_time,player,warehouses=[old_cove_warehouse])
 #Exchanges
-theFishermansWharf = components.Exchange("the Fisherman's Wharf",clammer,game_time, world,good_list=all_goods,reward_list=currency_goods)
+#theFishermansWharf = components.Exchange("the Fisherman's Wharf",clammer,game_time, world,good_list=all_goods,reward_list=currency_goods)
 theBargainHouse = components.Exchange("the Bargain House",grandure,game_time, world,good_list=trade_goods,reward_list=currency_goods)
-game_time.register(theFishermansWharf)
+#game_time.register(theFishermansWharf)
 game_time.register(theBargainHouse)
-
-
-
-print(random.choice(clammer.ports).name)

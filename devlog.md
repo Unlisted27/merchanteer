@@ -169,10 +169,12 @@ d - in-development version, not meant to be played, likely very unstable
 - Data tables can now be found in some menus
 - Data tables allow for it to be more obvious that the player has selected something if returning to the same menu once the selection is complete
 ### Minor added features
+- New location Old Cove has been added
 ## Player notes
 - Some menus have been updated with more information on side tables (ex: ship destination and contract selection menu now displays selected contracts and destinations)
 ## Bug fixes
 - Bug that would cause contracts to be announced as being able to be cashed out even if they had already expired has been patched
+- Fixed ships often not announcing their return, this was caused by check_arrival() being called twice even if the first one succeeded, resulting in the second returning None instead of the returned notification
 ## Dev notes
 - Added __main__() method in merchanteer.py
 - Added table:dict | list    to menu() function. This wil allow a table to be displayed with the other content

@@ -418,8 +418,9 @@ class Ship:
         #Daily checks when dispatched
         msg = None
         msg = self.check_arrival(days)
-        self.run_events(days)
-        msg = self.check_arrival(days)
+        if msg is None:
+            self.run_events(days)
+            msg = self.check_arrival(days)
         return msg
             
 class Warehouse:
