@@ -64,16 +64,16 @@ def __main__():
             game_art.slow_print(game_art.super_center_block(game_art.title.art),0.3)
             game_art.slow_print(game_art.super_center_block("""
     ============CREDITS============
-            Game design
-            Unlisted_dev
+              Game design
+              Unlisted_dev
                                 
-                Code
-            Unlisted_dev
+                  Code    
+              Unlisted_dev
 
-                Art
-        DefinitelyNotAPickle
+                  Art         
+          DefinitelyNotAPickle
 
-        Thank you for playing!
+         Thank you for playing!
     """),0.3)
         case 5:
             print("Thanks for playing!")

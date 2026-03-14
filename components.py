@@ -4,6 +4,9 @@
 import os, time, random, math, shutil, game_art, style
 from abc import ABC, abstractmethod
 
+def distance(point1:tuple[int],point2:tuple[int]):
+    return round(math.sqrt((point1[0] - point2[0])**2 + (point1[1] - point2[1])**2) / 100)
+
 def clear_terminal():
     os.system('cls' if os.name == 'nt' else 'clear')
 
@@ -171,7 +174,7 @@ def get_table(data:dict|list, sep: str = "  "):
     return block
 
 #This whole thing was AI generated and tweaked by me. Im not making logic like ts
-def gen_contract(good_list: list,reward_list:list, current_day, current_location, world, max_cargo_weight: int = 1000):
+def gen_contract(good_list: list,reward_list:list, current_day, current_location:'Location', world:'World', max_cargo_weight: int = 1000):
     """
     Generates a contract with random goods and a reward proportional to value,
     ensuring the total weight is under max_cargo_weight.
@@ -197,12 +200,8 @@ def gen_contract(good_list: list,reward_list:list, current_day, current_location
 
     # pick a deadline (arbitrary units, e.g., hours)
     deadline = current_day + random.randint(10, 20)  # 10-20 days from now
-
-    possible_destinations = []
-    for location in world.locations:
-        if location != current_location:
-            possible_destinations.append(location)
-    destination_location = random.choice(possible_destinations) if len(possible_destinations) > 0 else None
+    possible_destinations = [loc for loc in world.locations if loc != current_location]
+    destination_location = random.choice(possible_destinations) if possible_destinations else None
     #print(f"Possible destinations: {[loc.name for loc in possible_destinations]}")
     #print(f"Chosen destination: {destination_location.name if destination_location else 'None'}")
     #print(f"destination_location ports: {[port.name for port in destination_location.ports] if destination_location else 'N/A'}")
@@ -220,7 +219,8 @@ def gen_contract(good_list: list,reward_list:list, current_day, current_location
         good=good,
         amount=amount,
         destination_port=destination_port,
-        destination_storage=destination_storage
+        destination_storage=destination_storage,
+        home_port = current_location
     )
 
     return contract
@@ -340,6 +340,7 @@ class ShipEvent(ABC):
 
 class Ship:
     def __init__(self,name:str,health_current:int = 100,health_max:int = 100,cargo_max_weight:int = 1000,event_list=list[ShipEvent]):
+        #Internal properties (only to be adjsuted within the declaration of the class)
         self.name = name
         self.health_current = health_current
         self.health_max = health_max
@@ -347,7 +348,7 @@ class Ship:
         self.cargo_weight = 0
         self.event_list = list(event_list) if event_list is not None else []
         self.ships_log = []
-        #Affectable ship properties
+        #Affectable ship properties (to be adjusted by outside factors)
         self.storage = Storage(f"{name} Cargo", cargo_max_weight)
         self.is_dispatched = False
         self.day_of_arrival = 0
@@ -365,7 +366,8 @@ class Ship:
         '''This is an internal function, should not regularily be called outside of the class \n
         Use primary_dispatch() instead\n
         This function is the action of sending a ship off, but will not handle things like multiple destinations, or returning the ship to its home port'''
-        travel_time = round(math.sqrt((self.current_port.location.coordinates[0] - destination.coordinates[0])**2 + (self.current_port.location.coordinates[1] - destination.coordinates[1])**2) / 100) #The formula I learned in school, forgot, and then searched up when I needed it. Thanks grade 10 advanced math, you helped, a little, kinda, thanks, a little. Thanks google.
+        travel_time = distance((self.current_port.location.coordinates[0],self.current_port.location.coordinates[1]),(destination.coordinates[0],destination.coordinates[1]))
+        #travel_time = round(math.sqrt((self.current_port.location.coordinates[0] - destination.coordinates[0])**2 + (self.current_port.location.coordinates[1] - destination.coordinates[1])**2) / 100) #The formula I learned in school, forgot, and then searched up when I needed it. Thanks grade 10 advanced math, you helped, a little, kinda, thanks, a little. Thanks google.
         self.day_of_arrival = game_time.day + travel_time
         self.ships_log.append(f"-----Dispatched to {destination.name}-----")
         self.current_destination = destination
@@ -629,7 +631,7 @@ class Fleet:
         self.ships = ships
 
 class Contract:
-    def __init__(self,reward_type:Good,reward_amount:int,deadline:int,good:Good,amount:int,destination_port:Port,destination_storage:Storage):
+    def __init__(self,reward_type:Good,reward_amount:int,deadline:int,good:Good,amount:int,destination_port:Port,destination_storage:Storage,home_port:Port=None):
         self.reward_type = reward_type
         self.reward_amount = reward_amount
         self.deadline = deadline
@@ -637,6 +639,7 @@ class Contract:
         self.amount = amount
         self.destination_port = destination_port
         self.destination_storage = destination_storage
+        self.home_port = home_port
         self.expired = False
         self.complete = False
         self.complete_notice = False

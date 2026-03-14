@@ -136,6 +136,7 @@ d - in-development version, not meant to be played, likely very unstable
 - Credits sequence
 - Menu function changed to display a row of Xs on incorrect input
 - Menu function now has a box to enter text in
+- contracts now calculate their time to return to their port of origin rather than selecting a random time to be redeemed
 ## Player notes
 - Exchanges now refresh contracts daily
 - When dispatching a ship, you can now choose whether to send that ship with a contract or not. Sending a ship with a contract will automatically grab the correct destination
@@ -161,6 +162,7 @@ d - in-development version, not meant to be played, likely very unstable
 - Added and later removed Curses as a requirement
 - Added style.py to store ANSI escape codes for formatting text
 - reformated the switch case statements under components.Port into functions rather than nested statements for readability.
+- Added distance() function to get the distance between two points, then divide that by 100
 ## Other notes
 
 # 0.0.5a More menu info
