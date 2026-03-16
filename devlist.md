@@ -38,4 +38,13 @@ COMPLETE 3. Reformat switch cases to avoid nested statements and implement highe
 
 # 0.0.5a
  - Patch fatal bug when redeeming contracts
- 
+ - Ship types
+    -
+ - Crew system
+    - Roles on a ship
+        - Different sized ships require more roles, and have different number of crew slots
+    - Human object
+    - Crew object
+        - Crew best role
+        - Crew skill
+        - (crew can perform any role, but they specialise in one area)
