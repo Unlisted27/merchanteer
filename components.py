@@ -141,13 +141,15 @@ def get_table(data:dict|list, sep: str = "  "):
         str_headers = [data[0]]
         str_rows = [row for row in rows]
     elif isinstance(data, dict):
-        headers:list = ["Item"] + list(next(iter(data.values())).keys())
-        for item, properties in data.items():
-            row = [item] + list(properties.values())
-            rows.append(row)
-        # Convert everything to string for measuring
-        str_rows = [[str(c) for c in row] for row in rows]
-        str_headers = [str(h) for h in headers]
+        if len(data) > 0:
+            headers:list = ["Item"] + list(next(iter(data.values())).keys())
+            for item, properties in data.items():
+                row = [item] + list(properties.values())
+                rows.append(row)
+            # Convert everything to string for measuring
+            str_rows = [[str(c) for c in row] for row in rows]
+            str_headers = [str(h) for h in headers]
+        else: return "No data to display"
     else:
         raise TypeError("Data must be a list of str or a dictionary")
 
@@ -826,3 +828,15 @@ class Location:
     def add_exchange(self, exchange):
         if exchange not in self.exchanges:
             self.exchanges.append(exchange)
+
+class Human():
+    def __init__(self,max_health,strength,name):
+        self.max_health = max_health
+        self.strength = strength
+        self.name = name
+
+        self.current_health = max_health
+
+class crewMate(Human):
+    def __init__(self,crew_role):
+        super().__init__()

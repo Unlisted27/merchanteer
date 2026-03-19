@@ -37,7 +37,7 @@ COMPLETE 2. Add orders system to allow ships to go to multiple ports and deposit
 COMPLETE 3. Reformat switch cases to avoid nested statements and implement higher levels of functionalisation.
 
 # 0.0.5a
- - Patch fatal bug when redeeming contracts
+ - COMPLETE Patch fatal bug when redeeming contracts
  - Ship types
     -
  - Crew system
