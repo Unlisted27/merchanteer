@@ -532,7 +532,7 @@ class Port:
                             available_locations.append(location)
                             location_names.append(location.name)
                     location_names.append("Clear all")
-                    selected_destination_names = ["Selected Destinations"]
+                    selected_destination_names = ["Selected Destinations"] + [loc.name for loc in self.planned_destinations] # Gets the name of destinations that may already be set prior to opening the menu
                     while True:
                         try:
                             answer = menu("Select destinations (Order matters!)",location_names,True,table=selected_destination_names)

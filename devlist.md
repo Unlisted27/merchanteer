@@ -1,3 +1,7 @@
+# !!!NOTICE!!!
+This file is NOT for accurate tracking of the development timeline, this is simpyl a task list so not every change is recoreded.  
+
+For proper timeline and versionning, go to devlog.md
 # before 0.0.3a
 1. Add location system  
     COMPLETE a. Every building (port, exchange) is tied to a location  
@@ -36,10 +40,17 @@ COMPLETE 2. Add orders system to allow ships to go to multiple ports and deposit
  COMPLETE a. Tie contract to a ship, then when the ship reaches its destination it deposites the contract amount of resources into the contract target storage
 COMPLETE 3. Reformat switch cases to avoid nested statements and implement higher levels of functionalisation.
 
-# 0.0.5a
+# 0.0.5a the UI Update
  - COMPLETE Patch fatal bug when redeeming contracts
+# 0.0.6a The ship overhaul
+ - Ship constants (new and old):
+    - health_max (old)
+    - cargo_max_weight (old) (weight appears to be currently in lbs)
+    - 
  - Ship types
-    -
+    - Small ship : Ketch
+    - medium ship : 
+    
  - Crew system
     - Roles on a ship
         - Different sized ships require more roles, and have different number of crew slots

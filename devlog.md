@@ -6,7 +6,7 @@ MAJOR     MINOR     PATCH    SPECIAL
 ### Special legend
 a - Alpha (internal testing)  
 b - Beta  (external testing)  
-p - pre-release (available for download but not most stable verion)
+p - pre-release (available for download but not most stable final verion)
 d - in-development version, not meant to be played, likely very unstable
 
 # up to 0.0.1a Contracts rework #1 and locations
@@ -177,6 +177,7 @@ d - in-development version, not meant to be played, likely very unstable
 ## Bug fixes
 - Bug that would cause contracts to be announced as being able to be cashed out even if they had already expired has been patched
 - Fixed ships often not announcing their return, this was caused by check_arrival() being called twice even if the first one succeeded, resulting in the second returning None instead of the returned notification
+- Fixed bug when planning ship travel where the table would only display destinations selected during the time that the player was on that menu, and re-opening the menu would whipe the table. Now the table is pre populated with the planned destinations of a ship.
 ## Dev notes
 - Added __main__() method in merchanteer.py
 - Added table:dict | list    to menu() function. This wil allow a table to be displayed with the other content
