@@ -227,6 +227,14 @@ def gen_contract(good_list: list,reward_list:list, current_day, current_location
 
     return contract
 
+class Stat():
+    def __init__(self,max_value:int,min_value:int = 0,current_value:int = None):
+        self.max_value = max_value
+        self.min_value = min_value
+        self.current_value = current_value if current_value else max_value
+    def __str__(self):
+        return f"[{self.current_value}/{self.max_value}]"
+
 class GameTime:
     def __init__(self):
         self.day = 0
@@ -261,18 +269,17 @@ class Good:
         self.weight = weight
 
 class Storage:
-    def __init__(self, name: str, cargo_max_weight: int = 1000, cargo: dict | None = None):
+    def __init__(self, name: str, cargo_weight: int = 1000, cargo: dict | None = None):
         if cargo is None:
             cargo: dict[Good, int] = {}        # create a fresh dict for this instance
         self.cargo = cargo
         self.name = name
-        self.cargo_max_weight = cargo_max_weight
-        self.cargo_weight = 0
+        self.cargo_weight = Stat(cargo_weight)
 
     def calc_cargo(self):
-        self.cargo_weight = 0
+        self.cargo_weight.current_value = 0
         for good,amount in self.cargo.items():
-            self.cargo_weight += self.get_crate_weight(good,amount)
+            self.cargo_weight.current_value += self.get_crate_weight(good,amount)
     def get_crate_weight(self,good:Good,amount:int):
         return good.weight*amount
     def get_invent(self,starting_index = 1):
@@ -287,17 +294,17 @@ class Storage:
             )
         return to_return
     def show_invent(self,back_option=False):
-        print(f"|{self.name} | {self.cargo_weight}lbs/{self.cargo_max_weight}lbs |")
+        print(f"|{self.name} | {self.cargo_weight.__str__()}lbs|")
         if back_option: print("[1] | Go back")
         print(self.get_invent(2 if back_option else 1))
     def add_to_cargo(self,new_good:Good,amount:int=1):
         self.calc_cargo()
-        if self.cargo_weight + self.get_crate_weight(new_good,amount) <= self.cargo_max_weight:
+        if self.cargo_weight.current_value + self.get_crate_weight(new_good,amount) <= self.cargo_weight.max_value:
             for good in self.cargo:
                 if good.name == new_good.name:        # find existing by name
                     self.cargo[good] += amount
                     break
-            else:                               # not found -> create
+            else:   # not found -> create DO NOT INDENT THIS ELSE BLOCK, ITS A ```for else``` LOOP
                 self.cargo[new_good] = amount
             self.calc_cargo()
             return True
@@ -341,17 +348,17 @@ class ShipEvent(ABC):
         pass #This function is meant to be overridden by child classes, it will run the event's effects on the ship that is passed in as a parameter
 
 class Ship:
-    def __init__(self,name:str,health_current:int = 100,health_max:int = 100,cargo_max_weight:int = 1000,event_list=list[ShipEvent]):
+    def __init__(self,name:str,health:int = 100,cargo_weight:int = 1000,event_list=list[ShipEvent]):
+        #SHIP STATS
+        self.health = Stat(health)
+        self.stability = Stat(100)
         #Internal properties (only to be adjsuted within the declaration of the class)
         self.name = name
-        self.health_current = health_current
-        self.health_max = health_max
-        self.cargo_max_weight = cargo_max_weight
-        self.cargo_weight = 0
+        self.cargo_weight = Stat(cargo_weight)
         self.event_list = list(event_list) if event_list is not None else []
         self.ships_log = []
         #Affectable ship properties (to be adjusted by outside factors)
-        self.storage = Storage(f"{name} Cargo", cargo_max_weight)
+        self.storage = Storage(f"{name} Cargo", cargo_weight)
         self.is_dispatched = False
         self.day_of_arrival = 0
         self.destinations:list[Location] = []
@@ -430,8 +437,7 @@ class Ship:
 class Warehouse:
     def __init__(self,name:str,max_weight:int = 10000):
         self.name = name
-        self.max_weight = max_weight
-        self.storage = Storage(f"{name} Warehouse",self.max_weight)
+        self.storage = Storage(f"{name} Warehouse",max_weight)
 
 class Port:
     def __init__(self, name: str, location:object,world:World,game_time:GameTime,player:'Player',ships: list[Ship] | None = None, warehouses: list[Warehouse] | None = None):
@@ -499,7 +505,7 @@ class Port:
                     for contract in self.player.contracts:
                         contract_names.append(f"{contract.amount} {contract.good.name} to {contract.destination_port.name}")
                     contract_names.append("clear all")
-                    selected_contract_names = ["Selected Contracts"]
+                    selected_contract_names = ["Selected Contracts"] + [f"{contract.amount} {contract.good.name} to {contract.destination_port.name}" for contract in selected_ship.contracts]
                     while True:
                         try:
                             answer = menu("Select contracts to add (order does not matter)",contract_names,True,table=selected_contract_names)
@@ -768,9 +774,10 @@ class Exchange:
                                 warehouse_names.append(warehouse.name)
                             try:
                                 answer = int(menu("Where would you like to store these goods?",warehouse_names,True))-1
-                            except Exception:
-                                break
-                            selected_warehouse:Warehouse = player.warehouses[answer] 
+                            except Exception as e:
+                                input("An error occured!\n"+e)
+                            selected_warehouse:Warehouse = player.warehouses[answer]
+                            #input(selected_warehouse.name) 
                             if selected_warehouse.storage.add_to_cargo(chosen_contract.good,chosen_contract.amount):
                                 input("Contract accepted! (press enter to continue)")
                                 self.contracts.remove(chosen_contract) #Remove the contract from the exchange's list of contracts
@@ -829,6 +836,10 @@ class Location:
         if exchange not in self.exchanges:
             self.exchanges.append(exchange)
 
+class CrewRole():
+    def __init__(self):
+        pass
+
 class Human():
     def __init__(self,max_health,strength,name):
         self.max_health = max_health
@@ -837,6 +848,6 @@ class Human():
 
         self.current_health = max_health
 
-class crewMate(Human):
+class CrewMate(Human):
     def __init__(self,crew_role):
         super().__init__()

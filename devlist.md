@@ -50,7 +50,10 @@ COMPLETE 3. Reformat switch cases to avoid nested statements and implement highe
  - Ship types
     - Small ship : Ketch
     - medium ship : 
-    
+ - Ship stats:
+    Ships have a variety of stats, some of these stats are checked every day and if they cannot be met, there may be consequences
+ - Ship needs:
+    While at sea, ships will have needs that must be met in order to perform optimally. Some needs are tied to stats, if those needs cannot be met, the stat decreases
  - Crew system
     - Roles on a ship
         - Different sized ships require more roles, and have different number of crew slots
