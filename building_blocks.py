@@ -40,12 +40,12 @@ class GoodWind(components.ShipEvent):
         #input(f"Good wind event occured on {ship.name}")
 event_list.append(GoodWind())
 
+#Ship types
+ketch = components.ShipType("Ketch")
 #ships
-theSliver = components.Ship("the Sliver",event_list=event_list)
+theSliver = components.Ship("the Sliver",ketch,event_list)
 game_time.register(theSliver) #Register ship to game time so it can track travel time
-#theSliver.storage.add_to_cargo(gold,100)
-theSplinter = components.Ship("the Splinter",event_list=event_list)
-#theSplinter.storage.add_to_cargo(gold,100)
+theSplinter = components.Ship("the Splinter",ketch,event_list)
 game_time.register(theSplinter) #Register ship to game time so it can track travel time
 player_fleet = components.Fleet([theSliver,theSplinter])
 

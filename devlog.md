@@ -189,7 +189,13 @@ d - in-development version, not meant to be played, likely very unstable
 ## Added features
 ### Major added features
 - Ship stats:
-    Ships have a variety of stats, some of these stats are checked every day and if they cannot be met, there may be consequences
+    - Ships have a variety of stats, some of these stats are checked every day and if they cannot be met, there may be consequences
+    - Base stats:
+        - health
+        - cargo_weight (switching to kg)
+        - sailing_efficiency
+        - toughness
+        - crew_capacity
 - Ship needs:
     While at sea, ships will have needs that must be met in order to perform optimally. Some needs are tied to stats, if those needs cannot be met, the stat decreases
 - Crew roles:

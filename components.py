@@ -347,18 +347,30 @@ class ShipEvent(ABC):
     def run_event(self,ship:"Ship"):
         pass #This function is meant to be overridden by child classes, it will run the event's effects on the ship that is passed in as a parameter
 
+class ShipType:
+    def __init__(self,name:str,health:int=100,cargo_capacity:int=48000,crew_capacity:int=10,sailing_efficiency:int=160,toughness:int=350):
+        self.name = name
+        self.health = health
+        self.cargo_capacity = cargo_capacity #This is in kg
+        self.crew_capacity = crew_capacity
+        self.sailing_efficiency = sailing_efficiency #This is the max amount of sailing efficiency (sum of all crew sailing skill) for this ship to perform at its best
+        self.toughness = toughness
+
 class Ship:
-    def __init__(self,name:str,health:int = 100,cargo_weight:int = 1000,event_list=list[ShipEvent]):
+    def __init__(self,name:str,ship_type:ShipType,event_list:list[ShipEvent]):
         #SHIP STATS
-        self.health = Stat(health)
-        self.stability = Stat(100)
+        self.health = Stat(ship_type.health)
+        self.sailing_efficiency = Stat(ship_type.sailing_efficiency,current_value=0) # This determines the max a ship can perform (so a rowboat's max performance will be less than a proper ship). The actual ship performace (the current value of this stat) is determined by the sum of all crew sailing_ability
+        self.toughness = Stat(ship_type.toughness) # This is the max ship toughness, this may degrade during travels        
         #Internal properties (only to be adjsuted within the declaration of the class)
         self.name = name
-        self.cargo_weight = Stat(cargo_weight)
+        self.cargo_weight = Stat(ship_type.cargo_capacity)
         self.event_list = list(event_list) if event_list is not None else []
         self.ships_log = []
+        self.crew_capacity = Stat(ship_type.crew_capacity)
+        self.crew:list[CrewMate] = []
         #Affectable ship properties (to be adjusted by outside factors)
-        self.storage = Storage(f"{name} Cargo", cargo_weight)
+        self.storage = Storage(f"{name} Cargo", self.cargo_weight)
         self.is_dispatched = False
         self.day_of_arrival = 0
         self.destinations:list[Location] = []
