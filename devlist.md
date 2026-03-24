@@ -43,13 +43,19 @@ COMPLETE 3. Reformat switch cases to avoid nested statements and implement highe
 # 0.0.5a the UI Update
  - COMPLETE Patch fatal bug when redeeming contracts
 # 0.0.6a The ship overhaul
- - Ship constants (new and old):
-    - health_max (old)
-    - cargo_max_weight (old) (weight appears to be currently in lbs)
-    - 
- - Ship types
-    - Small ship : Ketch
-    - medium ship : 
+ - BALANCING NEEDED
+ - Switch all weight values from lbs to kg
+ - Ship stats:
+    - COMPLETE health
+    - COMPLETE cargo_weight
+    - sailing_efficiency (NEEDS IMPLEMENTATION)
+    - toughness (NEEDS IMPLEMENTATION)
+    - crew_capacity (NEEDS IMPLEMENTATION)
+
+ - COMPLETE Ship types (object from which ships take their base stats)
+    - COMPELTE create base ShipType class
+    - COMPLETE Small ship : Ketch
+    - medium ship : Fluyt
  - Ship stats:
     Ships have a variety of stats, some of these stats are checked every day and if they cannot be met, there may be consequences
  - Ship needs:
