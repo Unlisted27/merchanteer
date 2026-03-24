@@ -228,10 +228,10 @@ def gen_contract(good_list: list,reward_list:list, current_day, current_location
     return contract
 
 class Stat():
-    def __init__(self,max_value:int,min_value:int = 0,current_value:int = None):
+    def __init__(self, max_value: int, min_value: int = 0, current_value: int | None = None):
         self.max_value = max_value
         self.min_value = min_value
-        self.current_value = current_value if current_value else max_value
+        self.current_value = current_value if current_value is not None else max_value
     def __str__(self):
         return f"[{self.current_value}/{self.max_value}]"
 
@@ -274,7 +274,7 @@ class Storage:
             cargo: dict[Good, int] = {}        # create a fresh dict for this instance
         self.cargo = cargo
         self.name = name
-        self.cargo_weight = Stat(cargo_weight)
+        self.cargo_weight = Stat(cargo_weight,current_value=0)
 
     def calc_cargo(self):
         self.cargo_weight.current_value = 0
@@ -294,7 +294,7 @@ class Storage:
             )
         return to_return
     def show_invent(self,back_option=False):
-        print(f"|{self.name} | {self.cargo_weight.__str__()}lbs|")
+        print(f"|{self.name} | {self.cargo_weight}lbs|")
         if back_option: print("[1] | Go back")
         print(self.get_invent(2 if back_option else 1))
     def add_to_cargo(self,new_good:Good,amount:int=1):
