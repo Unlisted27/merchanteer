@@ -290,11 +290,11 @@ class Storage:
             f"[{i}] | Crate of {good.name} | "
             f"Amount: {amount} | "
             f"Value: ${round(good.value * amount, 2)} | "
-            f"Weight: {round(self.get_crate_weight(good, amount), 2)}lbs |\n"
+            f"Weight: {round(self.get_crate_weight(good, amount), 2)}Kg |\n"
             )
         return to_return
     def show_invent(self,back_option=False):
-        print(f"|{self.name} | {self.cargo_weight}lbs|")
+        print(f"|{self.name} | {self.cargo_weight}Kg|")
         if back_option: print("[1] | Go back")
         print(self.get_invent(2 if back_option else 1))
     def add_to_cargo(self,new_good:Good,amount:int=1):
@@ -348,12 +348,12 @@ class ShipEvent(ABC):
         pass #This function is meant to be overridden by child classes, it will run the event's effects on the ship that is passed in as a parameter
 
 class ShipType:
-    def __init__(self,name:str,health:int=100,cargo_capacity:int=48000,crew_capacity:int=10,sailing_efficiency:int=160,toughness:int=350):
+    def __init__(self,name:str,health:int=100,cargo_capacity:int=48000,crew_capacity:int=10,max_sailing_efficiency:int=160,toughness:int=350):
         self.name = name
         self.health = health
         self.cargo_capacity = cargo_capacity #This is in kg
         self.crew_capacity = crew_capacity
-        self.sailing_efficiency = sailing_efficiency #This is the max amount of sailing efficiency (sum of all crew sailing skill) for this ship to perform at its best
+        self.sailing_efficiency = max_sailing_efficiency #This is the max amount of sailing efficiency (sum of all crew sailing skill) for this ship to perform at its best. Adding crew that boost sailing efficiency past this point will do nothing
         self.toughness = toughness
 
 class Ship:

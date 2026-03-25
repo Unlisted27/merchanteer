@@ -196,14 +196,13 @@ d - in-development version, not meant to be played, likely very unstable
         - sailing_efficiency
         - toughness
         - crew_capacity
-- Ship needs:
-    While at sea, ships will have needs that must be met in order to perform optimally. Some needs are tied to stats, if those needs cannot be met, the stat decreases
-- Crew roles:
 ### Minor added features
+- Changed all weight values from Lbs to Kg (scaling didnt change, just units. Ballancing coming soon)
 ## Player notes
 ## Bug fixes
 - Fixed 0.0.5a ship travel planning bug but for contracts rather than destinations
 ## Dev notes
-- Added Stat class that holds a max and current value
+- Added Stat class that holds a min, max and current value
 - Removed unecessary property max_weight from warehouses as the warehouse's storage was the only thing that used this property
 ## Other notes
+- Made the discord link in the README work and added a little blurb for devs regarding code structure
