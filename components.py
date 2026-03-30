@@ -5,6 +5,7 @@ import os, time, random, math, shutil, game_art, style
 from abc import ABC, abstractmethod
 
 def distance(point1:tuple[int],point2:tuple[int]):
+    '''Returns the distance between two points. For ballancing and standard reasons, distances are in NM'''
     return round(math.sqrt((point1[0] - point2[0])**2 + (point1[1] - point2[1])**2) / 100)
 
 def clear_terminal():
@@ -175,6 +176,8 @@ def get_table(data:dict|list, sep: str = "  "):
 
     return block
 
+# Generators
+
 #This whole thing was AI generated and tweaked by me. Im not making logic like ts
 def gen_contract(good_list: list,reward_list:list, current_day, current_location:'Location', world:'World', max_cargo_weight: int = 1000):
     """
@@ -227,13 +230,105 @@ def gen_contract(good_list: list,reward_list:list, current_day, current_location
 
     return contract
 
+class name_parts():
+    start_sounds = [
+    'Ada', 'Adel', 'Adri', 'Agn', 'Alf', 'Ale', 'Ali', 'Alma', 'Alo', 'Alv', 'Ama', 'Amb', 'Ana', 'And', 'Ang', 'Ann', 
+    'Ans', 'Ant', 'Arn', 'Art', 'Aug', 'Aur', 'Bar', 'Bel', 'Ben', 'Ber', 'Bert', 'Bess', 'Bla', 'Blan', 'Bor', 'Bry', 
+    'Cal', 'Cam', 'Car', 'Carl', 'Cas', 'Cat', 'Cha', 'Che', 'Chr', 'Clar', 'Cla', 'Cle', 'Clif', 'Cly', 'Con', 'Cor', 
+    'Cyr', 'Dan', 'Dar', 'Dav', 'Deb', 'Del', 'Den', 'Dia', 'Dol', 'Dom', 'Dor', 'Dot', 'Edg', 'Edm', 'Edn', 'Edu', 
+    'Edw', 'Ela', 'Ele', 'Eli', 'Eliz', 'Ell', 'Emi', 'Emm', 'Eph', 'Est', 'Ethel', 'Eug', 'Eva', 'Eve', 'Evi', 'Flo', 
+    'Flora', 'Fran', 'Fre', 'Fred', 'Gab', 'Geo', 'Ger', 'Gil', 'Glad', 'Gor', 'Gra', 'Gre', 'Gus', 'Gwe', 'Har', 'Hen', 
+    'Her', 'Hes', 'Hor', 'How', 'Hub', 'Hugh', 'Ina', 'Ire', 'Isa', 'Iva', 'Ivy', 'Jac', 'Jam', 'Jan', 'Jas', 'Jen', 
+    'Jes', 'Jim', 'Joh', 'Jon', 'Jos', 'Jud', 'Jul', 'Jus', 'Kat', 'Ken', 'Kev', 'Kim', 'Lan', 'Lar', 'Leo', 'Les', 'Lil', 
+    'Lin', 'Liz', 'Lou', 'Luc', 'Lud', 'Lut', 'Lyd', 'Lyn', 'Mar', 'Marv', 'Mat', 'Maud', 'Max', 'Meg', 'Mel', 'Mic', 
+    'Mil', 'Min', 'Mit', 'Mor', 'Myr', 'Nan', 'Nel', 'Nell', 'Nev', 'Nia', 'Nor', 'Norv', 'Oli', 'Oma', 'Oph', 'Ora', 
+    'Osc', 'Ott', 'Pat', 'Paul', 'Peg', 'Pet', 'Phil', 'Pru', 'Quin', 'Rad', 'Ray', 'Reb', 'Reg', 'Ren', 'Ric', 'Rob', 
+    'Rod', 'Rog', 'Ron', 'Ros', 'Row', 'Roy', 'Ruf', 'Ruth', 'Sam', 'Sar', 'Sid', 'Sim', 'Sol', 'Ste', 'Stu', 'Sue', 
+    'Syl', 'Ted', 'The', 'Tho', 'Tim', 'Tom', 'Ton', 'Urs', 'Vic', 'Vir', 'Viv', 'Wal', 'War', 'Wil', 'Wilf', 'Win', 
+    'Wor', 'Wyn', 'Zac', 'Abel', 'Abr', 'Ach', 'Adal', 'Adolf', 'Aeth', 'Alar', 'Ald', 'Alv', 'Ambr', 'Arch', 'Arl', 'Arth', 
+    'Atha', 'Audr', 'Bald', 'Beau', 'Beli', 'Bern', 'Blan', 'Brun', 'Cad', 'Cael', 'Cai', 'Cel', 'Cen', 'Chr', 'Cid', 'Cleof', 
+    'Conr', 'Cons', 'Cyri', 'Dag', 'Diet', 'Diot', 'Ead', 'Eald', 'Ebra', 'Eber', 'Egbert', 'Eld', 'Elea', 'Elfr', 'Elys', 'Emm', 
+    'Ermin', 'Ern', 'Eth', 'Faust', 'Fitz', 'Flav', 'Fran', 'Frem', 'Gabr', 'Gai', 'Gar', 'Geof', 'Gerar', 'Gilb', 'Godr', 'Gott', 
+    'Guill', 'Gund', 'Gwen', 'Hadr', 'Hawk', 'Helo', 'Herv', 'Hild', 'Hilg', 'Holm', 'Ida', 'Inga', 'Irmi', 'Jarl', 'Jero', 'Joan', 
+    'Joaq', 'Josc', 'Josia', 'Judith', 'Klem', 'Lam', 'Lamb', 'Lau', 'Leif', 'Leod', 'Leom', 'Leop', 'Loth', 'Luc', 'Ludo', 
+    'Lup', 'Magn', 'Marce', 'Mart', 'Maur', 'Maxi', 'Melv', 'Mica', 'Milv', 'Nor', 'Odil', 'Odon', 'Off', 'Osm', 'Otth', 'Owin', 
+    'Pasc', 'Perci', 'Petron', 'Phine', 'Piers', 'Plac', 'Rein', 'Reym', 'Richm', 'Rinal', 'Roder', 'Roel', 'Rowl', 'Sigm', 
+    'Sixt', 'Stam', 'Tancr', 'Thib', 'Thorf', 'Thorv', 'Tryg', 'Ulr', 'Ursm', 'Valt', 'Vikt', 'Wald', 'Walther', 'Wit', 'Wolf', 
+    'Wulf', 'Ysm', 'Zeb', 'Zim'
+    ]
+    middle_sounds = [
+        'bel', 'bert', 'beth', 'bald', 'dred', 'drik', 'fred', 'gald', 'gar', 'gard', 'ger', 'hard', 'helm', 'lian', 'lina', 
+        'lind', 'lisa', 'man', 'mar', 'met', 'mir', 'mund', 'nad', 'nard', 'nath', 'neer', 'nel', 'nor', 'phin', 'rad', 'rick', 
+        'rold', 'rud', 'ryn', 'san', 'sandra', 'son', 'ston', 'thel', 'ther', 'trid', 'vald', 'ven', 'ver', 'vin', 'wald', 
+        'ward', 'win', 'wyn', 'yell', 'bel', 'belle', 'claud', 'den', 'din', 'dora', 'dyn', 'eline', 'ene', 'fan', 'gene', 
+        'hilde', 'la', 'lene', 'lene', 'leth', 'lie', 'lien', 'liev', 'line', 'lisa', 'lith', 'mand', 'maria', 'mine', 'mira', 
+        'mona', 'mund', 'nath', 'nelle', 'nor', 'pat', 'quin', 'rene', 'reth', 'ric', 'rin', 'rine', 'ryn', 'seb', 'sey', 
+        'stan', 'ston', 'tin', 'ton', 'uel', 'vin', 'vor', 'wen', 'ylen', 'zel', 'zia', 'zor', 'ang', 'ant', 'bra', 'cia', 'con', 
+        'dar', 'del', 'dor', 'dre', 'ein', 'eis', 'eus', 'fan', 'fer', 'fran', 'fri', 'gie', 'gio', 'gis', 'gie', 'han', 'hel', 
+        'hin', 'jan', 'jes', 'jin', 'kar', 'kie', 'laf', 'let', 'lin', 'lis', 'lud', 'mat', 'mir', 'mor', 'nat', 'nor', 'ral', 
+        'ram', 'ric', 'sie', 'sta', 'sue', 'tan', 'tor', 'tri', 'vic', 'von', 'vin', 'wyn'
+    ]
+    end_sounds = [
+        'a', 'ah', 'an', 'ard', 'ard', 'as', 'bel', 'bert', 'beth', 'dine', 'dine', 'dith', 'don', 'dor', 'dra', 'dred', 
+        'dyn', 'e', 'el', 'el', 'en', 'er', 'et', 'eth', 'eus', 'ey', 'fred', 'ga', 'gar', 'go', 'goth', 'gus', 'ham', 'hard', 
+        'helm', 'ia', 'ian', 'ias', 'ic', 'ice', 'ie', 'iel', 'ien', 'ier', 'if', 'in', 'ine', 'io', 'ion', 'is', 'isa', 'ius', 
+        'la', 'line', 'lis', 'lith', 'lon', 'ma', 'mar', 'mer', 'mir', 'mond', 'mund', 'na', 'nard', 'ne', 'nel', 'neth', 
+        'ney', 'ni', 'no', 'nor', 'on', 'or', 'os', 'que', 'ra', 'rad', 'ran', 'red', 'ric', 'rick', 'rid', 'ro', 'ron', 'ros', 
+        'sa', 'san', 'sel', 'son', 'ston', 'ta', 'tan', 'tha', 'ther', 'thia', 'tia', 'tin', 'ton', 'uel', 'us', 'va', 'ver', 
+        'vin', 'ward', 'wen', 'win', 'wyn', 'ya', 'yah', 'zar', 'zo'
+    ]
+
+def genname():
+    length = random.randint(2,3)
+    if length == 2:
+        name = name_parts.start_sounds[random.randint(0,len(name_parts.start_sounds)-1)] + name_parts.end_sounds[random.randint(0,len(name_parts.end_sounds)-1)]
+    if length == 3:
+        name = name_parts.start_sounds[random.randint(0,len(name_parts.start_sounds)-1)] + name_parts.middle_sounds[random.randint(0,len(name_parts.middle_sounds)-1)] + name_parts.end_sounds[random.randint(0,len(name_parts.end_sounds)-1)]
+    return(name)
+
+def gen_crewmate(crew_roles:list[CrewRole],min_sailing_ability=30,max_sailing_ability=70):
+    name = genname()
+    sailing_ability = random.randint(min_sailing_ability,max_sailing_ability)
+    if len(crew_roles) > 0:
+        crew_role = random.choice(crew_roles) 
+    else:
+        raise ValueError("Crew roles list cannot be empty")
+    return CrewMate(crew_role,sailing_ability,name)
+
+# Core components
+
 class Stat():
     def __init__(self, max_value: int, min_value: int = 0, current_value: int | None = None):
         self.max_value = max_value
         self.min_value = min_value
         self.current_value = current_value if current_value is not None else max_value
+    def _clamp(self):
+        self.current_value = max(
+            self.min_value,
+            min(self.current_value, self.max_value)
+        )
+    def full(self) -> bool:
+        # This function returns true if the stats current value is equal to its max
+        return self.max_value == self.current_value
     def __str__(self):
         return f"[{self.current_value}/{self.max_value}]"
+    #iadd and isub allow for a += b (the value of a is now changed) whereas __add__ would be for a + b where a is not changed
+    def __iadd__(self, other):
+        if isinstance(other, (int, float)):
+            self.current_value += other
+            self._clamp()
+            return self
+        return NotImplemented
+
+    def __isub__(self, other):
+        if isinstance(other, (int, float)):
+            self.current_value -= other
+            self._clamp()
+            return self
+        return NotImplemented
+    
+    def __int__(self):
+        return self.current_value
 
 class GameTime:
     def __init__(self):
@@ -357,37 +452,51 @@ class ShipType:
         self.toughness = toughness
 
 class Ship:
-    def __init__(self,name:str,ship_type:ShipType,event_list:list[ShipEvent]):
+    def __init__(self,name:str,ship_type:ShipType,event_list:list[ShipEvent],crew:list['CrewMate']=[]):
         #SHIP STATS
         self.health = Stat(ship_type.health)
         self.sailing_efficiency = Stat(ship_type.sailing_efficiency,current_value=0) # This determines the max a ship can perform (so a rowboat's max performance will be less than a proper ship). The actual ship performace (the current value of this stat) is determined by the sum of all crew sailing_ability
         self.toughness = Stat(ship_type.toughness) # This is the max ship toughness, this may degrade during travels        
         #Internal properties (only to be adjsuted within the declaration of the class)
         self.name = name
-        self.cargo_weight = Stat(ship_type.cargo_capacity)
         self.event_list = list(event_list) if event_list is not None else []
         self.ships_log = []
-        self.crew_capacity = Stat(ship_type.crew_capacity)
-        self.crew:list[CrewMate] = []
+        self.crew_amount = Stat(ship_type.crew_capacity,0,0)
+        self.crew:list[CrewMate] = crew
         #Affectable ship properties (to be adjusted by outside factors)
-        self.storage = Storage(f"{name} Cargo", self.cargo_weight)
+        self.storage = Storage(f"{name} Cargo", ship_type.cargo_capacity)
         self.is_dispatched = False
         self.day_of_arrival = 0
+        self.travel_progress = Stat(0,0,0)
         self.destinations:list[Location] = []
         self.current_destination:Location = None
         self.contracts:list[Contract] = []
         self.current_port:Port = None
-    def primary_dispatch(self, destinations:'Location', game_time:GameTime):
-        '''Call this function to dispatch a ship (DO NOT USE dispatch())\n
-        This function will handle all the backend for proper ship dispatch that dispatch() will not'''
-        self.destinations = destinations
-        self.destinations.append(self.current_port.location) #Add the current location as the final destination so the ship returns home after its route is complete
-        self.dispatch(self.destinations[0],game_time)
+        for crew_mate in self.crew:
+            if self.crew_amount.full():
+                raise ValueError("Total crew cannot exceed crew capacity at __init__")
+            self.crew_amount += 1
+            self.sailing_efficiency.current_value += crew_mate.sailing_ability.current_value
+    
+    #NON-USER FRIENDLY FUNCTIONS (NO UI)
+
+    def add_crew(self,new_crew:CrewMate):
+        if not self.crew_amount.full():
+            self.crew.append(new_crew)
+            self.sailing_efficiency += new_crew.sailing_ability
+            return True
+        else:
+            return False
+        
+    # INTERNAL FUNCTIONS
+
     def dispatch(self, destination:'Location', game_time:GameTime):
         '''This is an internal function, should not regularily be called outside of the class \n
         Use primary_dispatch() instead\n
         This function is the action of sending a ship off, but will not handle things like multiple destinations, or returning the ship to its home port'''
         travel_time = distance((self.current_port.location.coordinates[0],self.current_port.location.coordinates[1]),(destination.coordinates[0],destination.coordinates[1]))
+        self.travel_progress.current_value = 0
+        self.travel_progress.max_value = distance((self.current_port.location.coordinates[0],self.current_port.location.coordinates[1]),(destination.coordinates[0],destination.coordinates[1]))
         #travel_time = round(math.sqrt((self.current_port.location.coordinates[0] - destination.coordinates[0])**2 + (self.current_port.location.coordinates[1] - destination.coordinates[1])**2) / 100) #The formula I learned in school, forgot, and then searched up when I needed it. Thanks grade 10 advanced math, you helped, a little, kinda, thanks, a little. Thanks google.
         self.day_of_arrival = game_time.day + travel_time
         self.ships_log.append(f"-----Dispatched to {destination.name}-----")
@@ -396,15 +505,21 @@ class Ship:
         self.current_port.ships.remove(self) #Remove the ship from the port while it is dispatched
         self.current_port = None
         self.is_dispatched = True
-    def check_arrival(self, days:int):
-        # check_arrival() logic breakdown:
-        # First step is checking if the ship is dispatched, we dispatch to next destination if it isnt
-        # Check for arrival at a port
-        # If we arrived at a port, we need to empty cargo acording to any contracts assosiated with that port
-        # Then we dispatch to the next desitnation if there is one
+    def run_events(self,days:int):
+        #Event logic
         if self.is_dispatched:
+            event_roll = random.randint(1,4) #Decide if an event happens today
+            if event_roll == 1 and len(self.event_list) > 0: #If an event is to happen, and there are events to happen
+                event:ShipEvent = random.choice(self.event_list) #Select a random event from the list
+                event.run_event(self) #Run the event, passing in the ship as a parameter
+                self.ships_log.append(f"Day {days}: {event.name} event occurred.")
+    def daily_travel(self,days:int):
+        if self.is_dispatched:
+            # Run travel logic
+            self.travel_progress += 1*self.sailing_efficiency.current_value/1000 #The ship moves faster the higher its sailing efficiency.
+            input(self.travel_progress)
             # Check for arrival at a port
-            if days == self.day_of_arrival:
+            if self.travel_progress.full():
                 self.current_port = self.current_destination.ports[0] #This logic needs to be fixed to allow for multiple ports per location
                 self.current_port.add_ship(self) #Add the ship to the port's list of ships
                 self.ships_log.append(f"Arrived at {self.current_port.name} on day {days}!") #Log arrival at port
@@ -429,21 +544,32 @@ class Ship:
                     self.ships_log.append(f"No more destinations, {self.name} is now idle.")
                     return f"{self.name} has arrived at {self.current_port.name} and has no more destinations, it is now idle."
         return None
-    def run_events(self,days:int):
-        #Event logic
-        if self.is_dispatched:
-            event_roll = random.randint(1,4) #Decide if an event happens today
-            if event_roll == 1 and len(self.event_list) > 0: #If an event is to happen, and there are events to happen
-                event:ShipEvent = random.choice(self.event_list) #Select a random event from the list
-                event.run_event(self) #Run the event, passing in the ship as a parameter
-                self.ships_log.append(f"Day {days}: {event.name} event occurred.")
+    
+    #EXTERNAL FUNCTIONS
+    def primary_dispatch(self, destinations:'Location', game_time:GameTime):
+        '''Call this function to dispatch a ship (DO NOT USE dispatch())\n
+        This function will handle all the backend for proper ship dispatch that dispatch() will not'''
+        self.destinations = destinations
+        self.destinations.append(self.current_port.location) #Add the current location as the final destination so the ship returns home after its route is complete
+        self.dispatch(self.destinations[0],game_time)
+
+    def show_crew(self):
+        table_data = {}
+        for crew_mate in self.crew:
+            table_data[crew_mate.name] = {
+                "Name": crew_mate.name,
+                "Role": crew_mate.crew_role.name,
+                "Health": crew_mate.health,
+                "Sailing Ability": crew_mate.sailing_ability
+            }
+        menu(f"{self.name} crew", ["Go back"],False, table = table_data)
+
+    # Final thing
+
     def on_day_passed(self, days:int):
         #Daily checks when dispatched
         msg = None
-        msg = self.check_arrival(days)
-        if msg is None:
-            self.run_events(days)
-            msg = self.check_arrival(days)
+        msg = self.daily_travel(days)
         return msg
             
 class Warehouse:
@@ -620,7 +746,7 @@ class Port:
             while True:
                 clear_terminal()
                 print(f"|{selected_ship.name}|")
-                action = menu("Ship actions",["Load","view inventory","Plan voyage","Change name","View event log"],True,art=game_art.ship_1)
+                action = menu("Ship actions",["Load","view inventory","Plan voyage","View crew","Change name","View event log"],True,art=game_art.ship_1)
                 match action:
                     case 1:
                         #Load ship
@@ -634,9 +760,12 @@ class Port:
                         #Dispatch ship
                         self.dispatch_menu(selected_ship)
                     case 4:
+                        #View crew
+                        selected_ship.show_crew()
+                    case 5:
                         #Rename ship
                         self.change_ship_name_menu(selected_ship)
-                    case 5:
+                    case 6:
                         #View ships log
                         clear_terminal()
                         print(f"Event log for {selected_ship.name} ({len(selected_ship.ships_log)}):")
@@ -761,7 +890,6 @@ class Exchange:
 
             # Use i as the key for each contract
             table_data[i] = {
-                "ID": i,
                 "Amount": c.amount,
                 "Good": c.good.name,
                 "Reward": reward,
@@ -839,7 +967,7 @@ class Location:
         self.ports = ports if ports is not None else []
         self.exchanges = exchanges if exchanges is not None else []
         self.randomise_coordinates()
-    def randomise_coordinates(self,x_range:tuple[int,int]=(0,1000),y_range:tuple[int,int]=(0,1000)):
+    def randomise_coordinates(self,x_range:tuple[int,int]=(0,50000),y_range:tuple[int,int]=(0,50000)):
         self.coordinates = (random.randint(x_range[0],x_range[1]),random.randint(y_range[0],y_range[1]))
     def add_port(self, port):
         if port not in self.ports:
@@ -849,17 +977,18 @@ class Location:
             self.exchanges.append(exchange)
 
 class CrewRole():
-    def __init__(self):
-        pass
+    def __init__(self,name,description):
+        self.name = name
+        self.description = description
 
 class Human():
-    def __init__(self,max_health,strength,name):
-        self.max_health = max_health
+    def __init__(self,max_health:int=100,strength:int=5,name:str | None = None):
+        self.health = Stat(max_health)
         self.strength = strength
-        self.name = name
-
-        self.current_health = max_health
+        self.name = name if name is not None else genname()
 
 class CrewMate(Human):
-    def __init__(self,crew_role):
-        super().__init__()
+    def __init__(self,crew_role:CrewRole,sailing_ability:int | None = None, name:str | None = None):
+        super().__init__(name=name)
+        self.crew_role = crew_role
+        self.sailing_ability = Stat(100,current_value=sailing_ability if sailing_ability is not None else random.randint(30,70))

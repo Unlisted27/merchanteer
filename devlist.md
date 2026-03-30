@@ -45,7 +45,7 @@ COMPLETE 3. Reformat switch cases to avoid nested statements and implement highe
 # 0.0.6a The ship overhaul
  - BALANCING NEEDED
  - Overhaul ship travel
- - Ship will travel a certain distance in a day, that distance is determined by wind and sailing efficiency
+    - Ship will travel a certain distance in a day, that distance is determined by wind and sailing efficiency
  - Switch all weight values from lbs to kg
  - Ship stats:
     - COMPLETE health

@@ -204,5 +204,7 @@ d - in-development version, not meant to be played, likely very unstable
 ## Dev notes
 - Added Stat class that holds a min, max and current value
 - Removed unecessary property max_weight from warehouses as the warehouse's storage was the only thing that used this property
+- added __iadd__ and __isub__ to Stat class. Now stats CURRENT VALUE can be changed with Stat += int/float. Stat will automatically clamp the value so it does not exceed the max or go below the min
+- Removed ID from the available contracts menu
 ## Other notes
 - Made the discord link in the README work and added a little blurb for devs regarding code structure

@@ -40,10 +40,17 @@ class GoodWind(components.ShipEvent):
         #input(f"Good wind event occured on {ship.name}")
 event_list.append(GoodWind())
 
+#Crew roles
+buckaneer = components.CrewRole("Buckaneer","A regular sailor, well equiped in all areas but not excelling in any.")
+
+# Crew
+
+crew_mate1 = components.gen_crewmate([buckaneer])
+
 #Ship types
 ketch = components.ShipType("Ketch")
 #ships
-theSliver = components.Ship("the Sliver",ketch,event_list)
+theSliver = components.Ship("the Sliver",ketch,event_list,crew=[crew_mate1])
 game_time.register(theSliver) #Register ship to game time so it can track travel time
 theSplinter = components.Ship("the Splinter",ketch,event_list)
 game_time.register(theSplinter) #Register ship to game time so it can track travel time
