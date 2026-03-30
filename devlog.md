@@ -196,9 +196,21 @@ d - in-development version, not meant to be played, likely very unstable
         - sailing_efficiency
         - toughness
         - crew_capacity
+- Crew sailing ability
+    - Sailing ability affects the amount a ship can travel daily. 
+    - Each crew member's sailing ability is the number of kms they can contribute to the ship's travel.
+    - The daily travel distance is the total sailing ability of all crew members combined plus some random variation, and adjusted based on the ship's daily wind value
+- Storms
+    - If the daily storm value (affected by events) is greater than the ships tougness, it will take damage equal to the difference (storm_value - toughness)
+- Tavern
+    - You can now go to the tavern to hire crew
 ### Minor added features
 - Changed all weight values from Lbs to Kg (scaling didnt change, just units. Ballancing coming soon)
 ## Player notes
+- Ship health can now be affected by storms
+- Crew have been added!
+- Ships have a default crew, but to get the most out of your ships, hire more crew from the tavern
+- All weights are now in Kg, and distances in Km
 ## Bug fixes
 - Fixed 0.0.5a ship travel planning bug but for contracts rather than destinations
 ## Dev notes

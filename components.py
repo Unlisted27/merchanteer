@@ -143,9 +143,9 @@ def get_table(data:dict|list, sep: str = "  "):
         str_rows = [row for row in rows]
     elif isinstance(data, dict):
         if len(data) > 0:
-            headers:list = ["Item"] + list(next(iter(data.values())).keys())
+            headers:list = list(next(iter(data.values())).keys())
             for item, properties in data.items():
-                row = [item] + list(properties.values())
+                row = list(properties.values())
                 rows.append(row)
             # Convert everything to string for measuring
             str_rows = [[str(c) for c in row] for row in rows]
@@ -286,7 +286,7 @@ def genname():
         name = name_parts.start_sounds[random.randint(0,len(name_parts.start_sounds)-1)] + name_parts.middle_sounds[random.randint(0,len(name_parts.middle_sounds)-1)] + name_parts.end_sounds[random.randint(0,len(name_parts.end_sounds)-1)]
     return(name)
 
-def gen_crewmate(crew_roles:list[CrewRole],min_sailing_ability=30,max_sailing_ability=70):
+def gen_crewmate(crew_roles:list['CrewRole'],min_sailing_ability=10,max_sailing_ability=20):
     name = genname()
     sailing_ability = random.randint(min_sailing_ability,max_sailing_ability)
     if len(crew_roles) > 0:
@@ -326,7 +326,7 @@ class Stat():
             self._clamp()
             return self
         return NotImplemented
-    
+
     def __int__(self):
         return self.current_value
 
@@ -443,7 +443,7 @@ class ShipEvent(ABC):
         pass #This function is meant to be overridden by child classes, it will run the event's effects on the ship that is passed in as a parameter
 
 class ShipType:
-    def __init__(self,name:str,health:int=100,cargo_capacity:int=48000,crew_capacity:int=10,max_sailing_efficiency:int=160,toughness:int=350):
+    def __init__(self,name:str,health:int=100,cargo_capacity:int=48000,crew_capacity:int=10,max_sailing_efficiency:int=160,toughness:int=35):
         self.name = name
         self.health = health
         self.cargo_capacity = cargo_capacity #This is in kg
@@ -466,24 +466,47 @@ class Ship:
         #Affectable ship properties (to be adjusted by outside factors)
         self.storage = Storage(f"{name} Cargo", ship_type.cargo_capacity)
         self.is_dispatched = False
-        self.day_of_arrival = 0
         self.travel_progress = Stat(0,0,0)
         self.destinations:list[Location] = []
         self.current_destination:Location = None
         self.contracts:list[Contract] = []
         self.current_port:Port = None
+        
+        self.calculate_crew_amount()
+
+        # Properties for events to interact with
+        self.daily_storm_value = Stat(100,0,0)
+        self.daily_wind = Stat(100,0,0) #Average wind is 50
+
+    
+    #NON-USER FRIENDLY FUNCTIONS (NO UI)
+    def calculate_crew_amount(self):
+        self.crew_amount.current_value = 0
         for crew_mate in self.crew:
             if self.crew_amount.full():
                 raise ValueError("Total crew cannot exceed crew capacity at __init__")
             self.crew_amount += 1
-            self.sailing_efficiency.current_value += crew_mate.sailing_ability.current_value
-    
-    #NON-USER FRIENDLY FUNCTIONS (NO UI)
+    def calculate_ship_stats_daily_variation(self,days:int):
+        '''All of the daily variation that the ship may encounter. This is where the events are run.'''
+        self.daily_storm_value.current_value = 0
+        self.daily_wind.current_value = 50
+        self.sailing_efficiency.current_value = 0
+        self.run_events(days)
+        for crew_mate in self.crew:
+            if self.crew_amount.full():
+                raise ValueError("Total crew cannot exceed crew capacity at __init__")
+            self.sailing_efficiency.current_value += crew_mate.sailing_ability.current_value + random.randint(-5,5) # random variation added to each crewmate's ability
+        if self.daily_storm_value.current_value > self.toughness.current_value:
+            damage = self.daily_storm_value.current_value - self.toughness.current_value
+            self.health -= damage
+            self.ships_log.append(f"Ship took {damage} damage from the storm! Current health: {self.health}")
 
-    def add_crew(self,new_crew:CrewMate):
+    def add_crew(self,new_crew:'CrewMate'):
+        '''Returns True on success, false on failure'''
         if not self.crew_amount.full():
             self.crew.append(new_crew)
-            self.sailing_efficiency += new_crew.sailing_ability
+            self.sailing_efficiency += new_crew.sailing_ability.current_value
+            self.crew_amount += 1
             return True
         else:
             return False
@@ -516,7 +539,8 @@ class Ship:
     def daily_travel(self,days:int):
         if self.is_dispatched:
             # Run travel logic
-            self.travel_progress += 1*self.sailing_efficiency.current_value/1000 #The ship moves faster the higher its sailing efficiency.
+            self.calculate_ship_stats_daily_variation(days)
+            self.travel_progress += self.sailing_efficiency.current_value * ((self.daily_wind.current_value/100)*2)  #The ship moves faster the higher its sailing efficiency and wind
             input(self.travel_progress)
             # Check for arrival at a port
             if self.travel_progress.full():
@@ -991,4 +1015,41 @@ class CrewMate(Human):
     def __init__(self,crew_role:CrewRole,sailing_ability:int | None = None, name:str | None = None):
         super().__init__(name=name)
         self.crew_role = crew_role
-        self.sailing_ability = Stat(100,current_value=sailing_ability if sailing_ability is not None else random.randint(30,70))
+        self.sailing_ability = Stat(100,current_value=sailing_ability if sailing_ability is not None else random.randint(10,20))
+
+
+class Tavern():
+    def __init__(self,name:str,location:Location,crew_roles:list[CrewRole],player:Player,crew:list[CrewMate] | None = None):
+        self.name = name
+        self.location = location
+        self.crew_roles = crew_roles
+        self.crew = crew if crew is not None else []
+        self.player = player
+
+        self.populate_crew(10)
+
+    def populate_crew(self,crew_count:int):
+        for i in range(crew_count):
+            new_crew = gen_crewmate(self.crew_roles)
+            self.crew.append(new_crew)
+    
+    def select_crew(self):
+        table_data = {}
+        for crew_mate in self.crew:
+            table_data[crew_mate.name] = {
+                "Name": crew_mate.name,
+                "Role": crew_mate.crew_role.name,
+                "Health": crew_mate.health,
+                "Sailing Ability": crew_mate.sailing_ability
+            }
+        selected_crew = menu(f"{self.name} crew",list(table_data.keys()),return_option=True, table = table_data)
+        if selected_crew is not None:
+            selected_ship = menu("Select a ship to add this crew mate to", [ship.name for ship in self.player.fleet.ships], return_option=True)
+            if selected_ship is not None:
+                if self.player.fleet.ships[selected_ship-1].add_crew(self.crew[selected_crew-1]):
+                    input(f"{self.crew[selected_crew-1].name} has been added to {self.player.fleet.ships[selected_ship-1].name}! (press enter to continue)")
+                    self.crew.pop(selected_crew-1) #Remove the crew mate from the tavern's list of crew
+                else:
+                    input("Cannot add crew, that ship is at crew capacity!")
+        else:
+            None

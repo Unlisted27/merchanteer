@@ -37,7 +37,7 @@ def __main__():
             while True:
                 components.clear_terminal()
                 print(f"Day {building_blocks.game_time.day}")
-                answer = components.menu("Game menu",["Player actions","Bargain house","Port","Next day","Quit game"],art = game_art.title) 
+                answer = components.menu("Game menu",["Player actions","Bargain house","Port","Tavern","Next day","Quit game"],art = game_art.title) 
                 match answer:                           # <─ use match instead of “case answer:”
                     case 1:      
                         components.clear_terminal()                        # option 1
@@ -48,11 +48,14 @@ def __main__():
                     case 3:
                         components.clear_terminal()
                         portGrandure.manage_ships()
-                    case 4:   
+                    case 4:
+                        components.clear_terminal()
+                        building_blocks.fishHeadTavern.select_crew()
+                    case 5:   
                         components.clear_terminal()                           
                         building_blocks.game_time.advance()
                         print("A new day begins...")
-                    case 5:                             
+                    case 6:                             
                         print("Thanks for playing!")
                         break
         case 2:
