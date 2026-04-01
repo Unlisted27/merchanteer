@@ -196,10 +196,11 @@ d - in-development version, not meant to be played, likely very unstable
         - sailing_efficiency
         - toughness
         - crew_capacity
-- Crew sailing ability
+- Crew
     - Sailing ability affects the amount a ship can travel daily. 
     - Each crew member's sailing ability is the number of kms they can contribute to the ship's travel.
     - The daily travel distance is the total sailing ability of all crew members combined plus some random variation, and adjusted based on the ship's daily wind value
+    - Crew can be selected and moved between ships or terminated
 - Storms
     - If the daily storm value (affected by events) is greater than the ships tougness, it will take damage equal to the difference (storm_value - toughness)
 - Tavern

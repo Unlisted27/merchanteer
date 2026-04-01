@@ -54,15 +54,12 @@ buckaneer = components.CrewRole("Buckaneer","A regular sailor, well equiped in a
 
 # Crew
 
-crew_mate1 = components.gen_crewmate([buckaneer])
-crew_mate2 = components.gen_crewmate([buckaneer])
-
 #Ship types
 ketch = components.ShipType("Ketch")
 #ships
-theSliver = components.Ship("the Sliver",ketch,event_list,crew=[crew_mate1,crew_mate2])
+theSliver = components.Ship("the Sliver",ketch,event_list,crew=[components.gen_crewmate([buckaneer]),components.gen_crewmate([buckaneer])])
 game_time.register(theSliver) #Register ship to game time so it can track travel time
-theSplinter = components.Ship("the Splinter",ketch,event_list,crew=[crew_mate1,crew_mate2])
+theSplinter = components.Ship("the Splinter",ketch,event_list,crew=[components.gen_crewmate([buckaneer]),components.gen_crewmate([buckaneer])])
 game_time.register(theSplinter) #Register ship to game time so it can track travel time
 player_fleet = components.Fleet([theSliver,theSplinter])
 

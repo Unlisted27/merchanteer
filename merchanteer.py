@@ -77,6 +77,11 @@ def __main__():
           DefinitelyNotAPickle
 
          Thank you for playing!
+                               
+               support us             
+  https://buymeacoffee.com/unlisted_dev
+     (30/70) Artist / main dev split     
+      Unless specified otherwise (:
     """),0.3)
         case 5:
             print("Thanks for playing!")

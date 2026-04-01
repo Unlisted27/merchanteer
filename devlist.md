@@ -50,22 +50,22 @@ COMPLETE 3. Reformat switch cases to avoid nested statements and implement highe
  - Ship stats:
     - COMPLETE health
     - COMPLETE cargo_weight
-    - sailing_efficiency (NEEDS IMPLEMENTATION)
-    - toughness (NEEDS IMPLEMENTATION)
-    - crew_capacity (NEEDS IMPLEMENTATION)
+    - COMPLETE sailing_efficiency
+    - COMPLETE toughness 
+    - COMPLETE crew_capacity
 
  - COMPLETE Ship types (object from which ships take their base stats)
     - COMPELTE create base ShipType class
     - COMPLETE Small ship : Ketch
     - medium ship : Fluyt
- - Ship stats:
+ - COMPLETE Ship stats:
     Ships have a variety of stats, some of these stats are checked every day and if they cannot be met, there may be consequences
  - Ship needs:
     While at sea, ships will have needs that must be met in order to perform optimally. Some needs are tied to stats, if those needs cannot be met, the stat decreases
  - Crew system
     - Roles on a ship
         - Different sized ships require more roles, and have different number of crew slots
-    - Human object
+    - COMPLETE Human object
     - Crew object
         - Crew best role
         - Crew skill
