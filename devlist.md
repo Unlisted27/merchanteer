@@ -44,10 +44,10 @@ COMPLETE 3. Reformat switch cases to avoid nested statements and implement highe
  - COMPLETE Patch fatal bug when redeeming contracts
 # 0.0.6a The ship overhaul
  - BALANCING NEEDED
- - Overhaul ship travel
-    - Ship will travel a certain distance in a day, that distance is determined by wind and sailing efficiency
- - Switch all weight values from lbs to kg
- - Ship stats:
+ - COMPLETE Overhaul ship travel
+    - COMPLETE Ship will travel a certain distance in a day, that distance is determined by wind and sailing efficiency
+ - COMPLETE Switch all weight values from lbs to kg
+ - COMPLETE Ship stats:
     - COMPLETE health
     - COMPLETE cargo_weight
     - COMPLETE sailing_efficiency
@@ -69,3 +69,4 @@ COMPLETE 3. Reformat switch cases to avoid nested statements and implement highe
     - COMPLETE Crew object
         - COMPLETE Crew skill
         - COMPLETE (crew can perform any role, but they specialise in one area)
+ - Add ship repairing at home port

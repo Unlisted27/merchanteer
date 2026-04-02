@@ -9,6 +9,30 @@ def distance(point1:tuple[int],point2:tuple[int]):
     '''Returns the distance between two points. For ballancing and standard reasons, distances are in NM'''
     return round(math.sqrt((point1[0] - point2[0])**2 + (point1[1] - point2[1])**2) / 100)
 
+def point_along_vector(start: tuple[float, float],
+                       end: tuple[float, float],
+                       distance: float) -> tuple[float, float]:
+    x1, y1 = start
+    x2, y2 = end
+
+    dx = x2 - x1
+    dy = y2 - y1
+
+    length = (dx**2 + dy**2) ** 0.5
+
+    if length == 0:
+        raise ValueError("Start and end points cannot be the same")
+
+    # Normalize direction vector
+    unit_dx = dx / length
+    unit_dy = dy / length
+
+    # Scale by desired distance
+    new_x = x1 + unit_dx * distance
+    new_y = y1 + unit_dy * distance
+
+    return (new_x, new_y)
+
 def clear_terminal():
     os.system('cls' if os.name == 'nt' else 'clear')
 
@@ -309,6 +333,23 @@ def gen_crewmate(crew_roles:list['CrewRole']):
 
 # Core components
 
+class MessengerPigeon:
+    def __init__(self,game_time:GameTime,message:str,start_coordinates:tuple[int],destination_coordinates:tuple[int]):
+        self.game_time = game_time
+        self.message = message
+        self.start_coordinates = start_coordinates
+        self.destination_coordinates = destination_coordinates
+        self.travel_time = distance(start_coordinates,destination_coordinates) #Calculate travel time based on distance
+        self.game_time.register(self) #Register to game time so it can track travel time
+    def on_day_passed(self, current_day):
+        if self.travel_time > 0:
+            self.travel_time -= 1
+            if self.travel_time <= 0:
+                self.game_time.unregister(self) #Unregister from game time, makes no more references and pyhton cleans it up automatically
+                return f"A messenger pigeon has delivered a message:\n {self.message}"
+        return None
+
+
 class Stat():
     def __init__(self, max_value: int, min_value: int = 0, current_value: int | None = None):
         self.max_value = max_value
@@ -346,10 +387,14 @@ class GameTime:
     def __init__(self):
         self.day = 0
         self.observers = []   # anything that needs to react to time passing
+        self.to_remove = []    # used to avoid modifying observers list while iterating
 
     def register(self, obj):
         """Register an object that has an `on_day_passed(days:int)` method."""
         self.observers.append(obj)
+
+    def unregister(self, obj):
+        self.to_remove.append(obj)
 
     def advance(self, days=1):
         notices = []
@@ -359,6 +404,9 @@ class GameTime:
             msg = o.on_day_passed(self.day)
             if msg:
                 notices.append(msg)
+        for obj in self.to_remove:
+            if obj in self.observers:
+                self.observers.remove(obj)
         print(f"--Day [{self.day}] notices--")
         for notice in notices:
             print(notice)
@@ -488,8 +536,6 @@ class ShipNeed:
             else:
                 raise AttributeError(f"Parent ship does not have attribute {self.ship_stat_tie_in}")
 
-
-
 class ShipType:
     def __init__(self,name:str,health:int=100,cargo_capacity:int=48000,crew_capacity:int=10,max_sailing_efficiency:int=50,toughness:int=35,daily_maintenance:int=10):
         '''All default stats are for a sloop, the smallest/starter ship'''
@@ -504,8 +550,11 @@ class ShipType:
         self.daily_maintenance = daily_maintenance #If this is not met, the ship's toughness will degrade
 
 class Ship:
-    def __init__(self,name:str,ship_type:ShipType,event_list:list[ShipEvent],crew:list['CrewMate']=[]):
+    def __init__(self,name:str,ship_type:ShipType,event_list:list[ShipEvent],game_time:GameTime,crew:list['CrewMate']=[]):
         self.ship_type = ship_type.name
+        self.game_time = game_time
+        self.coordinates = (0,0)
+        self.game_time.register(self) #Register to game time so it can track daily needs and events
         #SHIP STATS
         self.health = Stat(ship_type.health)
         self.sailing_efficiency = Stat(ship_type.sailing_efficiency,current_value=0) # This determines the max a ship can perform (so a rowboat's max performance will be less than a proper ship). The actual ship performace (the current value of this stat) is determined by the sum of all crew sailing_ability
@@ -523,7 +572,9 @@ class Ship:
         self.destinations:list[Location] = []
         self.current_destination:Location = None
         self.contracts:list[Contract] = []
+        self.home_port:Port = None
         self.current_port:Port = None
+        self.last_port:Port = None
         
         #Ship needs
         self.daily_maintenance = ShipNeed(self,"maintenance_skill","toughness","Maintenance",ship_type.daily_maintenance)
@@ -569,8 +620,8 @@ class Ship:
             self.health -= damage
             self.ships_log.append(f"Ship took {damage} damage from the storm! Current health: {self.health}")
         if self.health.current_value <= 0:
-            
-            input("Ship has been destroyed!")
+            DeathMessage = MessengerPigeon(self.game_time,f"The {self.name} has been destroyed at sea!",self.coordinates,self.home_port.location.coordinates) #The coordinates here are placeholders, as the pigeon system is not fully implemented yet
+            self.game_time.unregister(self) #Unregister the ship from game time, makes no more references and pyhton cleans it up automatically
             #Handle ship destruction (this could be expanded to include things like losing cargo, or the crew being stranded at sea, but for now it just logs the destruction of the ship)
 
     def add_crew(self,new_crew:'CrewMate'):
@@ -600,13 +651,14 @@ class Ship:
         This function is the action of sending a ship off, but will not handle things like multiple destinations, or returning the ship to its home port'''
         travel_time = distance((self.current_port.location.coordinates[0],self.current_port.location.coordinates[1]),(destination.coordinates[0],destination.coordinates[1]))
         self.travel_progress.current_value = 0
-        self.travel_progress.max_value = distance((self.current_port.location.coordinates[0],self.current_port.location.coordinates[1]),(destination.coordinates[0],destination.coordinates[1]))
+        self.travel_progress.max_value = distance(self.current_port.location.coordinates,destination.coordinates)
         #travel_time = round(math.sqrt((self.current_port.location.coordinates[0] - destination.coordinates[0])**2 + (self.current_port.location.coordinates[1] - destination.coordinates[1])**2) / 100) #The formula I learned in school, forgot, and then searched up when I needed it. Thanks grade 10 advanced math, you helped, a little, kinda, thanks, a little. Thanks google.
         self.day_of_arrival = game_time.day + travel_time
         self.ships_log.append(f"-----Dispatched to {destination.name}-----")
         self.current_destination = destination
         self.destinations.remove(destination) #Remove the current destination from the ship's list of possible destinations (this only removes the first instance of that destination)
         self.current_port.ships.remove(self) #Remove the ship from the port while it is dispatched
+        self.last_port = self.current_port
         self.current_port = None
         self.is_dispatched = True
     def run_events(self,days:int):
@@ -623,6 +675,7 @@ class Ship:
             self.run_ship_daily_needs(days)
             self.calculate_ship_stats_daily_variation(days)
             self.travel_progress += self.sailing_efficiency.current_value * ((self.daily_wind.current_value/100)*2)  #The ship moves faster the higher its sailing efficiency and wind
+            self.coordinates = point_along_vector(self.last_port.location.coordinates,self.current_destination.coordinates,self.travel_progress.current_value)
             input(self.travel_progress)
             # Check for arrival at a port
             if self.travel_progress.full():
@@ -656,6 +709,7 @@ class Ship:
         '''Call this function to dispatch a ship (DO NOT USE dispatch())\n
         This function will handle all the backend for proper ship dispatch that dispatch() will not'''
         self.destinations = destinations
+        self.home_port = self.current_port
         self.destinations.append(self.current_port.location) #Add the current location as the final destination so the ship returns home after its route is complete
         self.dispatch(self.destinations[0],game_time)
 
@@ -711,6 +765,7 @@ class Ship:
 
     def on_day_passed(self, days:int):
         #Daily checks when dispatched
+        self.coordinates = (self.current_port.location.coordinates[0],self.current_port.location.coordinates[1]) if self.current_port is not None else self.coordinates
         msg = None
         msg = self.daily_travel(days)
         return msg
@@ -867,7 +922,7 @@ class Port:
             return
         selected_ship.name = new_name
         selected_ship.storage.name = f"{new_name} Cargo"
-        print("Name changed!")
+        input("Name changed! Press enter to continue")
 
     # ==MAIN FUNCTIONS==
     def manage_ships(self):
