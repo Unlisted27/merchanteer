@@ -20,7 +20,8 @@ def menu(
     horizontal_sign="_",
     vertical_sign="|",
     return_tuple: bool = False,
-    table:dict | None = None
+    table:dict | None = None,
+    sub_table:dict | None = None
 ):
     """Displays a menu with optional ASCII art beside it."""
     if art is not None:
@@ -60,6 +61,17 @@ def menu(
     if table:
         table_lines = get_table(table).splitlines()
     table_width = max((len(t) for t in table_lines), default=0)
+
+    sub_table_lines = []
+    if sub_table:
+        sub_table_lines = get_table(sub_table).splitlines()
+
+    # Combine table + sub_table vertically
+    if table_lines and sub_table_lines:
+        table_lines = table_lines + [""] + sub_table_lines
+    elif sub_table_lines:
+        table_lines = sub_table_lines
+
     # Determine total height
     total_height = max(len(menu_lines), len(art_lines),len(table_lines))
 
@@ -287,14 +299,13 @@ def genname():
         name = name_parts.start_sounds[random.randint(0,len(name_parts.start_sounds)-1)] + name_parts.middle_sounds[random.randint(0,len(name_parts.middle_sounds)-1)] + name_parts.end_sounds[random.randint(0,len(name_parts.end_sounds)-1)]
     return(name)
 
-def gen_crewmate(crew_roles:list['CrewRole'],min_sailing_ability=10,max_sailing_ability=20):
+def gen_crewmate(crew_roles:list['CrewRole']):
     name = genname()
-    sailing_ability = random.randint(min_sailing_ability,max_sailing_ability)
     if len(crew_roles) > 0:
         crew_role = random.choice(crew_roles) 
     else:
         raise ValueError("Crew roles list cannot be empty")
-    return CrewMate(crew_role,sailing_ability,name)
+    return CrewMate(crew_role,name=name)
 
 # Core components
 
@@ -443,6 +454,42 @@ class ShipEvent(ABC):
     def run_event(self,ship:"Ship"):
         pass #This function is meant to be overridden by child classes, it will run the event's effects on the ship that is passed in as a parameter
 
+class ShipNeed:
+    def __init__(self,parent_ship:'Ship',crew_skill_tie_in:str,ship_stat_tie_in:str,name:str,max_value:int):
+        '''crew_skill_tie_in is the EXACT name of the skill that will contribute to this need (ex: "maintenance_skill").\n
+        ship_stat_tie_in is the EXACT name of the ship stat that will be affected by this need (ex: "toughness")'''
+        self.parent_ship = parent_ship
+        self.crew_skill_tie_in = crew_skill_tie_in
+        self.ship_stat_tie_in = ship_stat_tie_in
+        self.name = name
+        self.max_value = max_value
+        self.need_value = Stat(max_value,0,0)
+    def update_need_value(self):
+        '''Checks if the need is being met'''
+        #calculate the total contribution from the crew
+        total_contribution = 0
+        for crew_mate in self.parent_ship.crew:
+            if hasattr(crew_mate, self.crew_skill_tie_in):
+                total_contribution += getattr(crew_mate, self.crew_skill_tie_in).current_value
+        self.need_value += total_contribution #Use += because Stat will auto handle clamping the value
+
+    def run_need(self):
+        '''Checks if the need is being met, and applies consequences if it isn't'''
+        self.update_need_value()
+        if not self.need_value.full():
+            degradation = self.need_value.max_value - self.need_value.current_value
+            if hasattr(self.parent_ship, self.ship_stat_tie_in):
+                current_stat = getattr(self.parent_ship, self.ship_stat_tie_in)
+                if isinstance(current_stat, Stat):
+                    current_stat -= degradation
+                    self.parent_ship.ships_log.append(f"{self.name} need not met! {self.ship_stat_tie_in} degraded by {degradation}. Current {self.ship_stat_tie_in}: {current_stat}")
+                else:
+                    raise TypeError(f"{self.ship_stat_tie_in} is not a Stat instance")
+            else:
+                raise AttributeError(f"Parent ship does not have attribute {self.ship_stat_tie_in}")
+
+
+
 class ShipType:
     def __init__(self,name:str,health:int=100,cargo_capacity:int=48000,crew_capacity:int=10,max_sailing_efficiency:int=50,toughness:int=35,daily_maintenance:int=10):
         '''All default stats are for a sloop, the smallest/starter ship'''
@@ -479,7 +526,10 @@ class Ship:
         self.current_port:Port = None
         
         #Ship needs
-        self.daily_maintenance = Stat(ship_type.daily_maintenance,0,0)
+        self.daily_maintenance = ShipNeed(self,"maintenance_skill","toughness","Maintenance",ship_type.daily_maintenance)
+
+        #Needs list
+        self.needs = [self.daily_maintenance]
 
         self.calculate_crew_amount()
 
@@ -496,9 +546,14 @@ class Ship:
                 raise ValueError("Total crew cannot exceed crew capacity at __init__")
             self.crew_amount += 1
             self.sailing_efficiency += crew_mate.sailing_ability.current_value
-    def calculate_ship_daily_needs(self,days:int):
-        '''Ship daily needs are calculated, this function is internal.'''
-
+    def update_ship_daily_needs(self):
+        '''Updates all ship daily needs'''
+        for need in self.needs:
+            need.update_need_value()
+    def run_ship_daily_needs(self,days:int):
+        '''Checks all ship needs and runs consequences'''
+        for need in self.needs:
+            need.run_need()
     def calculate_ship_stats_daily_variation(self,days:int):
         '''All of the daily variation that the ship may encounter. This is where the events are run.'''
         self.daily_storm_value.current_value = 0
@@ -513,6 +568,10 @@ class Ship:
             damage = self.daily_storm_value.current_value - self.toughness.current_value
             self.health -= damage
             self.ships_log.append(f"Ship took {damage} damage from the storm! Current health: {self.health}")
+        if self.health.current_value <= 0:
+            
+            input("Ship has been destroyed!")
+            #Handle ship destruction (this could be expanded to include things like losing cargo, or the crew being stranded at sea, but for now it just logs the destruction of the ship)
 
     def add_crew(self,new_crew:'CrewMate'):
         '''Returns True on success, false on failure'''
@@ -561,6 +620,7 @@ class Ship:
     def daily_travel(self,days:int):
         if self.is_dispatched:
             # Run travel logic
+            self.run_ship_daily_needs(days)
             self.calculate_ship_stats_daily_variation(days)
             self.travel_progress += self.sailing_efficiency.current_value * ((self.daily_wind.current_value/100)*2)  #The ship moves faster the higher its sailing efficiency and wind
             input(self.travel_progress)
@@ -837,7 +897,12 @@ class Port:
                             "Sailing Efficiency": selected_ship.sailing_efficiency
                         }
                     }
-                action = menu(f"{selected_ship.name} actions",["Load","view inventory","Plan voyage","View crew","Change name","View event log"],return_option=True,art=game_art.ship_1,table=table_data)
+                selected_ship.update_ship_daily_needs() #Check if the ship's needs are being met, and update the need values accordingly, this is done here to allow the player to see the current state of the ship's needs in the menu
+                sub_table_data = {
+                    "Daily upkeed": 
+                            {need.name: need.need_value for need in selected_ship.needs}
+                }
+                action = menu(f"{selected_ship.name} actions",["Load","view inventory","Plan voyage","View crew","Change name","View event log"],return_option=True,art=game_art.ship_1,table=table_data,sub_table=sub_table_data)
                 match action:
                     case 1:
                         #Load ship
@@ -1084,8 +1149,8 @@ class CrewMate(Human):
     def __init__(self,crew_role:CrewRole,sailing_ability:int | None = None,maintenance_ability:int | None = None, name:str | None = None):
         super().__init__(name=name)
         self.crew_role = crew_role
-        self.sailing_ability = Stat(100,current_value=sailing_ability if sailing_ability is not None else random.randint(10,20)+crew_role.sailing_booster) #Base sailing ability is a random number between 10 and 20, plus any booster from their crew role
-        self.maintenance_skill = Stat(100,current_value=maintenance_ability if maintenance_ability is not None else random.randint(10,20)+crew_role.maintenance_booster) #Base maintenance skill is a random number between 10 and 20, plus any booster from their crew role
+        self.sailing_ability = Stat(100,current_value=sailing_ability+crew_role.sailing_booster if sailing_ability is not None else random.randint(10,20)+crew_role.sailing_booster) #Base sailing ability is a random number between 10 and 20, plus any booster from their crew role
+        self.maintenance_skill = Stat(100,current_value=maintenance_ability+crew_role.maintenance_booster if maintenance_ability is not None else random.randint(10,20)+crew_role.maintenance_booster) #Base maintenance skill is a random number between 10 and 20, plus any booster from their crew role
 
 class Tavern():
     def __init__(self,name:str,location:Location,crew_roles:list[CrewRole],player:Player,crew:list[CrewMate] | None = None):
