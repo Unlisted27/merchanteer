@@ -205,6 +205,11 @@ d - in-development version, not meant to be played, likely very unstable
     - If the daily storm value (affected by events) is greater than the ships tougness, it will take damage equal to the difference (storm_value - toughness)
 - Tavern
     - You can now go to the tavern to hire crew
+- Ship needs
+    - While at sea, ships have needs
+    - Needs are met by having crew with the required skill to meet those needs
+    - Ex: Daily maintenance is maintained by the sum of all crew member's maintenance stats
+    - If needs are not met while dispatched, a ship's stats will degrade
 ### Minor added features
 - Changed all weight values from Lbs to Kg (scaling didnt change, just units. Ballancing coming soon)
 ## Player notes
@@ -212,6 +217,7 @@ d - in-development version, not meant to be played, likely very unstable
 - Crew have been added!
 - Ships have a default crew, but to get the most out of your ships, hire more crew from the tavern
 - All weights are now in Kg, and distances in Km
+- Ships now have daily needs while at sea. See the needs in the ship menu in the port. Ensure your crew have the skill to meet those needs or else the ship could degrade stats while at sea. (Not having enough maintenance degrades toughness)
 ## Bug fixes
 - Fixed 0.0.5a ship travel planning bug but for contracts rather than destinations
 ## Dev notes
@@ -219,5 +225,6 @@ d - in-development version, not meant to be played, likely very unstable
 - Removed unecessary property max_weight from warehouses as the warehouse's storage was the only thing that used this property
 - added __iadd__ and __isub__ to Stat class. Now stats CURRENT VALUE can be changed with Stat += int/float. Stat will automatically clamp the value so it does not exceed the max or go below the min
 - Removed ID from the available contracts menu
+- Added ShipNeed class. This holds tie-ins for all the values it needs to effect, brining together crew abilities and ship daily needs.
 ## Other notes
 - Made the discord link in the README work and added a little blurb for devs regarding code structure

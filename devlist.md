@@ -60,13 +60,12 @@ COMPLETE 3. Reformat switch cases to avoid nested statements and implement highe
     - medium ship : Fluyt
  - COMPLETE Ship stats:
     Ships have a variety of stats, some of these stats are checked every day and if they cannot be met, there may be consequences
- - Ship needs:
-    While at sea, ships will have needs that must be met in order to perform optimally. Some needs are tied to stats, if those needs cannot be met, the stat decreases
- - Crew system
-    - Roles on a ship
+ - COMPLETE Ship needs:
+    COMPLETE While at sea, ships will have needs that must be met in order to perform optimally. Some needs are tied to stats, if those needs cannot be met, the stat decreases
+ - COMPLETE Crew system
+    - COMPLETE Roles on a ship
         - Different sized ships require more roles, and have different number of crew slots
     - COMPLETE Human object
-    - Crew object
-        - Crew best role
-        - Crew skill
-        - (crew can perform any role, but they specialise in one area)
+    - COMPLETE Crew object
+        - COMPLETE Crew skill
+        - COMPLETE (crew can perform any role, but they specialise in one area)
