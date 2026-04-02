@@ -185,7 +185,7 @@ d - in-development version, not meant to be played, likely very unstable
 - get_table() can now take a dict for full table displays, or a list[str] for single column tables (lists)
 ## Other notes
 
-# 0.0.6a The Crew Update
+# 0.0.6a The Crew and ship needs Update (Ship travel overhaul)
 ## Added features
 ### Major added features
 - Ship stats:
@@ -212,8 +212,15 @@ d - in-development version, not meant to be played, likely very unstable
     - If needs are not met while dispatched, a ship's stats will degrade
 - Messenger Pigeons now carry messages back from your ships to notify you of things like losing a ship.
 - Ships can now sink
+- Ship repairs:
+    - If a ship takes damage, it can be repaired at a port by paying a fee. It will take a few days for most repairs.
 ### Minor added features
 - Changed all weight values from Lbs to Kg (scaling didnt change, just units. Ballancing coming soon)
+- General actions added to main Game Menu. It contains:
+    - Player actions
+        - Player actions menu (moved from Game Menu)
+    - View notices
+        - Allows viewing of past notices that the player might have missed
 ## Player notes
 - Ship health can now be affected by storms
 - Crew have been added!
@@ -221,8 +228,11 @@ d - in-development version, not meant to be played, likely very unstable
 - All weights are now in Kg, and distances in Km
 - Ships now have daily needs while at sea. See the needs in the ship menu in the port. Ensure your crew have the skill to meet those needs or else the ship could degrade stats while at sea. (Not having enough maintenance degrades toughness)
 - Watch out for notes from messenger pigeons on your daily notices!
+- Ships can now be repaired at port
 ## Bug fixes
 - Fixed 0.0.5a ship travel planning bug but for contracts rather than destinations
+- Fixed "Port" being displayed before port names in the port menu title that would lead to things like "Port port Grandure"
+- Fixed menu returning to the ship menu after dispatching a ship
 ## Dev notes
 - Added Stat class that holds a min, max and current value
 - Removed unecessary property max_weight from warehouses as the warehouse's storage was the only thing that used this property

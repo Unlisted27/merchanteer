@@ -69,4 +69,5 @@ COMPLETE 3. Reformat switch cases to avoid nested statements and implement highe
     - COMPLETE Crew object
         - COMPLETE Crew skill
         - COMPLETE (crew can perform any role, but they specialise in one area)
- - Add ship repairing at home port
+ - COMPLETE Add ship repairing at home port
+ - COMPLETE Add a way to view past daily notices

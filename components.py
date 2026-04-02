@@ -267,7 +267,7 @@ def gen_contract(good_list: list,reward_list:list, current_day, current_location
 
     return contract
 
-class name_parts():
+class name_parts:
     start_sounds = [
     'Ada', 'Adel', 'Adri', 'Agn', 'Alf', 'Ale', 'Ali', 'Alma', 'Alo', 'Alv', 'Ama', 'Amb', 'Ana', 'And', 'Ang', 'Ann', 
     'Ans', 'Ant', 'Arn', 'Art', 'Aug', 'Aur', 'Bar', 'Bel', 'Ben', 'Ber', 'Bert', 'Bess', 'Bla', 'Blan', 'Bor', 'Bry', 
@@ -333,24 +333,7 @@ def gen_crewmate(crew_roles:list['CrewRole']):
 
 # Core components
 
-class MessengerPigeon:
-    def __init__(self,game_time:GameTime,message:str,start_coordinates:tuple[int],destination_coordinates:tuple[int]):
-        self.game_time = game_time
-        self.message = message
-        self.start_coordinates = start_coordinates
-        self.destination_coordinates = destination_coordinates
-        self.travel_time = distance(start_coordinates,destination_coordinates) #Calculate travel time based on distance
-        self.game_time.register(self) #Register to game time so it can track travel time
-    def on_day_passed(self, current_day):
-        if self.travel_time > 0:
-            self.travel_time -= 1
-            if self.travel_time <= 0:
-                self.game_time.unregister(self) #Unregister from game time, makes no more references and pyhton cleans it up automatically
-                return f"A messenger pigeon has delivered a message:\n {self.message}"
-        return None
-
-
-class Stat():
+class Stat:
     def __init__(self, max_value: int, min_value: int = 0, current_value: int | None = None):
         self.max_value = max_value
         self.min_value = min_value
@@ -388,6 +371,7 @@ class GameTime:
         self.day = 0
         self.observers = []   # anything that needs to react to time passing
         self.to_remove = []    # used to avoid modifying observers list while iterating
+        self.notices = []    # used to store messages from observers
 
     def register(self, obj):
         """Register an object that has an `on_day_passed(days:int)` method."""
@@ -397,18 +381,19 @@ class GameTime:
         self.to_remove.append(obj)
 
     def advance(self, days=1):
-        notices = []
+        daily_notices = []
         """Advance the global clock and notify observers."""
         self.day += days
         for o in self.observers:
             msg = o.on_day_passed(self.day)
             if msg:
-                notices.append(msg)
+                daily_notices.append(msg)
         for obj in self.to_remove:
             if obj in self.observers:
                 self.observers.remove(obj)
         print(f"--Day [{self.day}] notices--")
-        for notice in notices:
+        for notice in daily_notices:
+            self.notices.append(notice)
             print(notice)
         input("Press enter to continue")
 
@@ -492,6 +477,22 @@ class Storage:
             except Exception as e:
                 #print(e) #Uncomment this line to show error message when the user enters an invalid option
                 print("Invalid selection, try again")
+
+class MessengerPigeon:
+    def __init__(self,game_time:GameTime,message:str,start_coordinates:tuple[int],destination_coordinates:tuple[int]):
+        self.game_time = game_time
+        self.message = message
+        self.start_coordinates = start_coordinates
+        self.destination_coordinates = destination_coordinates
+        self.travel_time = distance(start_coordinates,destination_coordinates) #Calculate travel time based on distance
+        self.game_time.register(self) #Register to game time so it can track travel time
+    def on_day_passed(self, current_day):
+        if self.travel_time > 0:
+            self.travel_time -= 1
+            if self.travel_time <= 0:
+                self.game_time.unregister(self) #Unregister from game time, makes no more references and pyhton cleans it up automatically
+                return f"A messenger pigeon has delivered a message:\n {self.message}"
+        return None
 
 #This class is abstract, meaning it cannot be instantiated without being inherited from, and any class that inherits from it must implement run_event
 class ShipEvent(ABC):
@@ -588,8 +589,26 @@ class Ship:
         self.daily_storm_value = Stat(100,0,0)
         self.daily_wind = Stat(100,0,0) #Average wind is 50
 
+        #Repair values
+        self.is_under_repair = False
+        self.daily_repair_amount = 0
+
     
     #NON-USER FRIENDLY FUNCTIONS (NO UI)
+    def start_repairs(self,daily_repair_amount:int):
+        '''Will repair the ship daily while the ship is in port, until the ship is fully repaired or leaves port'''
+        self.is_under_repair = True
+        self.daily_repair_amount = daily_repair_amount
+    
+    def _run_daily_repairs(self,daily_repair_amount:int):
+        if self.is_under_repair:
+            if self.current_port:
+                self.health += daily_repair_amount
+                self.ships_log.append(f"Ship repaired by {daily_repair_amount}. Current health: {self.health}")
+            else:
+                self.ships_log.append("Ship is not in port, terminating repairs")
+                self.is_under_repair = False
+
     def calculate_crew_amount(self):
         self.crew_amount.current_value = 0
         for crew_mate in self.crew:
@@ -764,7 +783,8 @@ class Ship:
     # Final thing
 
     def on_day_passed(self, days:int):
-        #Daily checks when dispatched
+        #Daily checks
+        self._run_daily_repairs(self.daily_repair_amount) #This checks if the ship is under repair too
         self.coordinates = (self.current_port.location.coordinates[0],self.current_port.location.coordinates[1]) if self.current_port is not None else self.coordinates
         msg = None
         msg = self.daily_travel(days)
@@ -776,11 +796,12 @@ class Warehouse:
         self.storage = Storage(f"{name} Warehouse",max_weight)
 
 class Port:
-    def __init__(self, name: str, location:object,world:World,game_time:GameTime,player:'Player',ships: list[Ship] | None = None, warehouses: list[Warehouse] | None = None):
+    def __init__(self, name: str, location:object,world:World,game_time:GameTime,player:'Player',currency_goods:list[Good],ships: list[Ship] | None = None, warehouses: list[Warehouse] | None = None):
         self.name = name
         self.location:Location = location
         self.world = world
         self.game_time = game_time
+        self.currency_goods = currency_goods
         self.ships = list(ships) if ships is not None else []
         self.ship_names = []
         self.warehouses = list(warehouses) if warehouses is not None else []
@@ -829,6 +850,36 @@ class Port:
 
     # ===== Player interacting functions =====
     # ==SUB FUNCTIONS==
+    def repair_ship_menu(self,selected_ship:Ship):
+        while True:
+            clear_terminal()
+            days_to_repair = math.floor((selected_ship.health.max_value - selected_ship.health.current_value)/10)
+            cost_to_repair = days_to_repair * 20
+            table_data = {
+                "Table Data": {
+                    "Health": selected_ship.health,
+                    "Days to Repair": days_to_repair
+                }
+            }
+            sub_table_data = {
+                "Cost to Repair":
+                {good.name: cost_to_repair/good.value for good in self.currency_goods}
+            }
+            answer = menu("Repair ship",[f"Pay with {good.name}" for good in self.currency_goods],True,table=table_data,sub_table=sub_table_data)
+            if answer is not None:
+                selected_good = self.currency_goods[answer-1]
+                selected_warehouse:Warehouse = self.player.warehouses[menu("Select warehouse to pay from",[warehouse.name for warehouse in self.player.warehouses],True)-1]
+                if selected_warehouse is not None:
+                    if selected_good in selected_warehouse.storage.cargo and selected_warehouse.storage.cargo[selected_good]*selected_good.value >= cost_to_repair:
+                        amount_to_remove = math.ceil(cost_to_repair/selected_good.value)
+                        selected_warehouse.storage.remove_cargo(selected_good,amount_to_remove)
+                        selected_ship.start_repairs(10)
+                        input(f"{selected_ship.name} is now undergoing repairs! Press enter to continue")
+                        break
+                    else:
+                        input("You do not have enough of that good to pay for repairs, press enter to continue")
+            else:
+                break
     def dispatch_menu(self,selected_ship:Ship):
         while True:
             clear_terminal()
@@ -891,7 +942,7 @@ class Port:
                         selected_ship.primary_dispatch(self.planned_destinations,self.game_time)
                         print(f"{selected_ship.name} has been dispatched!")
                         input("Press enter to continue")
-                        break
+                        return True
                     else:
                         input("You must add at least one destination before dispatching (Press enter to continue)")
                 case _:
@@ -937,7 +988,15 @@ class Port:
                 self.ship_names.append(ship.name)
             clear_terminal()
             try:
-                selected_ship:Ship = self.ships[menu(f"Port {self.name}",self.ship_names,return_option=True,art=game_art.port_birds_eye) -1] #Select a ship to manage\
+                table_data = {
+                    ship.name: {
+                        "Name": ship.name,
+                        "Type": ship.ship_type,
+                        "Health": ship.health,
+                        "In repair": "Yes" if ship.is_under_repair else "No"
+                    } for ship in self.ships
+                }
+                selected_ship:Ship = self.ships[menu(self.name,self.ship_names,return_option=True,art=game_art.port_birds_eye,table=table_data) -1] #Select a ship to manage\
             except Exception:
                 break
             # Ship management menu
@@ -957,7 +1016,7 @@ class Port:
                     "Daily upkeed": 
                             {need.name: need.need_value for need in selected_ship.needs}
                 }
-                action = menu(f"{selected_ship.name} actions",["Load","view inventory","Plan voyage","View crew","Change name","View event log"],return_option=True,art=game_art.ship_1,table=table_data,sub_table=sub_table_data)
+                action = menu(f"{selected_ship.name} actions",["Load","view inventory","Plan voyage","View crew","Change name","View event log","Repair ship"],return_option=True,art=game_art.ship_1,table=table_data,sub_table=sub_table_data)
                 match action:
                     case 1:
                         #Load ship
@@ -969,7 +1028,8 @@ class Port:
                         input("Press enter to go back")
                     case 3:
                         #Dispatch ship
-                        self.dispatch_menu(selected_ship)
+                        if self.dispatch_menu(selected_ship) == True:
+                            break
                     case 4:
                         #View crew
                         selected_ship.manage_crew(self.player)
@@ -983,6 +1043,9 @@ class Port:
                         for log_entry in selected_ship.ships_log:
                             print(log_entry)
                         input("Press enter to go back")
+                    case 7:
+                        #Repair ship
+                        self.repair_ship_menu(selected_ship)
                     case _:
                         break
 
@@ -1049,18 +1112,19 @@ class Player:
             }
         print(get_table(table_data))
     def player_actions(self):
-        answer = menu("Actions",["View stats","View contracts"],True)
-        match answer:
-            case 1:
-                clear_terminal()
-                self.view_stats()
-                input("Press enter to go back")
-            case 2:
-                clear_terminal()
-                self.view_contracts()
-                input("Press enter to go back")
-            case _:
-                pass
+        while True:
+            answer = menu("Player actions",["View stats","View contracts"],True)
+            match answer:
+                case 1:
+                    clear_terminal()
+                    self.view_stats()
+                    input("Press enter to go back")
+                case 2:
+                    clear_terminal()
+                    self.view_contracts()
+                    input("Press enter to go back")
+                case _:
+                    break
 
 class Exchange:
     def __init__(self, name: str, location:'Location', game_time: GameTime, world: World,
@@ -1207,7 +1271,7 @@ class CrewMate(Human):
         self.sailing_ability = Stat(100,current_value=sailing_ability+crew_role.sailing_booster if sailing_ability is not None else random.randint(10,20)+crew_role.sailing_booster) #Base sailing ability is a random number between 10 and 20, plus any booster from their crew role
         self.maintenance_skill = Stat(100,current_value=maintenance_ability+crew_role.maintenance_booster if maintenance_ability is not None else random.randint(10,20)+crew_role.maintenance_booster) #Base maintenance skill is a random number between 10 and 20, plus any booster from their crew role
 
-class Tavern():
+class Tavern:
     def __init__(self,name:str,location:Location,crew_roles:list[CrewRole],player:Player,crew:list[CrewMate] | None = None):
         self.name = name
         self.location = location

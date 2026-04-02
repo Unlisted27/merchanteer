@@ -1,3 +1,5 @@
+from re import match
+
 import components,building_blocks,game_art
 
 #Art
@@ -37,11 +39,24 @@ def __main__():
             while True:
                 components.clear_terminal()
                 print(f"Day {building_blocks.game_time.day}")
-                answer = components.menu("Game menu",["Player actions","Bargain house","Port","Tavern","Next day","Quit game"],art = game_art.title) 
+                answer = components.menu("Game menu",["General actions","Bargain house","Port","Tavern","Next day","Quit game"],art = game_art.title) 
                 match answer:                           # <─ use match instead of “case answer:”
                     case 1:      
-                        components.clear_terminal()                        # option 1
-                        player.player_actions()
+                        while True:
+                            answer = components.menu("General Actions",["View notices","Player actions"],True)                        # option 1
+                            match answer:
+                                case 1:
+                                    components.clear_terminal()
+                                    if len(building_blocks.game_time.notices) > 0:
+                                        for notice in building_blocks.game_time.notices:
+                                            print(notice)
+                                    else:
+                                        print("No notices yet")
+                                    input("Press enter to continue")
+                                case 2:
+                                    player.player_actions()
+                                case _:
+                                    break
                     case 2: 
                         components.clear_terminal()
                         start_exchange(theBargainHouse,player)

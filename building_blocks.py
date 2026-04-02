@@ -11,7 +11,7 @@ world = components.World([grandure,clammer,old_cove])
 
 #Currency goods
 gold = components.Good("gold","shiny",1,0.1)
-silver = components.Good("silver","shiny",0.5,0.1)
+silver = components.Good("silver","less-shiny",0.5,0.1)
 #Other goods
 bread = components.Good("bread","staple food",0.1,0.05)
 fish = components.Good("fish","protein food",0.3,1)
@@ -75,9 +75,9 @@ currency_goods = [gold,silver]
 player = components.Player(components.Storage("Player Inventory",100),0,fleet=player_fleet,warehouses=[theHold])
 
 #Port creation
-portClammer = components.Port("port Clammer",clammer,world,game_time,player,warehouses=[clammer_warehouse])
-portGrandure = components.Port("port Grandure",grandure,world,game_time,player,[theSliver,theSplinter],[theHold])
-portOldCove = components.Port("Old Cove Port",old_cove,world,game_time,player,warehouses=[old_cove_warehouse])
+portClammer = components.Port("port Clammer",clammer,world,game_time,player,currency_goods,warehouses=[clammer_warehouse])
+portGrandure = components.Port("port Grandure",grandure,world,game_time,player,currency_goods,[theSliver,theSplinter],[theHold])
+portOldCove = components.Port("Old Cove Port",old_cove,world,game_time,player,currency_goods,warehouses=[old_cove_warehouse])
 
 # Taverns
 fishHeadTavern = components.Tavern("Fish Head Tavern",clammer,[buckaneer],player)
