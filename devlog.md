@@ -229,6 +229,7 @@ d - in-development version, not meant to be played, likely very unstable
 - Ships now have daily needs while at sea. See the needs in the ship menu in the port. Ensure your crew have the skill to meet those needs or else the ship could degrade stats while at sea. (Not having enough maintenance degrades toughness)
 - Watch out for notes from messenger pigeons on your daily notices!
 - Ships can now be repaired at port
+- The go back option will now CONSISTANTLY be 1
 ## Bug fixes
 - Fixed 0.0.5a ship travel planning bug but for contracts rather than destinations
 - Fixed "Port" being displayed before port names in the port menu title that would lead to things like "Port port Grandure"
@@ -241,5 +242,7 @@ d - in-development version, not meant to be played, likely very unstable
 - Added ShipNeed class. This holds tie-ins for all the values it needs to effect, brining together crew abilities and ship daily needs.
 - Removed the need for ships to be registered withe game_time.register, they now take game time on initialisation and register themselves
 - Added MessengerPigeon class for sending messages back to the player home port. Basically, to semi-simulate ancient times, this class simulates information delay before it reaches the player on their daily notices screen.
+- Added error handling for menus created with no items, return_option=False and text_input = False. If this happens, a ValueError will be raised
+- Reworked the transfering of goods system to be more up to date with the modern table format of menus. The go back option will now CONSISTANTLY be 1
 ## Other notes
 - Made the discord link in the README work and added a little blurb for devs regarding code structure

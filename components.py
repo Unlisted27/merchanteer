@@ -45,7 +45,8 @@ def menu(
     vertical_sign="|",
     return_tuple: bool = False,
     table:dict | None = None,
-    sub_table:dict | None = None
+    sub_table:dict | None = None,
+    text_input: bool = False
 ):
     """Displays a menu with optional ASCII art beside it."""
     if art is not None:
@@ -67,6 +68,8 @@ def menu(
             raise TypeError("Items in list must be type str")
         items.append(f"{vertical_sign}[{i}] {item}")
 
+    if len(items) == 0 and not text_input:
+        raise ValueError("Menu must have at least one option, return option, or be a text input")
     length = max(len(name) + 1, *(len(i) for i in items)) #Calculate menu width based on longest line
 
     # Build menu block
@@ -131,6 +134,8 @@ def menu(
         
         try:
             answer = input()
+            if text_input:
+                return answer
             selected = options[int(answer) - 1]
 
             if answer == "0":
@@ -422,21 +427,19 @@ class Storage:
             self.cargo_weight.current_value += self.get_crate_weight(good,amount)
     def get_crate_weight(self,good:Good,amount:int):
         return good.weight*amount
-    def get_invent(self,starting_index = 1):
+    def get_invent_table(self):
         self.calc_cargo()
-        to_return = ""
-        for i, (good, amount) in enumerate(self.cargo.items(), start=starting_index):
-            to_return += (
-            f"[{i}] | Crate of {good.name} | "
-            f"Amount: {amount} | "
-            f"Value: ${round(good.value * amount, 2)} | "
-            f"Weight: {round(self.get_crate_weight(good, amount), 2)}Kg |\n"
-            )
-        return to_return
-    def show_invent(self,back_option=False):
-        print(f"|{self.name} | {self.cargo_weight}Kg|")
-        if back_option: print("[1] | Go back")
-        print(self.get_invent(2 if back_option else 1))
+        table_data = {}
+        for good, amount in self.cargo.items():
+            table_data[good.name] = {
+            "Good": good.name,
+            "Amount": amount,
+            "Value": round(good.value*amount,2),
+            "Weight": f"{round(self.get_crate_weight(good,amount),2)}Kg"
+        }
+        return table_data
+    def show_invent(self):
+        menu(f"Inventory",[],return_option=True,table=self.get_invent_table())
     def add_to_cargo(self,new_good:Good,amount:int=1):
         self.calc_cargo()
         if self.cargo_weight.current_value + self.get_crate_weight(new_good,amount) <= self.cargo_weight.max_value:
@@ -466,18 +469,8 @@ class Storage:
     def select_from_invent(self) -> int | None:
         """Displays the inventory in a menu format and allows the user to select an item by number.\n
         returns the list index of the selected item (1st item = 0)"""
-        self.show_invent(back_option=True)
-        while True:
-            try:
-                answer = int(input(f"|:"))
-                if answer == 1:
-                    return None
-                if answer <= (len(self.cargo)+1) and answer > 0:
-                    return int(answer)-2
-            except Exception as e:
-                #print(e) #Uncomment this line to show error message when the user enters an invalid option
-                print("Invalid selection, try again")
-
+        table_data = self.get_invent_table()
+        return menu("Select an item",[f"{amount} | {good.name}" for good,amount in self.cargo.items()],return_option=True,table=table_data)-1
 class MessengerPigeon:
     def __init__(self,game_time:GameTime,message:str,start_coordinates:tuple[int],destination_coordinates:tuple[int]):
         self.game_time = game_time
@@ -845,8 +838,7 @@ class Port:
                     print("There was a problem moving that cargo")
                     time.sleep(1)
                 else:
-                    print("Cargo moved!")
-                    time.sleep(1)
+                    input("Cargo moved! Press enter to continue")
 
     # ===== Player interacting functions =====
     # ==SUB FUNCTIONS==
@@ -954,12 +946,10 @@ class Port:
         match answer:
             #Warehouse loading logic
             case 1:
-                clear_terminal()
                 from_storage:Storage = self.warehouses[menu("Load from",self.warehouse_names) -1].storage #Get the warehouse we are moving from
                 self.transfer_goods(from_storage,selected_ship.storage)
             #Another ship loading logic
             case 2:
-                clear_terminal()
                 from_storage:Storage = self.ships[menu("Load from",self.ship_names) -1].storage #Get the ship we are moving from
                 self.transfer_goods(from_storage,selected_ship.storage)
             case _:
@@ -1025,7 +1015,6 @@ class Port:
                         #Show invent
                         clear_terminal()
                         selected_ship.storage.show_invent()
-                        input("Press enter to go back")
                     case 3:
                         #Dispatch ship
                         if self.dispatch_menu(selected_ship) == True:
@@ -1096,21 +1085,18 @@ class Player:
         self.storage.show_invent()
     def view_contracts(self):
         table_data = {}
+        for contract in self.contracts:
+                status = "Expired" if contract.expired else f"Due day {contract.deadline}"
+                reward = f"{contract.reward_amount} {contract.reward_type.name}"
+                table_data[contract.good.name] = {
+                    "Amount": contract.amount,
+                    "Good": contract.good.name,
+                    "Reward": reward,
+                    "Destination": contract.destination_port.location.name,
+                    "Status": status
+                }
+        return menu("Contracts", [f"{contract.amount} {contract.good.name} to {contract.destination_port.name}" for contract in self.contracts], table=table_data, return_option=True)
 
-        for i, c in enumerate(self.contracts, start=1):
-            status = "Expired" if c.expired else f"Due day {c.deadline}"
-            reward = f"{c.reward_amount} {c.reward_type.name}"
-
-            # Use i as the key for each contract
-            table_data[i] = {
-                "ID": i,
-                "Amount": c.amount,
-                "Good": c.good.name,
-                "Reward": reward,
-                "Destination": c.destination_port.location.name,
-                "Status": status
-            }
-        print(get_table(table_data))
     def player_actions(self):
         while True:
             answer = menu("Player actions",["View stats","View contracts"],True)
@@ -1171,47 +1157,41 @@ class Exchange:
                 "Destination": c.destination_port.location.name,
                 "Status": status
             }
-        print(get_table(table_data))
+        return menu("Available Contracts", [f"{contract.amount} {contract.good.name} to {contract.destination_port.name}" for contract in self.contracts], table=table_data, return_option=True)
     def select_contract(self,player:Player):
         while True:
             clear_terminal()
-            self.show_contracts()
-            print("(Enter 0 to go back)")
+            answer = self.show_contracts()
+            if answer is None:
+                return None
             try:
-                answer = int(input(f"|:"))
-                if answer <= (len(self.contracts)+1):
-                    if answer != 0:
-                        chosen_contract = self.contracts[answer-1] 
-                        while True:
-                            clear_terminal()
-                            warehouse_names = []
-                            for warehouse in player.warehouses:
-                                warehouse_names.append(warehouse.name)
-                            try:
-                                answer = int(menu("Where would you like to store these goods?",warehouse_names,True))-1
-                            except Exception as e:
-                                input("An error occured!\n"+e)
-                            selected_warehouse:Warehouse = player.warehouses[answer]
-                            #input(selected_warehouse.name) 
-                            if selected_warehouse.storage.add_to_cargo(chosen_contract.good,chosen_contract.amount):
-                                input("Contract accepted! (press enter to continue)")
-                                self.contracts.remove(chosen_contract) #Remove the contract from the exchange's list of contracts
-                                return chosen_contract
-                            else:
-                                input("That warehouse cannot hold that much cargo, choose another (press enter to continue)")
+                chosen_contract = self.contracts[answer-1] 
+                while True:
+                    clear_terminal()
+                    warehouse_names = []
+                    for warehouse in player.warehouses:
+                        warehouse_names.append(warehouse.name)
+                    try:
+                        answer = int(menu("Where would you like to store these goods?",warehouse_names,True))-1
+                    except Exception as e:
+                        input("An error occured!\n"+e)
+                    selected_warehouse:Warehouse = player.warehouses[answer]
+                    #input(selected_warehouse.name) 
+                    if selected_warehouse.storage.add_to_cargo(chosen_contract.good,chosen_contract.amount):
+                        input("Contract accepted! (press enter to continue)")
+                        self.contracts.remove(chosen_contract) #Remove the contract from the exchange's list of contracts
+                        return chosen_contract
                     else:
-                        return None
+                        input("That warehouse cannot hold that much cargo, choose another (press enter to continue)")
             except Exception:# as e:
                 print("Invalid selection, try again")
     def cashout_contracts(self,player:Player):
         while True:
             clear_terminal()
-            player.view_contracts()
-            print("(Enter 0 to go back)")
+            answer = player.view_contracts()
+            if answer is None:
+                return
             try:
-                answer = int(input(f"|:"))
-                if answer == 0:
-                    break
                 chosen_contract:Contract = player.contracts[answer-1] 
                 if chosen_contract.complete_notice:
                     warehouse_names = []
@@ -1232,7 +1212,7 @@ class Exchange:
                     input("This contract is not yet ready to be cashed out. (press enter to continue)")
             except Exception:# as e:
                 #print(e) #Uncomment this line to show error message when the user enters an invalid option
-                print("Invalid selection, try again")
+                input("Invalid selection, try again")
 
 class Location:
     def __init__(self,name:str,description:str | None = None,coordinates:tuple[int,int] | None = None, ports:list[Port] | None = None,exchanges:list[Exchange] | None = None):
