@@ -41,7 +41,7 @@ def menu(
     list_options: list,
     return_option=False,
     art: str | game_art.Art | None = None,
-    horizontal_sign="_",
+    horizontal_sign="-",
     vertical_sign="|",
     return_tuple: bool = False,
     table:dict | None = None,
@@ -74,10 +74,13 @@ def menu(
 
     # Build menu block
     menu_lines = []
-    menu_lines.append(horizontal_sign * length)
-    menu_lines.append(name + " " * (length - len(name)))
+    #menu_lines.append(name + " " * (length - len(name)))
     for thing in items:
-        menu_lines.append(thing)
+        if return_option and thing == f"{vertical_sign}[1] Go back":
+            menu_lines.append(style.YELLOW + thing + style.RESET + " " * (length - len(f"{vertical_sign}[1] Go back")))
+            menu_lines.append(horizontal_sign * length)
+        else:
+            menu_lines.append(thing)
 
     # Prepare art block
     art_lines = []
@@ -115,6 +118,7 @@ def menu(
     while True:
         clear_terminal()
         # Print side-by-side
+        print(f"~ {name} ~")
         gap = "  |  "
 
         for m, a, t in zip(menu_lines, art_lines, table_lines):
@@ -471,6 +475,7 @@ class Storage:
         returns the list index of the selected item (1st item = 0)"""
         table_data = self.get_invent_table()
         return menu("Select an item",[f"{amount} | {good.name}" for good,amount in self.cargo.items()],return_option=True,table=table_data)-1
+
 class MessengerPigeon:
     def __init__(self,game_time:GameTime,message:str,start_coordinates:tuple[int],destination_coordinates:tuple[int]):
         self.game_time = game_time
@@ -688,7 +693,7 @@ class Ship:
             self.calculate_ship_stats_daily_variation(days)
             self.travel_progress += self.sailing_efficiency.current_value * ((self.daily_wind.current_value/100)*2)  #The ship moves faster the higher its sailing efficiency and wind
             self.coordinates = point_along_vector(self.last_port.location.coordinates,self.current_destination.coordinates,self.travel_progress.current_value)
-            input(self.travel_progress)
+            #input(self.travel_progress)
             # Check for arrival at a port
             if self.travel_progress.full():
                 self.current_port = self.current_destination.ports[0] #This logic needs to be fixed to allow for multiple ports per location
@@ -855,7 +860,7 @@ class Port:
             }
             sub_table_data = {
                 "Cost to Repair":
-                {good.name: cost_to_repair/good.value for good in self.currency_goods}
+                {good.name: math.ceil(cost_to_repair/good.value) for good in self.currency_goods}
             }
             answer = menu("Repair ship",[f"Pay with {good.name}" for good in self.currency_goods],True,table=table_data,sub_table=sub_table_data)
             if answer is not None:
@@ -931,10 +936,13 @@ class Port:
                             break
                 case 3:
                     if len(self.planned_destinations) >= 1:
-                        selected_ship.primary_dispatch(self.planned_destinations,self.game_time)
-                        print(f"{selected_ship.name} has been dispatched!")
-                        input("Press enter to continue")
-                        return True
+                        if selected_ship.crew_amount.current_value > 0:
+                            selected_ship.primary_dispatch(self.planned_destinations,self.game_time)
+                            print(f"{selected_ship.name} has been dispatched!")
+                            input("Press enter to continue")
+                            return True
+                        else:
+                            input("You cannot dispatch a ship with no crew, press enter to continue")
                     else:
                         input("You must add at least one destination before dispatching (Press enter to continue)")
                 case _:
@@ -983,7 +991,7 @@ class Port:
                         "Name": ship.name,
                         "Type": ship.ship_type,
                         "Health": ship.health,
-                        "In repair": "Yes" if ship.is_under_repair else "No"
+                        "In repair": f"{style.RED}Yes{style.RESET}" if ship.is_under_repair else f"{style.GREEN}No{style.RESET}",
                     } for ship in self.ships
                 }
                 selected_ship:Ship = self.ships[menu(self.name,self.ship_names,return_option=True,art=game_art.port_birds_eye,table=table_data) -1] #Select a ship to manage\

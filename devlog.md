@@ -230,6 +230,7 @@ d - in-development version, not meant to be played, likely very unstable
 - Watch out for notes from messenger pigeons on your daily notices!
 - Ships can now be repaired at port
 - The go back option will now CONSISTANTLY be 1
+- Menus now look nicer and are easier to align with items in their tables
 ## Bug fixes
 - Fixed 0.0.5a ship travel planning bug but for contracts rather than destinations
 - Fixed "Port" being displayed before port names in the port menu title that would lead to things like "Port port Grandure"
