@@ -373,6 +373,11 @@ class Stat:
 
     def __int__(self):
         return self.current_value
+    
+    # This function is mainly used in the save process to convert to a JSON friendly type
+    def as_tuple(self):
+        """Returns tuple(max,min,current)"""
+        return(self.max_value,self.min_value,self.current_value)
 
 class Game:
     def __init__(self):
@@ -1357,20 +1362,18 @@ class CrewMate(Human):
     def save(self) -> dict:
         save = {
             "crew_role":self.crew_role.name,
-            "sailing_ability":self.description,
-            "sailing_booster":self.sailing_booster,
-            "maintenance_booster":self.maintenance_booster
+            "sailing_ability":self.sailing_ability.as_tuple(),
+            "maintenance_skill":self.maintenance_skill.as_tuple()
         }
         return save
     
     @classmethod
     def load(cls, save: dict,game:Game):
         instance = cls(
-            save["name"],
-            save["description"],
+            save["crew_role"],
             game,
-            save["sailing_booster"],
-            save["maintenance_booster"]
+            save["sailing_ability"],
+            save["maintenance_skill"]
         )
         return instance
 
