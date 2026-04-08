@@ -1,6 +1,4 @@
-from re import match
-
-import components,building_blocks,game_art
+import components, building_blocks, game_art, save_load
 
 #Art
 title = game_art.title
@@ -39,7 +37,7 @@ def __main__():
             while True:
                 components.clear_terminal()
                 print(f"Day {building_blocks.game_time.day}")
-                answer = components.menu("Game menu",["General actions","Bargain house","Port","Tavern","Next day","Quit game"],art = game_art.title) 
+                answer = components.menu("Game menu",["General actions","Bargain house","Port","Tavern","Next day","Save and quit"],art = game_art.title) 
                 match answer:                           # <─ use match instead of “case answer:”
                     case 1:      
                         while True:
@@ -71,8 +69,13 @@ def __main__():
                         building_blocks.game_time.advance()
                         print("A new day begins...")
                     case 6:                             
-                        print("Thanks for playing!")
-                        break
+                        #print("Saving game...")
+                        save_load.view_objects_in_running_game()
+                        #save_load.show_building_blocks_objects()
+                        input("=====DONE=====")
+                        #print("Game saved successfully!")
+                        #print("Thanks for playing!")
+                        #break
         case 2:
             print("Load save feature coming soon!")
         case 3:

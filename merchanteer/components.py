@@ -2,7 +2,6 @@
 # This is the back end, really complicated stuff so be ware. 
 # If you want to mod the game, or understand how this is all implemented, check out building_blocks.py
 import os, time, random, math, shutil, game_art, style
-from unittest import case
 from abc import ABC, abstractmethod
 
 def distance(point1:tuple[int],point2:tuple[int]):
@@ -332,13 +331,13 @@ def genname():
         name = name_parts.start_sounds[random.randint(0,len(name_parts.start_sounds)-1)] + name_parts.middle_sounds[random.randint(0,len(name_parts.middle_sounds)-1)] + name_parts.end_sounds[random.randint(0,len(name_parts.end_sounds)-1)]
     return(name)
 
-def gen_crewmate(crew_roles:list['CrewRole']):
+def gen_crewmate(crew_roles:list['CrewRole'],game:'Game'):
     name = genname()
     if len(crew_roles) > 0:
         crew_role = random.choice(crew_roles) 
     else:
         raise ValueError("Crew roles list cannot be empty")
-    return CrewMate(crew_role,name=name)
+    return CrewMate(crew_role,game,name=name)
 
 # Core components
 
@@ -375,12 +374,24 @@ class Stat:
     def __int__(self):
         return self.current_value
 
-class GameTime:
+class Game:
     def __init__(self):
-        self.day = 0
-        self.observers = []   # anything that needs to react to time passing
-        self.to_remove = []    # used to avoid modifying observers list while iterating
-        self.notices = []    # used to store messages from observers
+        self.day = 0 #Saved
+        self.observers = []   # anything that needs to react to time passing, not saved (on load, objects register themselves with Game)
+        self.to_remove = []    # used to avoid modifying observers list while iterating (Not saved as it is temporary, objects register themselves with Game later)
+        self.notices = []    # used to store messages from observers, Not saved as it is temporary
+    
+    def save(self) -> dict:
+        save = {
+            "day":self.day
+        }
+        return save
+    
+    @classmethod
+    def load(cls, save: dict):
+        instance = cls()  # cls is Game class, so cls() creates new Game()
+        instance.day = save["day"]
+        return instance
 
     def register(self, obj):
         """Register an object that has an `on_day_passed(days:int)` method."""
@@ -407,15 +418,52 @@ class GameTime:
         input("Press enter to continue")
 
 class World:
-    def __init__(self,locations:list['Location']):
+    def __init__(self,locations:list['Location'],game:Game):
         self.locations = locations
+        self.game = game
+        game.register(self)
+
+    def save(self) -> dict:
+        save = {
+            "locations":self.locations
+        }
+        return save
+    
+    @classmethod
+    def load(cls, save: dict,game:Game):
+        instance = cls(
+            locations=save["locations"],
+            game=game,
+        )
+        return instance
 
 class Good:
-    def __init__(self,name:str,description:str,value:int,weight:int):
+    def __init__(self,name:str,description:str,value:int,weight:int,game:Game):
         self.name = name
         self.description = description
         self.value = value
         self.weight = weight
+        game.register(self)
+    
+    def save(self) -> dict:
+        save = {
+            "name":self.name,
+            "description":self.description,
+            "value":self.value,
+            "weigth":self.weight
+        }
+        return save
+    
+    @classmethod
+    def load(cls, save: dict,game:Game):
+        instance = cls(
+            save["name"],
+            save["description"],
+            save["value"],
+            save["weight"],
+            game
+        )
+        return instance 
 
 class Storage:
     def __init__(self, name: str, cargo_weight: int = 1000, cargo: dict | None = None):
@@ -477,18 +525,18 @@ class Storage:
         return menu("Select an item",[f"{amount} | {good.name}" for good,amount in self.cargo.items()],return_option=True,table=table_data)-1
 
 class MessengerPigeon:
-    def __init__(self,game_time:GameTime,message:str,start_coordinates:tuple[int],destination_coordinates:tuple[int]):
-        self.game_time = game_time
+    def __init__(self,game:Game,message:str,start_coordinates:tuple[int],destination_coordinates:tuple[int]):
+        self.game = game
         self.message = message
         self.start_coordinates = start_coordinates
         self.destination_coordinates = destination_coordinates
         self.travel_time = distance(start_coordinates,destination_coordinates) #Calculate travel time based on distance
-        self.game_time.register(self) #Register to game time so it can track travel time
+        self.game.register(self) #Register to game time so it can track travel time
     def on_day_passed(self, current_day):
         if self.travel_time > 0:
             self.travel_time -= 1
             if self.travel_time <= 0:
-                self.game_time.unregister(self) #Unregister from game time, makes no more references and pyhton cleans it up automatically
+                self.game.unregister(self) #Unregister from game time, makes no more references and pyhton cleans it up automatically
                 return f"A messenger pigeon has delivered a message:\n {self.message}"
         return None
 
@@ -549,11 +597,11 @@ class ShipType:
         self.daily_maintenance = daily_maintenance #If this is not met, the ship's toughness will degrade
 
 class Ship:
-    def __init__(self,name:str,ship_type:ShipType,event_list:list[ShipEvent],game_time:GameTime,crew:list['CrewMate']=[]):
+    def __init__(self,name:str,ship_type:ShipType,event_list:list[ShipEvent],game:Game,crew:list['CrewMate']=[]):
         self.ship_type = ship_type.name
-        self.game_time = game_time
+        self.game = game
         self.coordinates = (0,0)
-        self.game_time.register(self) #Register to game time so it can track daily needs and events
+        self.game.register(self) #Register to game time so it can track daily needs and events
         #SHIP STATS
         self.health = Stat(ship_type.health)
         self.sailing_efficiency = Stat(ship_type.sailing_efficiency,current_value=0) # This determines the max a ship can perform (so a rowboat's max performance will be less than a proper ship). The actual ship performace (the current value of this stat) is determined by the sum of all crew sailing_ability
@@ -637,8 +685,8 @@ class Ship:
             self.health -= damage
             self.ships_log.append(f"Ship took {damage} damage from the storm! Current health: {self.health}")
         if self.health.current_value <= 0:
-            DeathMessage = MessengerPigeon(self.game_time,f"The {self.name} has been destroyed at sea!",self.coordinates,self.home_port.location.coordinates) #The coordinates here are placeholders, as the pigeon system is not fully implemented yet
-            self.game_time.unregister(self) #Unregister the ship from game time, makes no more references and pyhton cleans it up automatically
+            DeathMessage = MessengerPigeon(self.game,f"The {self.name} has been destroyed at sea!",self.coordinates,self.home_port.location.coordinates) #The coordinates here are placeholders, as the pigeon system is not fully implemented yet
+            self.game.unregister(self) #Unregister the ship from game time, makes no more references and pyhton cleans it up automatically
             #Handle ship destruction (this could be expanded to include things like losing cargo, or the crew being stranded at sea, but for now it just logs the destruction of the ship)
 
     def add_crew(self,new_crew:'CrewMate'):
@@ -662,7 +710,7 @@ class Ship:
             return False
     # INTERNAL FUNCTIONS
 
-    def dispatch(self, destination:'Location', game_time:GameTime):
+    def dispatch(self, destination:'Location', game:Game):
         '''This is an internal function, should not regularily be called outside of the class \n
         Use primary_dispatch() instead\n
         This function is the action of sending a ship off, but will not handle things like multiple destinations, or returning the ship to its home port'''
@@ -670,7 +718,7 @@ class Ship:
         self.travel_progress.current_value = 0
         self.travel_progress.max_value = distance(self.current_port.location.coordinates,destination.coordinates)
         #travel_time = round(math.sqrt((self.current_port.location.coordinates[0] - destination.coordinates[0])**2 + (self.current_port.location.coordinates[1] - destination.coordinates[1])**2) / 100) #The formula I learned in school, forgot, and then searched up when I needed it. Thanks grade 10 advanced math, you helped, a little, kinda, thanks, a little. Thanks google.
-        self.day_of_arrival = game_time.day + travel_time
+        self.day_of_arrival = game.day + travel_time
         self.ships_log.append(f"-----Dispatched to {destination.name}-----")
         self.current_destination = destination
         self.destinations.remove(destination) #Remove the current destination from the ship's list of possible destinations (this only removes the first instance of that destination)
@@ -712,7 +760,7 @@ class Ship:
                             self.ships_log.append(f"Contract for {contract.amount} {contract.good.name} was NOT completed!")
                         self.contracts.remove(contract) #Remove the contract from the ship's list of contracts, even if it wasnt completed cause the ship is out of that Good anyways
                 if len(self.destinations) > 0:
-                    self.dispatch(self.destinations[0],self.current_port.game_time) #Dispatch to the next destination in the list (this only dispatches to the first instance of that destination)
+                    self.dispatch(self.destinations[0],self.current_port.game) #Dispatch to the next destination in the list (this only dispatches to the first instance of that destination)
                 else:
                     self.is_dispatched = False
                     self.current_destination = None
@@ -722,13 +770,13 @@ class Ship:
         return None
     
     #EXTERNAL FUNCTIONS
-    def primary_dispatch(self, destinations:'Location', game_time:GameTime):
+    def primary_dispatch(self, destinations:'Location', game:Game):
         '''Call this function to dispatch a ship (DO NOT USE dispatch())\n
         This function will handle all the backend for proper ship dispatch that dispatch() will not'''
         self.destinations = destinations
         self.home_port = self.current_port
         self.destinations.append(self.current_port.location) #Add the current location as the final destination so the ship returns home after its route is complete
-        self.dispatch(self.destinations[0],game_time)
+        self.dispatch(self.destinations[0],game)
 
     def manage_crew(self,player:'Player'):
         while True:
@@ -789,16 +837,17 @@ class Ship:
         return msg
             
 class Warehouse:
-    def __init__(self,name:str,max_weight:int = 10000):
+    def __init__(self,name:str,game:Game,max_weight:int = 10000):
         self.name = name
         self.storage = Storage(f"{name} Warehouse",max_weight)
+        game.register(self)
 
 class Port:
-    def __init__(self, name: str, location:object,world:World,game_time:GameTime,player:'Player',currency_goods:list[Good],ships: list[Ship] | None = None, warehouses: list[Warehouse] | None = None):
+    def __init__(self, name: str, location:object,world:World,game:Game,player:'Player',currency_goods:list[Good],ships: list[Ship] | None = None, warehouses: list[Warehouse] | None = None):
         self.name = name
         self.location:Location = location
         self.world = world
-        self.game_time = game_time
+        self.game = game
         self.currency_goods = currency_goods
         self.ships = list(ships) if ships is not None else []
         self.ship_names = []
@@ -937,7 +986,7 @@ class Port:
                 case 3:
                     if len(self.planned_destinations) >= 1:
                         if selected_ship.crew_amount.current_value > 0:
-                            selected_ship.primary_dispatch(self.planned_destinations,self.game_time)
+                            selected_ship.primary_dispatch(self.planned_destinations,self.game)
                             print(f"{selected_ship.name} has been dispatched!")
                             input("Press enter to continue")
                             return True
@@ -1047,8 +1096,9 @@ class Port:
                         break
 
 class Fleet:
-    def __init__(self,ships:list[Ship]):
+    def __init__(self,ships:list[Ship],game:Game):
         self.ships = ships
+        game.register(self)
 
 class Contract:
     def __init__(self,reward_type:Good,reward_amount:int,deadline:int,good:Good,amount:int,destination_port:Port,destination_storage:Storage,home_port:Port=None):
@@ -1080,13 +1130,14 @@ class Contract:
             self.expired = True
 
 class Player:
-    def __init__(self, storage: Storage, reputation: int, fleet: Fleet | None = None, contracts: list[Contract] | None = None, warehouses: list[Warehouse] | None = None):
+    def __init__(self, game:Game,storage: Storage, reputation: int, fleet: Fleet | None = None, contracts: list[Contract] | None = None, warehouses: list[Warehouse] | None = None):
         self.storage = storage
         self.reputation = reputation
         self.fleet = fleet
         self.contracts = list(contracts) if contracts is not None else []
         self.warehouses = list(warehouses) if warehouses is not None else []
-        #self.location = ""
+        self.game = game
+        game.register(self)
     def view_stats(self):
         print(f"Reputation: {self.reputation}")
         print(f"Fleet size: {len(self.fleet.ships) if self.fleet else 0}")
@@ -1121,13 +1172,14 @@ class Player:
                     break
 
 class Exchange:
-    def __init__(self, name: str, location:'Location', game_time: GameTime, world: World,
+    def __init__(self, name: str, location:'Location', game: Game, world: World,
                  contracts: list[Contract] | None = None, good_list: list[Good] | None = None,
                  reward_list: list[Good] | None = None, max_cargo_weight: int = 1000):
         self.name = name
         self.location = location
-        self.game_time = game_time
+        self.game = game
         self.world = world
+        game.register(self) #Register the exchange to game
         # defensive copies: new list for each instance
         self.contracts = list(contracts) if contracts is not None else []
         self.good_list = list(good_list) if good_list is not None else []
@@ -1141,10 +1193,10 @@ class Exchange:
             self.gen_daily_contracts()
     
     def gen_daily_contracts(self):
-        if len(self.good_list) == 0 or len(self.reward_list) == 0 or self.game_time is None:
-            raise ValueError("If no contracts are provided, good_list, reward_list, and GameTime must be provided. Also, make sure the day value is accurate.")
+        if len(self.good_list) == 0 or len(self.reward_list) == 0 or self.game is None:
+            raise ValueError("If no contracts are provided, good_list, reward_list, and Game must be provided. Also, make sure the day value is accurate.")
         for i in range(random.randint(3,5)):
-            self.contracts.append(gen_contract(self.good_list,self.reward_list,self.game_time.day,self.location,self.world,self.max_cargo_weight)) #We can GameTime.register contracts that are selected, dont need to do it when they are generated
+            self.contracts.append(gen_contract(self.good_list,self.reward_list,self.game.day,self.location,self.world,self.max_cargo_weight)) #We can Game.register contracts that are selected, dont need to do it when they are generated
     
     def on_day_passed(self, days):
         self.contracts = []
@@ -1223,13 +1275,35 @@ class Exchange:
                 input("Invalid selection, try again")
 
 class Location:
-    def __init__(self,name:str,description:str | None = None,coordinates:tuple[int,int] | None = None, ports:list[Port] | None = None,exchanges:list[Exchange] | None = None):
-        self.name = name
-        self.coordinates = coordinates
-        self.description = description
+    def __init__(self,name:str,game:Game,description:str | None = None,coordinates:tuple[int,int] | None = None, ports:list[Port] | None = None,exchanges:list[Exchange] | None = None):
+        self.name = name # Saved
+        self.game = game
+        self.coordinates = coordinates # Saved
+        self.description = description # Saved
         self.ports = ports if ports is not None else []
         self.exchanges = exchanges if exchanges is not None else []
-        self.randomise_coordinates()
+        if self.coordinates is None:
+            self.randomise_coordinates()
+        game.register(self)
+    
+    def save(self) -> dict:
+        save = {
+            "name":self.name,
+            "coordinates":self.coordinates,
+            "description":self.description
+        }
+        return save
+    
+    @classmethod
+    def load(cls, save: dict,game:Game):
+        instance = cls(
+            save["name"],
+            game=game,
+            coordinates = save["coordinates"],
+            description = save["description"]
+        )
+        return instance
+    
     def randomise_coordinates(self,x_range:tuple[int,int]=(0,50000),y_range:tuple[int,int]=(0,50000)):
         self.coordinates = (random.randint(x_range[0],x_range[1]),random.randint(y_range[0],y_range[1]))
     def add_port(self, port):
@@ -1240,11 +1314,31 @@ class Location:
             self.exchanges.append(exchange)
 
 class CrewRole:
-    def __init__(self,name,description,sailing_booster=0,maintenance_booster=0):
+    def __init__(self,name:str,description:str,game:Game,sailing_booster:int=0,maintenance_booster:int=0):
         self.name = name
         self.description = description
         self.sailing_booster = sailing_booster
         self.maintenance_booster = maintenance_booster
+        game.register(self)
+    def save(self) -> dict:
+        save = {
+            "name":self.name,
+            "description":self.description,
+            "sailing_booster":self.sailing_booster,
+            "maintenance_booster":self.maintenance_booster
+        }
+        return save
+    
+    @classmethod
+    def load(cls, save: dict,game:Game):
+        instance = cls(
+            save["name"],
+            save["description"],
+            game,
+            save["sailing_booster"],
+            save["maintenance_booster"]
+        )
+        return instance
 
 class Human:
     def __init__(self,max_health:int=100,strength:int=5,name:str | None = None):
@@ -1253,25 +1347,47 @@ class Human:
         self.name = name if name is not None else genname()
 
 class CrewMate(Human):
-    def __init__(self,crew_role:CrewRole,sailing_ability:int | None = None,maintenance_ability:int | None = None, name:str | None = None):
+    def __init__(self,crew_role:CrewRole,game:Game,sailing_ability:int | None = None,maintenance_ability:int | None = None, name:str | None = None):
         super().__init__(name=name)
         self.crew_role = crew_role
         self.sailing_ability = Stat(100,current_value=sailing_ability+crew_role.sailing_booster if sailing_ability is not None else random.randint(10,20)+crew_role.sailing_booster) #Base sailing ability is a random number between 10 and 20, plus any booster from their crew role
         self.maintenance_skill = Stat(100,current_value=maintenance_ability+crew_role.maintenance_booster if maintenance_ability is not None else random.randint(10,20)+crew_role.maintenance_booster) #Base maintenance skill is a random number between 10 and 20, plus any booster from their crew role
+        game.register(self)
+    
+    def save(self) -> dict:
+        save = {
+            "crew_role":self.crew_role.name,
+            "sailing_ability":self.description,
+            "sailing_booster":self.sailing_booster,
+            "maintenance_booster":self.maintenance_booster
+        }
+        return save
+    
+    @classmethod
+    def load(cls, save: dict,game:Game):
+        instance = cls(
+            save["name"],
+            save["description"],
+            game,
+            save["sailing_booster"],
+            save["maintenance_booster"]
+        )
+        return instance
 
 class Tavern:
-    def __init__(self,name:str,location:Location,crew_roles:list[CrewRole],player:Player,crew:list[CrewMate] | None = None):
+    def __init__(self,name:str,game:Game,location:Location,crew_roles:list[CrewRole],player:Player,crew:list[CrewMate] | None = None):
         self.name = name
+        self.game = game
         self.location = location
         self.crew_roles = crew_roles
         self.crew = crew if crew is not None else []
         self.player = player
-
+        game.register(self)
         self.populate_crew(10)
 
     def populate_crew(self,crew_count:int):
         for i in range(crew_count):
-            new_crew = gen_crewmate(self.crew_roles)
+            new_crew = gen_crewmate(self.crew_roles,self.game)
             self.crew.append(new_crew)
     
     def select_crew(self):

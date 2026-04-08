@@ -247,3 +247,16 @@ d - in-development version, not meant to be played, likely very unstable
 - Reworked the transfering of goods system to be more up to date with the modern table format of menus. The go back option will now CONSISTANTLY be 1
 ## Other notes
 - Made the discord link in the README work and added a little blurb for devs regarding code structure
+
+# 0.1.0a Save load
+## Added features
+### Major added features
+### Minor added features
+## Player notes
+## Bug fixes
+## Dev notes
+- GameTime changed to Game, and all references changed accordingly.
+    - This was done as Game now acts as the register tracking all objects that need to be saved, as well as the central clock. Game is a more fitting name for this new role.
+- Exchange objects now GameTime.register themselves
+    - The old system of running GameTime.register on everything that needs to be time tracked is now fully deprecated as all objects that accept a GameTime arg now register themselves
+## Other notes
