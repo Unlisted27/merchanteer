@@ -12,7 +12,7 @@ import components,building_blocks,gc,inspect
 # 3. World
 # 4. Goods
 # 5. Events - Does not need to be saved as events are constant
-# 6. Crew roles
+# 6. Crew roles - Crew roles are static, does not need to be saved
 # 7. Crew - None created on first build as crew created during runtime
 # 8. Ship types - Not need to be saved as its a constant
 # 9. Ships

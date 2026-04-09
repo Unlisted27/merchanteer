@@ -496,7 +496,7 @@ class Game:
         input("Press enter to continue")
 
 class World:
-    def __init__(self,locations:list['Location'],game:Game):
+    def __init__(self,locations:list['Location'],game:Game, id:int | None = None):
         self.locations = locations
         self.game = game
         self.id = None
@@ -517,7 +517,7 @@ class World:
         return instance
 
 class Good:
-    def __init__(self,name:str,description:str,value:int,weight:int,game:Game):
+    def __init__(self,name:str,description:str,value:int,weight:int,game:Game, id:int | None = None):
         self.name = name
         self.description = description
         self.value = value
@@ -546,7 +546,7 @@ class Good:
         return instance 
 
 class Storage:
-    def __init__(self, name: str,game:Game, cargo_weight: int = 1000, cargo: dict | None = None):
+    def __init__(self, name: str,game:Game, cargo_weight: int = 1000, cargo: dict | None = None, id:int | None = None):
         if cargo is None:
             cargo: dict[Good, int] = {}        # create a fresh dict for this instance
         self.cargo = cargo
@@ -608,7 +608,7 @@ class Storage:
         return menu("Select an item",[f"{amount} | {good.name}" for good,amount in self.cargo.items()],return_option=True,table=table_data)-1
 
 class MessengerPigeon:
-    def __init__(self,game:Game,message:str,start_coordinates:tuple[int],destination_coordinates:tuple[int]):
+    def __init__(self,game:Game,message:str,start_coordinates:tuple[int],destination_coordinates:tuple[int], id:int | None = None):
         self.game = game
         self.message = message
         self.start_coordinates = start_coordinates
@@ -681,7 +681,7 @@ class ShipType:
         self.daily_maintenance = daily_maintenance #If this is not met, the ship's toughness will degrade
 
 class Ship:
-    def __init__(self,name:str,ship_type:ShipType,event_list:list[ShipEvent],game:Game,crew:list['CrewMate']=[]):
+    def __init__(self,name:str,ship_type:ShipType,event_list:list[ShipEvent],game:Game,crew:list['CrewMate']=[], id:int | None = None):
         self.ship_type = ship_type.name
         self.game = game
         self.coordinates = (0,0)
@@ -926,14 +926,14 @@ class Ship:
         return msg
             
 class Warehouse:
-    def __init__(self,name:str,game:Game,max_weight:int = 10000):
+    def __init__(self,name:str,game:Game,max_weight:int = 10000, id:int | None = None):
         self.name = name
         self.storage = Storage(f"{name} Warehouse",game,max_weight)
         self.id = None
         game.register(self)
 
 class Port:
-    def __init__(self, name: str, location:object,world:World,game:Game,player:'Player',currency_goods:list[Good],ships: list[Ship] | None = None, warehouses: list[Warehouse] | None = None):
+    def __init__(self, name: str, location:object,world:World,game:Game,player:'Player',currency_goods:list[Good],ships: list[Ship] | None = None, warehouses: list[Warehouse] | None = None, id:int | None = None):
         self.name = name
         self.location:Location = location
         self.world = world
@@ -1189,13 +1189,13 @@ class Port:
                         break
 
 class Fleet:
-    def __init__(self,ships:list[Ship],game:Game):
+    def __init__(self,ships:list[Ship],game:Game, id:int | None = None):
         self.ships = ships
         self.id = None
         game.register(self)
 
 class Contract:
-    def __init__(self,game:Game,reward_good:Good,reward_amount:int,deadline:int,good:Good,amount:int,destination_port:Port,destination_storage:Storage,home_port:Port=None):
+    def __init__(self,game:Game,reward_good:Good,reward_amount:int,deadline:int,good:Good,amount:int,destination_port:Port,destination_storage:Storage,home_port:Port=None, id:int | None = None):
         self.reward_good = reward_good
         self.reward_amount = reward_amount
         self.deadline = deadline
@@ -1257,7 +1257,7 @@ class Contract:
             self.expired = True
 
 class Player:
-    def __init__(self, game:Game,storage: Storage, reputation: int, fleet: Fleet | None = None, contracts: list[Contract] | None = None, warehouses: list[Warehouse] | None = None):
+    def __init__(self, game:Game,storage: Storage, reputation: int, fleet: Fleet | None = None, contracts: list[Contract] | None = None, warehouses: list[Warehouse] | None = None, id:int | None = None):
         self.storage = storage
         self.reputation = reputation
         self.fleet = fleet
@@ -1302,7 +1302,7 @@ class Player:
 class Exchange:
     def __init__(self, name: str, location:'Location', game: Game, world: World,
                  contracts: list[Contract] | None = None, good_list: list[Good] | None = None,
-                 reward_list: list[Good] | None = None, max_cargo_weight: int = 1000):
+                 reward_list: list[Good] | None = None, max_cargo_weight: int = 1000, id:int | None = None):
         self.name = name
         self.location = location
         self.game = game
@@ -1404,7 +1404,7 @@ class Exchange:
                 input("Invalid selection, try again")
 
 class Location:
-    def __init__(self,name:str,game:Game,description:str | None = None,coordinates:tuple[int,int] | None = None, ports:list[Port] | None = None,exchanges:list[Exchange] | None = None):
+    def __init__(self,name:str,game:Game,description:str | None = None,coordinates:tuple[int,int] | None = None, ports:list[Port] | None = None,exchanges:list[Exchange] | None = None, id:int | None = None):
         self.name = name # Saved
         self.game = game
         self.coordinates = coordinates # Saved
@@ -1418,6 +1418,7 @@ class Location:
     
     def save(self) -> dict:
         save = {
+            "ID":self.id,
             "name":self.name,
             "coordinates":self.coordinates,
             "description":self.description
@@ -1428,7 +1429,7 @@ class Location:
     def load(cls, save: dict,game:Game):
         instance = cls(
             save["name"],
-            game=game,
+            game,
             coordinates = save["coordinates"],
             description = save["description"]
         )
@@ -1530,7 +1531,6 @@ class Tavern:
             table_data[crew_mate.name] = {
                 "Name": crew_mate.name,
                 "Role": crew_mate.crew_role.name,
-                "Health": crew_mate.health,
                 "Sailing Ability": crew_mate.sailing_ability
             }
         selected_crew = menu(f"{self.name} crew",list(table_data.keys()),return_option=True, table = table_data)
