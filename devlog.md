@@ -255,6 +255,7 @@ d - in-development version, not meant to be played, likely very unstable
 ## Player notes
 ## Bug fixes
 ## Dev notes
+- All objects that need to be tracked via save/load now have an ID value. This value is set when the object runs ```game.register(self)``` in ```__init__```
 - GameTime changed to Game, and all references changed accordingly.
     - This was done as Game now acts as the register tracking all objects that need to be saved, as well as the central clock. Game is a more fitting name for this new role.
 - Exchange objects now GameTime.register themselves

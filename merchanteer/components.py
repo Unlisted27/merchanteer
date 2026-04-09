@@ -1,7 +1,7 @@
 # Code by Unlisted_dev
 # This is the back end, really complicated stuff so be ware. 
 # If you want to mod the game, or understand how this is all implemented, check out building_blocks.py
-import os, time, random, math, shutil, game_art, style
+import os, time, random, math, json, game_art, style, uuid
 from abc import ABC, abstractmethod
 
 def distance(point1:tuple[int],point2:tuple[int]):
@@ -224,7 +224,7 @@ def get_table(data:dict|list, sep: str = "  "):
 # Generators
 
 #This whole thing was AI generated and tweaked by me. Im not making logic like ts
-def gen_contract(good_list: list,reward_list:list, current_day, current_location:'Location', world:'World', max_cargo_weight: int = 1000):
+def gen_contract(game:'Game',good_list: list,reward_list:list, current_day, current_location:'Location', world:'World', max_cargo_weight: int = 1000):
     """
     Generates a contract with random goods and a reward proportional to value,
     ensuring the total weight is under max_cargo_weight.
@@ -242,7 +242,7 @@ def gen_contract(good_list: list,reward_list:list, current_day, current_location
     amount = random.randint(int(max_amount/8), max_amount)
 
     # pick a reward good (can be the same or different)
-    reward_type = random.choice(reward_list)
+    reward_good = random.choice(reward_list)
 
     # calculate reward proportional to total value of delivered goods
     total_value = good.value * amount
@@ -263,7 +263,8 @@ def gen_contract(good_list: list,reward_list:list, current_day, current_location
         return  #no valid destination found
     # create the contract
     contract = Contract(
-        reward_type=reward_type,
+        game,
+        reward_good=reward_good,
         reward_amount=reward_amount,
         deadline=deadline,
         good=good,
@@ -381,26 +382,97 @@ class Stat:
 
 class Game:
     def __init__(self):
-        self.day = 0 #Saved
-        self.observers = []   # anything that needs to react to time passing, not saved (on load, objects register themselves with Game)
-        self.to_remove = []    # used to avoid modifying observers list while iterating (Not saved as it is temporary, objects register themselves with Game later)
-        self.notices = []    # used to store messages from observers, Not saved as it is temporary
-    
+        self.day = 0
+        self.observers = []
+        self.to_remove = []
+        self.notices = []
+        self.used_IDs = []
+
     def save(self) -> dict:
         save = {
-            "day":self.day
+            "day": self.day,
+            "game_items": []  # Will store all observer save data
         }
+        
+        # Iterate through each observer and call its save() method
+        for observer in self.observers:
+            if hasattr(observer,"save"):
+                observer_data = {
+                    "type": type(observer).__name__,  # Store the class name (e.g., "CrewMate", "Ship")
+                    "data": observer.save()  # Call the observer's save() method
+                }
+                print(observer_data)
+                save["game_items"].append(observer_data)
+        
         return save
+    
+    def save_to_file(self, filename: str):
+        """Save the entire game state to a JSON file."""
+        save_data = self.save()
+        with open(filename, 'w') as f:
+            json.dump(save_data, f, indent=2)
+        print(f"Game saved to {filename}")
     
     @classmethod
     def load(cls, save: dict):
-        instance = cls()  # cls is Game class, so cls() creates new Game()
+        instance = cls()
         instance.day = save["day"]
+        # Don't load observers here - they'll be loaded separately
         return instance
+    
+    @classmethod
+    def load_from_file(cls, filename: str):
+        """Load the entire game state from a JSON file."""
+        with open(filename, 'r') as f:
+            save_data = json.load(f)
+        
+        # Create the Game instance
+        # Step 1
+        game = cls.load(save_data)
+        
+        # Now load each observer (you'll need a registry of class types)
+        for item_data in save_data["game_items"]:
+            item_type = item_data["type"]
+            item_save = item_data["data"]
+            
+            # Load the observer based on its type
+            if item_type == "Location":
+                Location.load(item_save,game)
+            elif item_type == "World":
+                World.load(item_save,game)
+            elif item_type == "Good":
+                Good.load(item_save,game)
+            elif item_type == "Contract":
+                Contract.load(item_save,game)
+            elif item_type == "CrewRole":
+                CrewRole.load(item_save,game)
+            elif item_type == "CrewMate":
+                CrewMate.load(item_save, game)
+            elif item_type == "Ship":
+                Ship.load(item_save, game)
+            #elif item_type == "Fleet":
+            # Add more types as needed
+        
+        return game
+    def scan_loaded_objects(self,item_type,item_name):
+        for item in self.observers:
+            if type(item) == item_type:
+                if hasattr(item,"name"):
+                    if item.name == item_name:
+                        return item
+                else:
+                    raise ValueError("Could not scan for loaded item as item provided has no 'name' property! \nAborting load...")
+        else:
+            raise ValueError(f"Could not find object {item_name} in loaded items! \nAborting load...")
 
+    # Game methods
     def register(self, obj):
         """Register an object that has an `on_day_passed(days:int)` method."""
         self.observers.append(obj)
+        id = str(uuid.uuid4())
+        while id in self.used_IDs:
+            id = str(uuid.uuid4())
+        obj.id = id
 
     def unregister(self, obj):
         self.to_remove.append(obj)
@@ -410,9 +482,10 @@ class Game:
         """Advance the global clock and notify observers."""
         self.day += days
         for o in self.observers:
-            msg = o.on_day_passed(self.day)
-            if msg:
-                daily_notices.append(msg)
+            if hasattr(o,"on_day_passed"):
+                msg = o.on_day_passed(self.day)
+                if msg:
+                    daily_notices.append(msg)
         for obj in self.to_remove:
             if obj in self.observers:
                 self.observers.remove(obj)
@@ -426,11 +499,12 @@ class World:
     def __init__(self,locations:list['Location'],game:Game):
         self.locations = locations
         self.game = game
+        self.id = None
         game.register(self)
 
     def save(self) -> dict:
         save = {
-            "locations":self.locations
+            "locations":[location.name for location in self.locations]
         }
         return save
     
@@ -448,6 +522,7 @@ class Good:
         self.description = description
         self.value = value
         self.weight = weight
+        self.id = None
         game.register(self)
     
     def save(self) -> dict:
@@ -471,12 +546,15 @@ class Good:
         return instance 
 
 class Storage:
-    def __init__(self, name: str, cargo_weight: int = 1000, cargo: dict | None = None):
+    def __init__(self, name: str,game:Game, cargo_weight: int = 1000, cargo: dict | None = None):
         if cargo is None:
             cargo: dict[Good, int] = {}        # create a fresh dict for this instance
         self.cargo = cargo
         self.name = name
         self.cargo_weight = Stat(cargo_weight,current_value=0)
+        self.game = game
+        self.id = None
+        game.register(self)
 
     def calc_cargo(self):
         self.cargo_weight.current_value = 0
@@ -536,6 +614,7 @@ class MessengerPigeon:
         self.start_coordinates = start_coordinates
         self.destination_coordinates = destination_coordinates
         self.travel_time = distance(start_coordinates,destination_coordinates) #Calculate travel time based on distance
+        self.id = None
         self.game.register(self) #Register to game time so it can track travel time
     def on_day_passed(self, current_day):
         if self.travel_time > 0:
@@ -606,6 +685,7 @@ class Ship:
         self.ship_type = ship_type.name
         self.game = game
         self.coordinates = (0,0)
+        self.id = None
         self.game.register(self) #Register to game time so it can track daily needs and events
         #SHIP STATS
         self.health = Stat(ship_type.health)
@@ -618,7 +698,7 @@ class Ship:
         self.crew_amount = Stat(ship_type.crew_capacity,0,0)
         self.crew:list[CrewMate] = crew
         #Affectable ship properties (to be adjusted by outside factors)
-        self.storage = Storage(f"{name} Cargo", ship_type.cargo_capacity)
+        self.storage = Storage(f"{name} Cargo",self.game, ship_type.cargo_capacity)
         self.is_dispatched = False
         self.travel_progress = Stat(0,0,0)
         self.destinations:list[Location] = []
@@ -644,6 +724,10 @@ class Ship:
         self.is_under_repair = False
         self.daily_repair_amount = 0
 
+    def save(self) -> dict:
+        save = {
+            ""
+        }
     
     #NON-USER FRIENDLY FUNCTIONS (NO UI)
     def start_repairs(self,daily_repair_amount:int):
@@ -844,7 +928,8 @@ class Ship:
 class Warehouse:
     def __init__(self,name:str,game:Game,max_weight:int = 10000):
         self.name = name
-        self.storage = Storage(f"{name} Warehouse",max_weight)
+        self.storage = Storage(f"{name} Warehouse",game,max_weight)
+        self.id = None
         game.register(self)
 
 class Port:
@@ -864,6 +949,9 @@ class Port:
             for ship in self.ships:
                 ship.current_port = self
         self.planned_destinations:list[Location] = []
+        
+        self.id = None
+        game.register(self)
     def add_ship(self, ship: Ship):
         self.ships.append(ship)
         ship.current_port = self
@@ -1103,11 +1191,12 @@ class Port:
 class Fleet:
     def __init__(self,ships:list[Ship],game:Game):
         self.ships = ships
+        self.id = None
         game.register(self)
 
 class Contract:
-    def __init__(self,reward_type:Good,reward_amount:int,deadline:int,good:Good,amount:int,destination_port:Port,destination_storage:Storage,home_port:Port=None):
-        self.reward_type = reward_type
+    def __init__(self,game:Game,reward_good:Good,reward_amount:int,deadline:int,good:Good,amount:int,destination_port:Port,destination_storage:Storage,home_port:Port=None):
+        self.reward_good = reward_good
         self.reward_amount = reward_amount
         self.deadline = deadline
         self.good = good
@@ -1119,6 +1208,39 @@ class Contract:
         self.complete = False
         self.complete_notice = False
         self.contract_travel_time = None
+        self.game = game
+        self.id = None
+        game.register(self)
+
+
+    def save(self):
+        save = {
+            "reward_good":self.reward_good,
+            "reward_amount":self.reward_amount,
+            "deadline":self.deadline,
+            "good":self.good,
+            "amount":self.amount,
+            "destination_port":self.destination_port,
+            "destination_storage":self.destination_storage,
+            "home_port":self.home_port,
+            "expired":self.expired,
+            "complete":self.complete,
+            "complete_notice":self.complete_notice,
+            "contract_travel_time":self.contract_travel_time
+        }
+        return save
+
+    @classmethod
+    def load(cls,save:dict,game:Game):
+        reward_good = game.scan_loaded_objects(Good,save["reward_good"])
+        good = game.scan_loaded_objects(Good,save)
+        instance = cls(
+            reward_good,
+            save["reward_amount"],
+            save["deadline"]
+            
+        )
+
     def check_completion(self):
         if self.destination_storage.cargo.get(self.good,0) >= self.amount:
             return True
@@ -1142,6 +1264,7 @@ class Player:
         self.contracts = list(contracts) if contracts is not None else []
         self.warehouses = list(warehouses) if warehouses is not None else []
         self.game = game
+        self.id = None
         game.register(self)
     def view_stats(self):
         print(f"Reputation: {self.reputation}")
@@ -1151,7 +1274,7 @@ class Player:
         table_data = {}
         for contract in self.contracts:
                 status = "Expired" if contract.expired else f"Due day {contract.deadline}"
-                reward = f"{contract.reward_amount} {contract.reward_type.name}"
+                reward = f"{contract.reward_amount} {contract.reward_good.name}"
                 table_data[contract.good.name] = {
                     "Amount": contract.amount,
                     "Good": contract.good.name,
@@ -1184,6 +1307,7 @@ class Exchange:
         self.location = location
         self.game = game
         self.world = world
+        self.id = None
         game.register(self) #Register the exchange to game
         # defensive copies: new list for each instance
         self.contracts = list(contracts) if contracts is not None else []
@@ -1201,7 +1325,7 @@ class Exchange:
         if len(self.good_list) == 0 or len(self.reward_list) == 0 or self.game is None:
             raise ValueError("If no contracts are provided, good_list, reward_list, and Game must be provided. Also, make sure the day value is accurate.")
         for i in range(random.randint(3,5)):
-            self.contracts.append(gen_contract(self.good_list,self.reward_list,self.game.day,self.location,self.world,self.max_cargo_weight)) #We can Game.register contracts that are selected, dont need to do it when they are generated
+            self.contracts.append(gen_contract(self.game,self.good_list,self.reward_list,self.game.day,self.location,self.world,self.max_cargo_weight)) #We can Game.register contracts that are selected, dont need to do it when they are generated
     
     def on_day_passed(self, days):
         self.contracts = []
@@ -1212,7 +1336,7 @@ class Exchange:
 
         for i, c in enumerate(self.contracts, start=1):
             status = "Expired" if c.expired else f"Due day {c.deadline}"
-            reward = f"{c.reward_amount} {c.reward_type.name}"
+            reward = f"{c.reward_amount} {c.reward_good.name}"
 
             # Use i as the key for each contract
             table_data[i] = {
@@ -1267,7 +1391,7 @@ class Exchange:
                     except Exception:
                         break
                     selected_warehouse:Warehouse = player.warehouses[answer] 
-                    if selected_warehouse.storage.add_to_cargo(chosen_contract.reward_type,chosen_contract.reward_amount):
+                    if selected_warehouse.storage.add_to_cargo(chosen_contract.reward_good,chosen_contract.reward_amount):
                         input("Contract cashed out! (press enter to continue)")
                         player.contracts.remove(chosen_contract)
                         del chosen_contract
@@ -1289,6 +1413,7 @@ class Location:
         self.exchanges = exchanges if exchanges is not None else []
         if self.coordinates is None:
             self.randomise_coordinates()
+        self.id = None
         game.register(self)
     
     def save(self) -> dict:
@@ -1324,6 +1449,7 @@ class CrewRole:
         self.description = description
         self.sailing_booster = sailing_booster
         self.maintenance_booster = maintenance_booster
+        self.id = None
         game.register(self)
     def save(self) -> dict:
         save = {
@@ -1355,25 +1481,29 @@ class CrewMate(Human):
     def __init__(self,crew_role:CrewRole,game:Game,sailing_ability:int | None = None,maintenance_ability:int | None = None, name:str | None = None):
         super().__init__(name=name)
         self.crew_role = crew_role
-        self.sailing_ability = Stat(100,current_value=sailing_ability+crew_role.sailing_booster if sailing_ability is not None else random.randint(10,20)+crew_role.sailing_booster) #Base sailing ability is a random number between 10 and 20, plus any booster from their crew role
-        self.maintenance_skill = Stat(100,current_value=maintenance_ability+crew_role.maintenance_booster if maintenance_ability is not None else random.randint(10,20)+crew_role.maintenance_booster) #Base maintenance skill is a random number between 10 and 20, plus any booster from their crew role
+        self.sailing_ability = Stat(100,current_value=sailing_ability if sailing_ability is not None else random.randint(10,20)+crew_role.sailing_booster) #Base sailing ability is a random number between 10 and 20, plus any booster from their crew role
+        self.maintenance_skill = Stat(100,current_value=maintenance_ability if maintenance_ability is not None else random.randint(10,20)+crew_role.maintenance_booster) #Base maintenance skill is a random number between 10 and 20, plus any booster from their crew role
+        self.id = None
         game.register(self)
     
     def save(self) -> dict:
         save = {
             "crew_role":self.crew_role.name,
-            "sailing_ability":self.sailing_ability.as_tuple(),
-            "maintenance_skill":self.maintenance_skill.as_tuple()
+            "sailing_ability":self.sailing_ability.current_value,
+            "maintenance_skill":self.maintenance_skill.current_value,
+            "name":self.name
         }
         return save
     
     @classmethod
     def load(cls, save: dict,game:Game):
+        role = game.scan_loaded_objects(CrewRole,save["crew_role"])
         instance = cls(
-            save["crew_role"],
+            role,
             game,
             save["sailing_ability"],
-            save["maintenance_skill"]
+            save["maintenance_skill"],
+            save["name"]
         )
         return instance
 
@@ -1385,6 +1515,7 @@ class Tavern:
         self.crew_roles = crew_roles
         self.crew = crew if crew is not None else []
         self.player = player
+        self.id = None
         game.register(self)
         self.populate_crew(10)
 

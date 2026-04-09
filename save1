@@ -1,0 +1,256 @@
+{
+  "day": 0,
+  "game_items": [
+    {
+      "type": "Location",
+      "data": {
+        "name": "Grandure",
+        "coordinates": [
+          20763,
+          25456
+        ],
+        "description": "A bustling trade city with a large port."
+      }
+    },
+    {
+      "type": "Location",
+      "data": {
+        "name": "Clammer",
+        "coordinates": [
+          2627,
+          29197
+        ],
+        "description": "A small fishing village known for its seafood."
+      }
+    },
+    {
+      "type": "Location",
+      "data": {
+        "name": "Old Cove",
+        "coordinates": [
+          42584,
+          32490
+        ],
+        "description": "One of the first foreign settlements, old cove has survived through it all."
+      }
+    },
+    {
+      "type": "World",
+      "data": {
+        "locations": [
+          "Grandure",
+          "Clammer",
+          "Old Cove"
+        ]
+      }
+    },
+    {
+      "type": "Good",
+      "data": {
+        "name": "gold",
+        "description": "shiny",
+        "value": 1,
+        "weigth": 0.1
+      }
+    },
+    {
+      "type": "Good",
+      "data": {
+        "name": "silver",
+        "description": "less-shiny",
+        "value": 0.5,
+        "weigth": 0.1
+      }
+    },
+    {
+      "type": "Good",
+      "data": {
+        "name": "bread",
+        "description": "staple food",
+        "value": 0.1,
+        "weigth": 0.05
+      }
+    },
+    {
+      "type": "Good",
+      "data": {
+        "name": "fish",
+        "description": "protein food",
+        "value": 0.3,
+        "weigth": 1
+      }
+    },
+    {
+      "type": "Good",
+      "data": {
+        "name": "wood",
+        "description": "building material",
+        "value": 0.5,
+        "weigth": 2
+      }
+    },
+    {
+      "type": "Good",
+      "data": {
+        "name": "cloth",
+        "description": "fabric material",
+        "value": 0.3,
+        "weigth": 0.1
+      }
+    },
+    {
+      "type": "Good",
+      "data": {
+        "name": "rice",
+        "description": "staple food",
+        "value": 0.2,
+        "weigth": 1
+      }
+    },
+    {
+      "type": "CrewRole",
+      "data": {
+        "name": "Buckaneer",
+        "description": "A regular sailor, well equiped in all areas but not excelling in any.",
+        "sailing_booster": 0,
+        "maintenance_booster": 0
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "Buckaneer",
+        "sailing_ability": 15,
+        "maintenance_skill": 17,
+        "name": "Faustsantha"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "Buckaneer",
+        "sailing_ability": 18,
+        "maintenance_skill": 18,
+        "name": "Lyduelmar"
+      }
+    },
+    {
+      "type": "Ship",
+      "data": null
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "Buckaneer",
+        "sailing_ability": 12,
+        "maintenance_skill": 18,
+        "name": "Katard"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "Buckaneer",
+        "sailing_ability": 10,
+        "maintenance_skill": 17,
+        "name": "Ysmia"
+      }
+    },
+    {
+      "type": "Ship",
+      "data": null
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "Buckaneer",
+        "sailing_ability": 14,
+        "maintenance_skill": 11,
+        "name": "Camier"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "Buckaneer",
+        "sailing_ability": 11,
+        "maintenance_skill": 17,
+        "name": "Chrdra"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "Buckaneer",
+        "sailing_ability": 10,
+        "maintenance_skill": 13,
+        "name": "Thorfneernard"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "Buckaneer",
+        "sailing_ability": 13,
+        "maintenance_skill": 12,
+        "name": "Denrick"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "Buckaneer",
+        "sailing_ability": 11,
+        "maintenance_skill": 13,
+        "name": "Athaa"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "Buckaneer",
+        "sailing_ability": 19,
+        "maintenance_skill": 11,
+        "name": "Warier"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "Buckaneer",
+        "sailing_ability": 16,
+        "maintenance_skill": 19,
+        "name": "Orahana"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "Buckaneer",
+        "sailing_ability": 20,
+        "maintenance_skill": 13,
+        "name": "Cyrdred"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "Buckaneer",
+        "sailing_ability": 17,
+        "maintenance_skill": 18,
+        "name": "Ingadyn"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "Buckaneer",
+        "sailing_ability": 20,
+        "maintenance_skill": 14,
+        "name": "Leifstonia"
+      }
+    },
+    {
+      "type": "Contract",
+      "data": {
+        "reward_good": 

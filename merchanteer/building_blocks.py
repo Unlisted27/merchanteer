@@ -77,7 +77,7 @@ clammer_warehouse = components.Warehouse("Clammer Warehouse",game)
 old_cove_warehouse = components.Warehouse("Old Cove Warehouse",game)
 
 #Player
-player = components.Player(game,components.Storage("Player Inventory",100),0,fleet=player_fleet,warehouses=[theHold])
+player = components.Player(game,components.Storage("Player Inventory",game,100),0,fleet=player_fleet,warehouses=[theHold])
 
 #Port creation
 portClammer = components.Port("port Clammer",clammer,world,game,player,currency_goods,warehouses=[clammer_warehouse])

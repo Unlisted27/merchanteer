@@ -1,4 +1,4 @@
-import components, building_blocks, game_art, save_load
+import components, building_blocks, game_art
 
 #Art
 title = game_art.title
@@ -19,7 +19,7 @@ def start_exchange(exchange:components.Exchange,player:components.Player):
                 components.clear_terminal()
                 contract = exchange.select_contract(player)
                 if type(contract) is components.Contract:
-                    building_blocks.game_time.register(contract)
+                    building_blocks.game.register(contract)
                     player.contracts.append(contract)
             case 2:                              # option 2
                 exchange.cashout_contracts(player)
@@ -36,7 +36,7 @@ def __main__():
         case 1:
             while True:
                 components.clear_terminal()
-                print(f"Day {building_blocks.game_time.day}")
+                print(f"Day {building_blocks.game.day}")
                 answer = components.menu("Game menu",["General actions","Bargain house","Port","Tavern","Next day","Save and quit"],art = game_art.title) 
                 match answer:                           # <─ use match instead of “case answer:”
                     case 1:      
@@ -45,8 +45,8 @@ def __main__():
                             match answer:
                                 case 1:
                                     components.clear_terminal()
-                                    if len(building_blocks.game_time.notices) > 0:
-                                        for notice in building_blocks.game_time.notices:
+                                    if len(building_blocks.game.notices) > 0:
+                                        for notice in building_blocks.game.notices:
                                             print(notice)
                                     else:
                                         print("No notices yet")
@@ -66,7 +66,7 @@ def __main__():
                         building_blocks.fishHeadTavern.select_crew()
                     case 5:   
                         components.clear_terminal()                           
-                        building_blocks.game_time.advance()
+                        building_blocks.game.advance()
                         print("A new day begins...")
                     case 6:                             
                         #print("Saving game...")

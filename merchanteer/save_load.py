@@ -24,11 +24,12 @@ import components,building_blocks,gc,inspect
 # 15. Exchanges
 
 # Order of loading from a save:
-# 1. Game /
+# 1. Game object is created, day value is loaded in. game object tracks loaded objects via its observers list
 # 2. Location /
 # 3. World /
 # 4. Goods /
-# 5. Crew roles /
+# 5. Contracts
+# 5. Crew roles
 # 6. Crew
 # 7. Ships
 # 8. Fleets
@@ -38,19 +39,26 @@ import components,building_blocks,gc,inspect
 # 12. Taverns
 # 13. Exchanges
 
-# NEED TO IMPLEMENT loaded_objects FOR OBJECTS THAT REQUIRE OTHER OBJECTS ON INIT
-# LEFT OFF ON LINE 1356
-
-
 # NO NEED FOR A SECOND PASS, OBJECTS THAT BECOME CHILDREN SHOULD AUTOMATICALLY ADD THEMSELVES TO THEIR PARENTS
 # Example: Port objects automatically add themselves to their parent location objects
 game = building_blocks.game
-print(building_blocks.grandure.coordinates)
-save_data = building_blocks.grandure.save()
-print(save_data)
-loaded_location = components.Location.load(save_data,game)
-print(loaded_location.coordinates)
+#print(building_blocks.grandure.coordinates)
+#save_data = building_blocks.grandure.save()
+#print(save_data)
+#loaded_location = components.Location.load(save_data,game)
+#print(loaded_location.coordinates)
 
+#crewRole1 = components.CrewRole("ROLE 1","A ROLE",game)
+#crew1 = components.gen_crewmate([crewRole1],game)
+#print(f"{crew1.name} {crew1.crew_role.name}")
+#save_data = crew1.save()
+#print(save_data)
+#loaded_crew = components.CrewMate.load(save_data,game)
+#print(f"{loaded_crew.name} {loaded_crew.crew_role.name}")
+game.save_to_file("save1")
+input("Press enter to load data")
+game.load_from_file("save1")
+print(game.observers[0].name)
 #Save load template:
 #
 #def save(self) -> dict:
