@@ -28,20 +28,22 @@ import components,building_blocks,gc,inspect
 # 15. Exchanges
 
 # Order of loading from a save:
-# 1. Game object is created, day value is loaded in. game object tracks loaded objects via its observers list
-# 2. Location /
-# 3. World /
-# 4. Goods /
-# 5. Contracts /
-# 5. Crew roles 
-# 6. Crew
-# 7. Ships
-# 8. Fleets
-# 9. Warehouses
-# 10. Player
-# 11. Ports
-# 12. Taverns
-# 13. Exchanges
+# . Game object is created, day value is loaded in. game object tracks loaded objects via its observers list
+# . Location /
+# . World /
+# . Warehouses
+# . Ports
+# . Goods /
+# . Contracts /
+# . Crew roles /
+# . Crew /
+# . Ship Type
+# . Ships
+# . Fleets
+# . Player
+# . Taverns
+# . Exchanges
+# . MessengerPigeon
 
 # NO NEED FOR A SECOND PASS, OBJECTS THAT BECOME CHILDREN SHOULD AUTOMATICALLY ADD THEMSELVES TO THEIR PARENTS
 # Example: Port objects automatically add themselves to their parent location objects

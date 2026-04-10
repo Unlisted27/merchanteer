@@ -64,7 +64,8 @@ buckaneer = components.CrewRole("Buckaneer","A regular sailor, well equiped in a
 # Crew
 
 #Ship types
-ketch = components.ShipType("Ketch")
+ketch = components.ShipType(game,"Ketch")
+
 #ships
 theSliver = components.Ship("the Sliver",ketch,event_list,game,crew=[components.gen_crewmate([buckaneer],game),components.gen_crewmate([buckaneer],game)])
 theSplinter = components.Ship("the Splinter",ketch,event_list,game,crew=[components.gen_crewmate([buckaneer],game),components.gen_crewmate([buckaneer],game)])
@@ -80,12 +81,12 @@ old_cove_warehouse = components.Warehouse("Old Cove Warehouse",game)
 player = components.Player(game,components.Storage("Player Inventory",game,100),0,fleet=player_fleet,warehouses=[theHold])
 
 #Port creation
-portClammer = components.Port("port Clammer",clammer,world,game,player,currency_goods,warehouses=[clammer_warehouse])
-portGrandure = components.Port("port Grandure",grandure,world,game,player,currency_goods,ships=[theSliver,theSplinter],warehouses=[theHold])
-portOldCove = components.Port("Old Cove Port",old_cove,world,game,player,currency_goods,warehouses=[old_cove_warehouse])
+portClammer = components.Port("port Clammer",clammer,world,game,currency_goods,warehouses=[clammer_warehouse])
+portGrandure = components.Port("port Grandure",grandure,world,game,currency_goods,ships=[theSliver,theSplinter],warehouses=[theHold])
+portOldCove = components.Port("Old Cove Port",old_cove,world,game,currency_goods,warehouses=[old_cove_warehouse])
 
 # Taverns
-fishHeadTavern = components.Tavern("Fish Head Tavern",game,clammer,[buckaneer],player)
+fishHeadTavern = components.Tavern("Fish Head Tavern",game,grandure,[buckaneer],player)
 
 #Exchange
 theBargainHouse = components.Exchange("the Bargain House",grandure,game, world,good_list=trade_goods,reward_list=currency_goods)

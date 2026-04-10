@@ -60,7 +60,7 @@ def __main__():
                         start_exchange(theBargainHouse,player)
                     case 3:
                         components.clear_terminal()
-                        portGrandure.manage_ships()
+                        portGrandure.manage_ships(player)
                     case 4:
                         components.clear_terminal()
                         building_blocks.fishHeadTavern.select_crew()

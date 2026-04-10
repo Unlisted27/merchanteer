@@ -1,6 +1,8 @@
 # Code by Unlisted_dev
 # This is the back end, really complicated stuff so be ware. 
 # If you want to mod the game, or understand how this is all implemented, check out building_blocks.py
+from __future__ import annotations
+from collections import defaultdict #IDK what this does
 import os, time, random, math, json, game_art, style, uuid
 from abc import ABC, abstractmethod
 
@@ -380,6 +382,11 @@ class Stat:
         """Returns tuple(max,min,current)"""
         return(self.max_value,self.min_value,self.current_value)
 
+    @classmethod
+    def from_tuple(cls,tuple):
+        instance = cls(tuple[0],tuple[1],tuple[2])
+        return instance
+
 class Game:
     def __init__(self):
         self.day = 0
@@ -429,35 +436,40 @@ class Game:
         # Create the Game instance
         # Step 1
         game = cls.load(save_data)
+
+        grouped = defaultdict(list)
+
+        for item in save_data["game_items"]:
+            grouped[item["type"]].append(item["data"])
         
-        # Now load each observer (you'll need a registry of class types)
-        for item_data in save_data["game_items"]:
-            item_type = item_data["type"]
-            item_save = item_data["data"]
-            
-            # Load the observer based on its type
-            if item_type == "Location":
-                Location.load(item_save,game)
-            elif item_type == "World":
-                World.load(item_save,game)
-            elif item_type == "Good":
-                Good.load(item_save,game)
-            elif item_type == "Contract":
-                Contract.load(item_save,game)
-            elif item_type == "CrewRole":
-                CrewRole.load(item_save,game)
-            elif item_type == "CrewMate":
-                CrewMate.load(item_save, game)
-            elif item_type == "Ship":
-                Ship.load(item_save, game)
-            #elif item_type == "Fleet":
-            # Add more types as needed
-        
+        LOAD_ORDER = [
+            "World",
+            "Location",
+            "Good",
+            "CrewRole",
+            "CrewMate",
+            "Contract",
+            "Ship"
+        ]
+
+        CLASS_REGISTRY = {
+            "World": World,
+            "Location": Location,
+            "Good": Good,
+            "CrewRole": CrewRole,
+            "CrewMate": CrewMate,
+            "Contract": Contract,
+            "Ship": Ship
+        }
+        for item_type in LOAD_ORDER:
+            for item_data in grouped[item_type]:
+                CLASS_REGISTRY[item_type].load(item_data, game)
         return game
+    
     def scan_loaded_objects(self,item_type,item_id):
         for item in self.observers:
             if type(item) == item_type:
-                if hasattr(item,"id"):
+                if hasattr(item,"ID"):
                     if item.ID == item_id:
                         return item
                 else:
@@ -496,6 +508,48 @@ class Game:
             print(notice)
         input("Press enter to continue")
 
+class Location:
+    def __init__(self,name:str,game:Game,description:str | None = None,coordinates:tuple[int,int] | None = None, ports:list['Port'] | None = None,exchanges:list['Exchange'] | None = None, ID:str | None = None):
+        self.name = name # Saved
+        self.game = game
+        self.coordinates = coordinates # Saved
+        self.description = description # Saved
+        self.ports = ports if ports is not None else []
+        self.exchanges = exchanges if exchanges is not None else []
+        if self.coordinates is None:
+            self.randomise_coordinates()
+        self.ID = ID if ID is not None else None
+        game.register(self)
+    
+    def save(self) -> dict:
+        save = {
+            "ID":self.ID,
+            "name":self.name,
+            "coordinates":self.coordinates,
+            "description":self.description
+        }
+        return save
+    
+    @classmethod
+    def load(cls, save: dict,game:Game):
+        instance = cls(
+            save["name"],
+            game,
+            coordinates = save["coordinates"],
+            description = save["description"],
+            id=save["ID"]
+        )
+        return instance
+    
+    def randomise_coordinates(self,x_range:tuple[int,int]=(0,50000),y_range:tuple[int,int]=(0,50000)):
+        self.coordinates = (random.randint(x_range[0],x_range[1]),random.randint(y_range[0],y_range[1]))
+    def add_port(self, port):
+        if port not in self.ports:
+            self.ports.append(port)
+    def add_exchange(self, exchange):
+        if exchange not in self.exchanges:
+            self.exchanges.append(exchange)
+
 class World:
     def __init__(self,locations:list['Location'],game:Game, ID:str | None = None):
         self.locations = locations
@@ -506,7 +560,7 @@ class World:
     def save(self) -> dict:
         save = {
             "locations":[location.name for location in self.locations],
-            "id":self.id
+            "ID":self.ID
         }
         return save
     
@@ -515,7 +569,7 @@ class World:
         instance = cls(
             locations=save["locations"],
             game=game,
-            id=save["id"]
+            id=save["ID"]
         )
         return instance
 
@@ -534,7 +588,7 @@ class Good:
             "description":self.description,
             "value":self.value,
             "weigth":self.weight,
-            "id":self.id
+            "ID":self.ID
         }
         return save
     
@@ -546,7 +600,7 @@ class Good:
             save["value"],
             save["weight"],
             game,
-            ID = save["id"]
+            ID = save["ID"]
         )
         return instance 
 
@@ -612,22 +666,146 @@ class Storage:
         table_data = self.get_invent_table()
         return menu("Select an item",[f"{amount} | {good.name}" for good,amount in self.cargo.items()],return_option=True,table=table_data)-1
 
-class MessengerPigeon:
-    def __init__(self,game:Game,message:str,start_coordinates:tuple[int],destination_coordinates:tuple[int], ID:str | None = None):
+class Contract:
+    def __init__(self,game:Game,reward_good:Good,reward_amount:int,deadline:int,good:Good,amount:int,destination_port:'Port',destination_storage:Storage,home_port:'Port'=None, ID:str | None = None):
+        self.reward_good = reward_good
+        self.reward_amount = reward_amount
+        self.deadline = deadline
+        self.good = good
+        self.amount = amount
+        self.destination_port = destination_port
+        self.destination_storage = destination_storage
+        self.home_port = home_port
+        self.expired = False
+        self.complete = False
+        self.complete_notice = False
+        self.contract_travel_time:int = None
         self.game = game
-        self.message = message
-        self.start_coordinates = start_coordinates
-        self.destination_coordinates = destination_coordinates
-        self.travel_time = distance(start_coordinates,destination_coordinates) #Calculate travel time based on distance
         self.ID = ID if ID is not None else None
-        self.game.register(self) #Register to game time so it can track travel time
-    def on_day_passed(self, current_day):
-        if self.travel_time > 0:
-            self.travel_time -= 1
-            if self.travel_time <= 0:
-                self.game.unregister(self) #Unregister from game time, makes no more references and pyhton cleans it up automatically
-                return f"A messenger pigeon has delivered a message:\n {self.message}"
-        return None
+        game.register(self)
+
+
+    def save(self):
+        save = {
+            "reward_good":self.reward_good.id,
+            "reward_amount":self.reward_amount,
+            "deadline":self.deadline,
+            "good":self.good.id,
+            "amount":self.amount,
+            "destination_port":self.destination_port.id,
+            "destination_storage":self.destination_storage.id,
+            "home_port":self.home_port.id,
+            "expired":self.expired,
+            "complete":self.complete,
+            "complete_notice":self.complete_notice,
+            "contract_travel_time":self.contract_travel_time,
+            "ID":self.ID
+        }
+        return save
+
+    @classmethod
+    def load(cls,save:dict,game:Game):
+        reward_good = game.scan_loaded_objects(Good,save["reward_good"])
+        good = game.scan_loaded_objects(Good,save["good"])
+        destination_port = game.scan_loaded_objects(Good,save["destination_port"])
+        destination_storage = game.scan_loaded_objects(Good,save["destination_storage"])
+        home_port = game.scan_loaded_objects(Good,save["home_port"])
+        instance = cls(
+            game,
+            reward_good,
+            save["reward_amount"],
+            save["deadline"],
+            good,
+            save["amount"],
+            destination_port,
+            destination_storage,
+            home_port,
+            save["ID"]
+        )
+        return instance
+
+    def check_completion(self):
+        if self.destination_storage.cargo.get(self.good,0) >= self.amount:
+            return True
+        return False
+    def on_day_passed(self, day):
+        if self.check_completion(): #Check if contract is complete
+            if not self.complete: #Check if it was already complete
+                self.contract_travel_time = day + random.randint(2,5) #Random travel time for reward delivery
+                self.complete = True
+        if day == self.contract_travel_time and self.complete is True and self.complete_notice is False and self.expired is False: #Check if reward should be delivered
+            self.complete_notice = True
+            return f"Contract for {self.amount} {self.good.name} is ready to be cashed out!"
+        if self.deadline < day and self.complete is False:
+            self.expired = True
+
+class CrewRole:
+    def __init__(self,name:str,description:str,game:Game,sailing_booster:int=0,maintenance_booster:int=0, ID:str | None=None):
+        self.name = name
+        self.description = description
+        self.sailing_booster = sailing_booster
+        self.maintenance_booster = maintenance_booster
+        self.ID = ID if ID is not None else None
+        game.register(self)
+    def save(self) -> dict:
+        save = {
+            "name":self.name,
+            "description":self.description,
+            "sailing_booster":self.sailing_booster,
+            "maintenance_booster":self.maintenance_booster,
+            "ID":self.ID
+            }
+        return save
+    
+    @classmethod
+    def load(cls, save: dict,game:Game):
+        instance = cls(
+            save["name"],
+            save["description"],
+            game,
+            save["sailing_booster"],
+            save["maintenance_booster"],
+            ID=save["ID"]
+        )
+        return instance
+
+class Human:
+    def __init__(self,max_health:int=100,strength:int=5,name:str | None = None):
+        self.health = Stat(max_health)
+        self.strength = strength
+        self.name = name if name is not None else genname()
+
+class CrewMate(Human):
+    def __init__(self,crew_role:CrewRole,game:Game,sailing_ability:int | None = None,maintenance_ability:int | None = None, name:str | None = None, ID:str | None = None):
+        super().__init__(name=name)
+        self.crew_role = crew_role
+        self.sailing_ability = Stat(100,current_value=sailing_ability if sailing_ability is not None else random.randint(10,20)+crew_role.sailing_booster) #Base sailing ability is a random number between 10 and 20, plus any booster from their crew role
+        self.maintenance_skill = Stat(100,current_value=maintenance_ability if maintenance_ability is not None else random.randint(10,20)+crew_role.maintenance_booster) #Base maintenance skill is a random number between 10 and 20, plus any booster from their crew role
+        self.ID = ID if ID is not None else None
+        game.register(self)
+    
+    def save(self) -> dict:
+        save = {
+            "crew_role":self.crew_role.name,
+            "sailing_ability":self.sailing_ability.current_value,
+            "maintenance_skill":self.maintenance_skill.current_value,
+            "name":self.name,
+            "ID":self.ID
+        }
+        return save
+    
+    @classmethod
+    def load(cls, save: dict,game:Game):
+        role = game.scan_loaded_objects(CrewRole,save["crew_role"])
+        instance = cls(
+            role,
+            game,
+            save["sailing_ability"],
+            save["maintenance_skill"],
+            save["name"],
+            ID=save["ID"]
+        )
+        return instance
 
 #This class is abstract, meaning it cannot be instantiated without being inherited from, and any class that inherits from it must implement run_event
 class ShipEvent(ABC):
@@ -673,45 +851,74 @@ class ShipNeed:
                 raise AttributeError(f"Parent ship does not have attribute {self.ship_stat_tie_in}")
 
 class ShipType:
-    def __init__(self,name:str,health:int=100,cargo_capacity:int=48000,crew_capacity:int=10,max_sailing_efficiency:int=50,toughness:int=35,daily_maintenance:int=10):
+    def __init__(self,game:Game,name:str,health:int=100,cargo_capacity:int=48000,crew_capacity:int=10,max_sailing_efficiency:int=50,toughness:int=35,daily_maintenance:int=10, ID:str | None = None):
         '''All default stats are for a sloop, the smallest/starter ship'''
+        self.game = game
         self.name = name
         self.health = health
         self.cargo_capacity = cargo_capacity #This is in kg
         self.crew_capacity = crew_capacity
         self.sailing_efficiency = max_sailing_efficiency #This is the max amount of sailing efficiency (sum of all crew sailing skill) for this ship to perform at its best. Adding crew that boost sailing efficiency past this point will do nothing
         self.toughness = toughness
-
+        self.ID = ID if ID is not None else None
         #Needs
         self.daily_maintenance = daily_maintenance #If this is not met, the ship's toughness will degrade
+        game.register(self)
+    def save(self) -> dict:
+        save = {
+            "name":self.name,
+            "health":self.health,
+            "cargo_capacity":self.cargo_capacity,
+            "crew_capacity":self.crew_capacity,
+            "sailing_efficiency":self.sailing_efficiency,
+            "toughness":self.toughness,
+            "daily_maintenance":self.daily_maintenance,
+            "ID":self.ID
+        }
+        return save
+    
+    @classmethod
+    def load(cls, save: dict,game:Game):
+        instance = cls(
+            game,
+            save["name"],
+            save["health"],
+            save["cargo_capacity"],
+            save["crew_capacity"],
+            save["sailing_efficiency"],
+            save["toughness"],
+            save["daily_maintenance"],
+            ID = save["ID"]
+        )
+        return instance
 
 class Ship:
-    def __init__(self,name:str,ship_type:ShipType,event_list:list[ShipEvent],game:Game,crew:list['CrewMate']=[], ID:str | None = None):
-        self.ship_type = ship_type.name
+    def __init__(self,name:str,ship_type:ShipType,event_list:list[ShipEvent],game:Game,crew:list['CrewMate']=[],coordinates:tuple | None = None, current_health:int | None = None, current_toughness:int | None = None, ships_log:list[str] | None = None, storage:Storage | None = None, is_dispatched:bool | None = None, travel_progress:Stat | None = None, destinations:list[Location] | None = None, current_destination:Location | None = None, contracts:list[Contract] | None = None, home_port:'Port' | None = None, current_port:'Port' | None = None, last_port:'Port'| None = None, is_under_repair:bool | None = None, daily_repair_amount:int | None = None, ID = None):
+        self.ship_type = ship_type
         self.game = game
-        self.coordinates = (0,0)
+        self.coordinates = coordinates if coordinates is not None else (0,0)
         self.ID = ID if ID is not None else None
         self.game.register(self) #Register to game time so it can track daily needs and events
         #SHIP STATS
-        self.health = Stat(ship_type.health)
-        self.sailing_efficiency = Stat(ship_type.sailing_efficiency,current_value=0) # This determines the max a ship can perform (so a rowboat's max performance will be less than a proper ship). The actual ship performace (the current value of this stat) is determined by the sum of all crew sailing_ability
-        self.toughness = Stat(ship_type.toughness) # This is the max ship toughness, this may degrade during travels        
+        self.health = Stat(ship_type.health,0,current_health if current_health is not None else ship_type.health)
+        self.sailing_efficiency = Stat(ship_type.sailing_efficiency,current_value=0) # Does not need to be saved as it is calculated later is calculate_crew_amount(). This determines the max a ship can perform (so a rowboat's max performance will be less than a proper ship). The actual ship performace (the current value of this stat) is determined by the sum of all crew sailing_ability
+        self.toughness = Stat(ship_type.toughness,0,current_toughness if current_toughness is not None else ship_type.toughness) # This is the max ship toughness, this may degrade during travels        
         #Internal properties (only to be adjsuted within the declaration of the class)
         self.name = name
-        self.event_list = list(event_list) if event_list is not None else []
-        self.ships_log = []
-        self.crew_amount = Stat(ship_type.crew_capacity,0,0)
+        self.event_list = event_list # Not saved, gonna pass event_list into the load function
+        self.ships_log = ships_log if ships_log is not None else []
+        self.crew_amount = Stat(ship_type.crew_capacity,0,0) # Calculated later, does not need to be saved
         self.crew:list[CrewMate] = crew
         #Affectable ship properties (to be adjusted by outside factors)
-        self.storage = Storage(f"{name} Cargo",self.game, ship_type.cargo_capacity)
-        self.is_dispatched = False
-        self.travel_progress = Stat(0,0,0)
-        self.destinations:list[Location] = []
-        self.current_destination:Location = None
-        self.contracts:list[Contract] = []
-        self.home_port:Port = None
-        self.current_port:Port = None
-        self.last_port:Port = None
+        self.storage = Storage(f"{name} Cargo",self.game, ship_type.cargo_capacity) if storage is None else storage
+        self.is_dispatched = is_dispatched if is_dispatched is not None else False
+        self.travel_progress = travel_progress if travel_progress is not None else Stat(0,0,0)
+        self.destinations:list[Location] = destinations if destinations is not None else []
+        self.current_destination:Location = current_destination if current_destination is not None else None
+        self.contracts:list[Contract] = contracts if contracts is not None else []
+        self.home_port:Port = home_port if home_port is not None else None
+        self.current_port:Port = current_port if current_port is not None else None
+        self.last_port:Port = last_port if last_port is not None else None
         
         #Ship needs
         self.daily_maintenance = ShipNeed(self,"maintenance_skill","toughness","Maintenance",ship_type.daily_maintenance)
@@ -726,13 +933,68 @@ class Ship:
         self.daily_wind = Stat(100,0,0) #Average wind is 50
 
         #Repair values
-        self.is_under_repair = False
-        self.daily_repair_amount = 0
+        self.is_under_repair = is_under_repair if is_under_repair is not None else False
+        self.daily_repair_amount = daily_repair_amount if daily_repair_amount is not None else 0
 
     def save(self) -> dict:
         save = {
-            ""
+            # All stat values are current value, as their max value is populated by ship type
+            "ship_type":self.ship_type.ID,
+            "coordinates":self.coordinates,
+            "ID":self.ID,
+            "current_health":self.health.current_value,
+            "sailing_efficiency":self.sailing_efficiency.current_value,
+            "current_toughness":self.toughness.current_value,
+            "name":self.name,
+            "ships_log":self.ships_log,
+            "crew":[crewMate.ID for crewMate in self.crew],
+            "storage":self.storage.ID,
+            "is_dispatched":self.is_dispatched,
+            "travel_progress":self.travel_progress.as_tuple(),
+            "destinations":[loc.ID for loc in self.destinations],
+            "current_destination":self.current_destination.ID,
+            "contracts":[con.ID for con in self.contracts],
+            "home_port":self.home_port.ID,
+            "last_port":self.last_port.ID,
+            "is_under_repair":self.is_under_repair,
+            "daily_repair_amount":self.daily_repair_amount
         }
+
+    @classmethod
+    def load(cls,save:dict,game:Game,events_list:list[Ship]):
+        ship_type = game.scan_loaded_objects(ShipType,save["ship_type"])
+        crew = [game.scan_loaded_objects(CrewMate,crewID) for crewID in save["crew"]]
+        storage = game.scan_loaded_objects(Storage,save["storage"])
+        destinations = [game.scan_loaded_objects(Location,destID) for destID in save["destinations"]]
+        current_destination = game.scan_loaded_objects(Location,save["current_destination"])
+        contracts = [game.scan_loaded_objects(Contract,conID) for conID in save["contracts"]]
+        home_port = game.scan_loaded_objects(Port,save["home_port"])
+        current_port = game.scan_loaded_objects(Port,save["current_port"])
+        last_port = game.scan_loaded_objects(Port,save["last_port"])
+        instance = cls(
+            save["name"],
+            ship_type,
+            events_list,
+            game,
+            crew=crew,
+            coordinates=save["coordinates"],
+            current_health=save["current_health"],
+            current_toughness=save["current_toughness"],
+            ships_log=save["ships_log"],
+            storage=storage,
+            is_dispatched=save["is_dispatched"],
+            travel_progress=Stat.from_tuple(save["travel_progress"]),
+            destinations=destinations,
+            current_destination=current_destination,
+            contracts=contracts,
+            home_port=home_port,
+            current_port=current_port,
+            last_port=last_port,
+            is_under_repair=save["is_under_repair"],
+            daily_repair_amount=save["daily_repair_amount"],
+            ID=save["ID"]
+        )
+        return instance
     
     #NON-USER FRIENDLY FUNCTIONS (NO UI)
     def start_repairs(self,daily_repair_amount:int):
@@ -872,7 +1134,7 @@ class Ship:
         self.destinations.append(self.current_port.location) #Add the current location as the final destination so the ship returns home after its route is complete
         self.dispatch(self.destinations[0],game)
 
-    def manage_crew(self,player:'Player'):
+    def manage_crew(self,player:Player):
         while True:
             table_data = {}
             for crew_mate in self.crew:
@@ -929,7 +1191,7 @@ class Ship:
         msg = None
         msg = self.daily_travel(days)
         return msg
-            
+           
 class Warehouse:
     def __init__(self,name:str,game:Game,max_weight:int = 10000, ID:str | None = None):
         self.name = name
@@ -938,7 +1200,7 @@ class Warehouse:
         game.register(self)
 
 class Port:
-    def __init__(self, name: str, location:object,world:World,game:Game,player:'Player',currency_goods:list[Good],ships: list[Ship] | None = None, warehouses: list[Warehouse] | None = None, ID:str | None = None):
+    def __init__(self, name: str, location:object,world:World,game:Game,currency_goods:list[Good],ships: list[Ship] | None = None, warehouses: list[Warehouse] | None = None, ID:str | None = None):
         self.name = name
         self.location:Location = location
         self.world = world
@@ -947,7 +1209,6 @@ class Port:
         self.ships = list(ships) if ships is not None else []
         self.ship_names = []
         self.warehouses = list(warehouses) if warehouses is not None else []
-        self.player = player
         self.location.add_port(self) # Since location is static and does not save its ports, ports need to re-add themselves to location on load
         if self.ships is not None:
             for ship in self.ships:
@@ -993,7 +1254,7 @@ class Port:
 
     # ===== Player interacting functions =====
     # ==SUB FUNCTIONS==
-    def repair_ship_menu(self,selected_ship:Ship):
+    def repair_ship_menu(self,selected_ship:Ship,player:Player):
         while True:
             clear_terminal()
             days_to_repair = math.floor((selected_ship.health.max_value - selected_ship.health.current_value)/10)
@@ -1011,7 +1272,7 @@ class Port:
             answer = menu("Repair ship",[f"Pay with {good.name}" for good in self.currency_goods],True,table=table_data,sub_table=sub_table_data)
             if answer is not None:
                 selected_good = self.currency_goods[answer-1]
-                selected_warehouse:Warehouse = self.player.warehouses[menu("Select warehouse to pay from",[warehouse.name for warehouse in self.player.warehouses],True)-1]
+                selected_warehouse:Warehouse = player.warehouses[menu("Select warehouse to pay from",[warehouse.name for warehouse in player.warehouses],True)-1]
                 if selected_warehouse is not None:
                     if selected_good in selected_warehouse.storage.cargo and selected_warehouse.storage.cargo[selected_good]*selected_good.value >= cost_to_repair:
                         amount_to_remove = math.ceil(cost_to_repair/selected_good.value)
@@ -1023,7 +1284,7 @@ class Port:
                         input("You do not have enough of that good to pay for repairs, press enter to continue")
             else:
                 break
-    def dispatch_menu(self,selected_ship:Ship):
+    def dispatch_menu(self,selected_ship:Ship,player:Player):
         while True:
             clear_terminal()
             answer = menu("Route planning",["Add contracts","Add destinations","Dispatch"],True)
@@ -1032,7 +1293,7 @@ class Port:
                 case 1:
                     clear_terminal()
                     contract_names = []
-                    for contract in self.player.contracts:
+                    for contract in player.contracts:
                         contract_names.append(f"{contract.amount} {contract.good.name} to {contract.destination_port.name}")
                     contract_names.append("clear all")
                     selected_contract_names = ["Selected Contracts"] + [f"{contract.amount} {contract.good.name} to {contract.destination_port.name}" for contract in selected_ship.contracts]
@@ -1041,7 +1302,7 @@ class Port:
                             answer = menu("Select contracts to add (order does not matter)",contract_names,True,table=selected_contract_names)
                             if answer == len(contract_names): #Clear all option
                                 selected_contract_names = ["Selected Contracts"]
-                                for contract in self.player.contracts:
+                                for contract in player.contracts:
                                     if contract in selected_ship.contracts:
                                         selected_ship.contracts.remove(contract) #Remove the contract from the ship if its currently selected
                                 continue
@@ -1049,7 +1310,7 @@ class Port:
                         except Exception:
                             #input("BREAKED" + e)
                             break
-                        selected_contract:Contract = self.player.contracts[answer-1]
+                        selected_contract:Contract = player.contracts[answer-1]
                         
                         try:
                             selected_ship.contracts.append(selected_contract) #Add the contract to the ship's list of contracts
@@ -1120,7 +1381,7 @@ class Port:
         input("Name changed! Press enter to continue")
 
     # ==MAIN FUNCTIONS==
-    def manage_ships(self):
+    def manage_ships(self,player:Player):
         while True:
             # Initial ship selection menu
             self.ship_names = []
@@ -1135,7 +1396,7 @@ class Port:
                 table_data = {
                     ship.name: {
                         "Name": ship.name,
-                        "Type": ship.ship_type,
+                        "Type": ship.ship_type.name,
                         "Health": ship.health,
                         "In repair": f"{style.RED}Yes{style.RESET}" if ship.is_under_repair else f"{style.GREEN}No{style.RESET}",
                     } for ship in self.ships
@@ -1149,7 +1410,7 @@ class Port:
                 table_data = {
                         selected_ship.name: {
                             "Name": selected_ship.name,
-                            "Type": selected_ship.ship_type,
+                            "Type": selected_ship.ship_type.name,
                             "Health": selected_ship.health,
                             "Toughness": selected_ship.toughness,
                             "Sailing Efficiency": selected_ship.sailing_efficiency
@@ -1171,11 +1432,11 @@ class Port:
                         selected_ship.storage.show_invent()
                     case 3:
                         #Dispatch ship
-                        if self.dispatch_menu(selected_ship) == True:
+                        if self.dispatch_menu(selected_ship,player) == True:
                             break
                     case 4:
                         #View crew
-                        selected_ship.manage_crew(self.player)
+                        selected_ship.manage_crew(player)
                     case 5:
                         #Rename ship
                         self.change_ship_name_menu(selected_ship)
@@ -1188,7 +1449,7 @@ class Port:
                         input("Press enter to go back")
                     case 7:
                         #Repair ship
-                        self.repair_ship_menu(selected_ship)
+                        self.repair_ship_menu(selected_ship,player)
                     case _:
                         break
 
@@ -1197,79 +1458,6 @@ class Fleet:
         self.ships = ships
         self.ID = ID if ID is not None else None
         game.register(self)
-
-class Contract:
-    def __init__(self,game:Game,reward_good:Good,reward_amount:int,deadline:int,good:Good,amount:int,destination_port:Port,destination_storage:Storage,home_port:Port=None, ID:str | None = None):
-        self.reward_good = reward_good
-        self.reward_amount = reward_amount
-        self.deadline = deadline
-        self.good = good
-        self.amount = amount
-        self.destination_port = destination_port
-        self.destination_storage = destination_storage
-        self.home_port = home_port
-        self.expired = False
-        self.complete = False
-        self.complete_notice = False
-        self.contract_travel_time:int = None
-        self.game = game
-        self.ID = ID if ID is not None else None
-        game.register(self)
-
-
-    def save(self):
-        save = {
-            "reward_good":self.reward_good.id,
-            "reward_amount":self.reward_amount,
-            "deadline":self.deadline,
-            "good":self.good.id,
-            "amount":self.amount,
-            "destination_port":self.destination_port.id,
-            "destination_storage":self.destination_storage.id,
-            "home_port":self.home_port.id,
-            "expired":self.expired,
-            "complete":self.complete,
-            "complete_notice":self.complete_notice,
-            "contract_travel_time":self.contract_travel_time,
-            "id":self.id
-        }
-        return save
-
-    @classmethod
-    def load(cls,save:dict,game:Game):
-        reward_good = game.scan_loaded_objects(Good,save["reward_good"])
-        good = game.scan_loaded_objects(Good,save["good"])
-        destination_port = game.scan_loaded_objects(Good,save["destination_port"])
-        destination_storage = game.scan_loaded_objects(Good,save["destination_storage"])
-        home_port = game.scan_loaded_objects(Good,save["home_port"])
-        instance = cls(
-            game,
-            reward_good,
-            save["reward_amount"],
-            save["deadline"],
-            good,
-            save["amount"],
-            destination_port,
-            destination_storage,
-            home_port,
-            save["id"]
-        )
-        return instance
-
-    def check_completion(self):
-        if self.destination_storage.cargo.get(self.good,0) >= self.amount:
-            return True
-        return False
-    def on_day_passed(self, day):
-        if self.check_completion(): #Check if contract is complete
-            if not self.complete: #Check if it was already complete
-                self.contract_travel_time = day + random.randint(2,5) #Random travel time for reward delivery
-                self.complete = True
-        if day == self.contract_travel_time and self.complete is True and self.complete_notice is False and self.expired is False: #Check if reward should be delivered
-            self.complete_notice = True
-            return f"Contract for {self.amount} {self.good.name} is ready to be cashed out!"
-        if self.deadline < day and self.complete is False:
-            self.expired = True
 
 class Player:
     def __init__(self, game:Game,storage: Storage, reputation: int, fleet: Fleet | None = None, contracts: list[Contract] | None = None, warehouses: list[Warehouse] | None = None, ID:str | None = None):
@@ -1418,112 +1606,6 @@ class Exchange:
                 #print(e) #Uncomment this line to show error message when the user enters an invalid option
                 input("Invalid selection, try again")
 
-class Location:
-    def __init__(self,name:str,game:Game,description:str | None = None,coordinates:tuple[int,int] | None = None, ports:list[Port] | None = None,exchanges:list[Exchange] | None = None, ID:str | None = None):
-        self.name = name # Saved
-        self.game = game
-        self.coordinates = coordinates # Saved
-        self.description = description # Saved
-        self.ports = ports if ports is not None else []
-        self.exchanges = exchanges if exchanges is not None else []
-        if self.coordinates is None:
-            self.randomise_coordinates()
-        self.ID = ID if ID is not None else None
-        game.register(self)
-    
-    def save(self) -> dict:
-        save = {
-            "id":self.id,
-            "name":self.name,
-            "coordinates":self.coordinates,
-            "description":self.description
-        }
-        return save
-    
-    @classmethod
-    def load(cls, save: dict,game:Game):
-        instance = cls(
-            save["name"],
-            game,
-            coordinates = save["coordinates"],
-            description = save["description"],
-            id=save["id"]
-        )
-        return instance
-    
-    def randomise_coordinates(self,x_range:tuple[int,int]=(0,50000),y_range:tuple[int,int]=(0,50000)):
-        self.coordinates = (random.randint(x_range[0],x_range[1]),random.randint(y_range[0],y_range[1]))
-    def add_port(self, port):
-        if port not in self.ports:
-            self.ports.append(port)
-    def add_exchange(self, exchange):
-        if exchange not in self.exchanges:
-            self.exchanges.append(exchange)
-
-class CrewRole:
-    def __init__(self,name:str,description:str,game:Game,sailing_booster:int=0,maintenance_booster:int=0, ID:str | None=None):
-        self.name = name
-        self.description = description
-        self.sailing_booster = sailing_booster
-        self.maintenance_booster = maintenance_booster
-        self.ID = ID if ID is not None else None
-        game.register(self)
-    def save(self) -> dict:
-        save = {
-            "name":self.name,
-            "description":self.description,
-            "sailing_booster":self.sailing_booster,
-            "maintenance_booster":self.maintenance_booster
-        }
-        return save
-    
-    @classmethod
-    def load(cls, save: dict,game:Game):
-        instance = cls(
-            save["name"],
-            save["description"],
-            game,
-            save["sailing_booster"],
-            save["maintenance_booster"]
-        )
-        return instance
-
-class Human:
-    def __init__(self,max_health:int=100,strength:int=5,name:str | None = None):
-        self.health = Stat(max_health)
-        self.strength = strength
-        self.name = name if name is not None else genname()
-
-class CrewMate(Human):
-    def __init__(self,crew_role:CrewRole,game:Game,sailing_ability:int | None = None,maintenance_ability:int | None = None, name:str | None = None, ID:str | None = None):
-        super().__init__(name=name)
-        self.crew_role = crew_role
-        self.sailing_ability = Stat(100,current_value=sailing_ability if sailing_ability is not None else random.randint(10,20)+crew_role.sailing_booster) #Base sailing ability is a random number between 10 and 20, plus any booster from their crew role
-        self.maintenance_skill = Stat(100,current_value=maintenance_ability if maintenance_ability is not None else random.randint(10,20)+crew_role.maintenance_booster) #Base maintenance skill is a random number between 10 and 20, plus any booster from their crew role
-        self.ID = ID if ID is not None else None
-        game.register(self)
-    
-    def save(self) -> dict:
-        save = {
-            "crew_role":self.crew_role.name,
-            "sailing_ability":self.sailing_ability.current_value,
-            "maintenance_skill":self.maintenance_skill.current_value,
-            "name":self.name
-        }
-        return save
-    
-    @classmethod
-    def load(cls, save: dict,game:Game):
-        role = game.scan_loaded_objects(CrewRole,save["crew_role"])
-        instance = cls(
-            role,
-            game,
-            save["sailing_ability"],
-            save["maintenance_skill"],
-            save["name"]
-        )
-        return instance
-
 class Tavern:
     def __init__(self,name:str,game:Game,location:Location,crew_roles:list[CrewRole],player:Player,crew:list[CrewMate] | None = None, ID:str | None = None):
         self.name = name
@@ -1560,3 +1642,20 @@ class Tavern:
                     input("Cannot add crew, that ship is at crew capacity!")
         else:
             None
+
+class MessengerPigeon:
+    def __init__(self,game:Game,message:str,start_coordinates:tuple[int],destination_coordinates:tuple[int], ID:str | None = None):
+        self.game = game
+        self.message = message
+        self.start_coordinates = start_coordinates
+        self.destination_coordinates = destination_coordinates
+        self.travel_time = distance(start_coordinates,destination_coordinates) #Calculate travel time based on distance
+        self.ID = ID if ID is not None else None
+        self.game.register(self) #Register to game time so it can track travel time
+    def on_day_passed(self, current_day):
+        if self.travel_time > 0:
+            self.travel_time -= 1
+            if self.travel_time <= 0:
+                self.game.unregister(self) #Unregister from game time, makes no more references and pyhton cleans it up automatically
+                return f"A messenger pigeon has delivered a message:\n {self.message}"
+        return None
