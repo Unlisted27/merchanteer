@@ -2,255 +2,172 @@
   "day": 0,
   "game_items": [
     {
-      "type": "Location",
+      "type": "Good",
       "data": {
-        "name": "Grandure",
-        "coordinates": [
-          20763,
-          25456
-        ],
-        "description": "A bustling trade city with a large port."
+        "name": "Gold",
+        "description": "Shiny",
+        "value": 1,
+        "weight": 0.1,
+        "ID": "6bc8ae80-969b-459f-a05a-9198c13b6e8a"
+      }
+    },
+    {
+      "type": "Good",
+      "data": {
+        "name": "Bread",
+        "description": "Staple food",
+        "value": 0.1,
+        "weight": 0.2,
+        "ID": "6ccb2875-dd00-43f0-b193-0ddf4d44c81b"
       }
     },
     {
       "type": "Location",
       "data": {
-        "name": "Clammer",
+        "ID": "44d0ccbb-0d59-4981-a2cd-0c507367e3f2",
+        "name": "Home",
         "coordinates": [
-          2627,
-          29197
+          40621,
+          11843
         ],
-        "description": "A small fishing village known for its seafood."
+        "description": null
       }
     },
     {
       "type": "Location",
       "data": {
-        "name": "Old Cove",
+        "ID": "a12cc060-5573-4a81-a6a1-c69d26659fb0",
+        "name": "Away",
         "coordinates": [
-          42584,
-          32490
+          21650,
+          16386
         ],
-        "description": "One of the first foreign settlements, old cove has survived through it all."
+        "description": null
       }
     },
     {
       "type": "World",
       "data": {
         "locations": [
-          "Grandure",
-          "Clammer",
-          "Old Cove"
-        ]
+          "Home",
+          "Away"
+        ],
+        "ID": "9d26bcfb-1dbf-4db1-9455-89202749d4a4"
       }
     },
     {
-      "type": "Good",
+      "type": "Storage",
       "data": {
-        "name": "gold",
-        "description": "shiny",
-        "value": 1,
-        "weigth": 0.1
+        "cargo": {},
+        "name": "Home warehouse 1 Warehouse",
+        "cargo_weight": [
+          10000,
+          0,
+          0
+        ],
+        "ID": "ca1baac9-4c6f-47c6-be54-db2acf3dc3d6"
       }
     },
     {
-      "type": "Good",
+      "type": "Warehouse",
       "data": {
-        "name": "silver",
-        "description": "less-shiny",
-        "value": 0.5,
-        "weigth": 0.1
+        "name": "Home warehouse 1",
+        "storage": "ca1baac9-4c6f-47c6-be54-db2acf3dc3d6",
+        "ID": "2a610b97-f119-43e7-82d8-3faaf73a18b4"
       }
     },
     {
-      "type": "Good",
+      "type": "Storage",
       "data": {
-        "name": "bread",
-        "description": "staple food",
-        "value": 0.1,
-        "weigth": 0.05
+        "cargo": {},
+        "name": "Home Warehouse 2 Warehouse",
+        "cargo_weight": [
+          10000,
+          0,
+          0
+        ],
+        "ID": "bbd0f1a9-56ed-4595-b243-8553922562de"
       }
     },
     {
-      "type": "Good",
+      "type": "Warehouse",
       "data": {
-        "name": "fish",
-        "description": "protein food",
-        "value": 0.3,
-        "weigth": 1
+        "name": "Home Warehouse 2",
+        "storage": "bbd0f1a9-56ed-4595-b243-8553922562de",
+        "ID": "4a670807-2495-495f-a0d8-7cee13d00123"
       }
     },
     {
-      "type": "Good",
+      "type": "Storage",
       "data": {
-        "name": "wood",
-        "description": "building material",
-        "value": 0.5,
-        "weigth": 2
+        "cargo": {},
+        "name": "Dest warehouse Warehouse",
+        "cargo_weight": [
+          10000,
+          0,
+          0
+        ],
+        "ID": "5d209e2e-6cfb-4eeb-82ab-b27060b2d54b"
       }
     },
     {
-      "type": "Good",
+      "type": "Warehouse",
       "data": {
-        "name": "cloth",
-        "description": "fabric material",
-        "value": 0.3,
-        "weigth": 0.1
+        "name": "Dest warehouse",
+        "storage": "5d209e2e-6cfb-4eeb-82ab-b27060b2d54b",
+        "ID": "3b34dcc1-4f90-4b6a-88fa-6e12773bcd32"
       }
     },
     {
-      "type": "Good",
+      "type": "Port",
       "data": {
-        "name": "rice",
-        "description": "staple food",
-        "value": 0.2,
-        "weigth": 1
+        "name": "Port Home",
+        "location": "44d0ccbb-0d59-4981-a2cd-0c507367e3f2",
+        "world": "9d26bcfb-1dbf-4db1-9455-89202749d4a4",
+        "currency_goods": [
+          "6bc8ae80-969b-459f-a05a-9198c13b6e8a"
+        ],
+        "ships": [],
+        "warehouses": [
+          "2a610b97-f119-43e7-82d8-3faaf73a18b4",
+          "4a670807-2495-495f-a0d8-7cee13d00123"
+        ],
+        "ID": "d0b16578-536e-4f7c-b9dc-29ff0ae726a6"
       }
     },
     {
-      "type": "CrewRole",
+      "type": "Port",
       "data": {
-        "name": "Buckaneer",
-        "description": "A regular sailor, well equiped in all areas but not excelling in any.",
-        "sailing_booster": 0,
-        "maintenance_booster": 0
-      }
-    },
-    {
-      "type": "CrewMate",
-      "data": {
-        "crew_role": "Buckaneer",
-        "sailing_ability": 15,
-        "maintenance_skill": 17,
-        "name": "Faustsantha"
-      }
-    },
-    {
-      "type": "CrewMate",
-      "data": {
-        "crew_role": "Buckaneer",
-        "sailing_ability": 18,
-        "maintenance_skill": 18,
-        "name": "Lyduelmar"
-      }
-    },
-    {
-      "type": "Ship",
-      "data": null
-    },
-    {
-      "type": "CrewMate",
-      "data": {
-        "crew_role": "Buckaneer",
-        "sailing_ability": 12,
-        "maintenance_skill": 18,
-        "name": "Katard"
-      }
-    },
-    {
-      "type": "CrewMate",
-      "data": {
-        "crew_role": "Buckaneer",
-        "sailing_ability": 10,
-        "maintenance_skill": 17,
-        "name": "Ysmia"
-      }
-    },
-    {
-      "type": "Ship",
-      "data": null
-    },
-    {
-      "type": "CrewMate",
-      "data": {
-        "crew_role": "Buckaneer",
-        "sailing_ability": 14,
-        "maintenance_skill": 11,
-        "name": "Camier"
-      }
-    },
-    {
-      "type": "CrewMate",
-      "data": {
-        "crew_role": "Buckaneer",
-        "sailing_ability": 11,
-        "maintenance_skill": 17,
-        "name": "Chrdra"
-      }
-    },
-    {
-      "type": "CrewMate",
-      "data": {
-        "crew_role": "Buckaneer",
-        "sailing_ability": 10,
-        "maintenance_skill": 13,
-        "name": "Thorfneernard"
-      }
-    },
-    {
-      "type": "CrewMate",
-      "data": {
-        "crew_role": "Buckaneer",
-        "sailing_ability": 13,
-        "maintenance_skill": 12,
-        "name": "Denrick"
-      }
-    },
-    {
-      "type": "CrewMate",
-      "data": {
-        "crew_role": "Buckaneer",
-        "sailing_ability": 11,
-        "maintenance_skill": 13,
-        "name": "Athaa"
-      }
-    },
-    {
-      "type": "CrewMate",
-      "data": {
-        "crew_role": "Buckaneer",
-        "sailing_ability": 19,
-        "maintenance_skill": 11,
-        "name": "Warier"
-      }
-    },
-    {
-      "type": "CrewMate",
-      "data": {
-        "crew_role": "Buckaneer",
-        "sailing_ability": 16,
-        "maintenance_skill": 19,
-        "name": "Orahana"
-      }
-    },
-    {
-      "type": "CrewMate",
-      "data": {
-        "crew_role": "Buckaneer",
-        "sailing_ability": 20,
-        "maintenance_skill": 13,
-        "name": "Cyrdred"
-      }
-    },
-    {
-      "type": "CrewMate",
-      "data": {
-        "crew_role": "Buckaneer",
-        "sailing_ability": 17,
-        "maintenance_skill": 18,
-        "name": "Ingadyn"
-      }
-    },
-    {
-      "type": "CrewMate",
-      "data": {
-        "crew_role": "Buckaneer",
-        "sailing_ability": 20,
-        "maintenance_skill": 14,
-        "name": "Leifstonia"
+        "name": "Port Away",
+        "location": "a12cc060-5573-4a81-a6a1-c69d26659fb0",
+        "world": "9d26bcfb-1dbf-4db1-9455-89202749d4a4",
+        "currency_goods": [
+          "6bc8ae80-969b-459f-a05a-9198c13b6e8a"
+        ],
+        "ships": [],
+        "warehouses": [
+          "3b34dcc1-4f90-4b6a-88fa-6e12773bcd32"
+        ],
+        "ID": "24927e21-a4ff-4137-a757-16507a0f8b50"
       }
     },
     {
       "type": "Contract",
       "data": {
-        "reward_good": 
+        "reward_good": "6bc8ae80-969b-459f-a05a-9198c13b6e8a",
+        "reward_amount": 10,
+        "deadline": 5,
+        "good": "6ccb2875-dd00-43f0-b193-0ddf4d44c81b",
+        "amount": 5,
+        "destination_port": "24927e21-a4ff-4137-a757-16507a0f8b50",
+        "destination_storage": "5d209e2e-6cfb-4eeb-82ab-b27060b2d54b",
+        "home_port": "d0b16578-536e-4f7c-b9dc-29ff0ae726a6",
+        "expired": false,
+        "complete": false,
+        "complete_notice": false,
+        "contract_travel_time": null,
+        "ID": "c71cbe7e-8f04-4a63-b90c-00f90d457b49"
+      }
+    }
+  ]
+}

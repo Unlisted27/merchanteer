@@ -387,6 +387,11 @@ class Stat:
         instance = cls(tuple[0],tuple[1],tuple[2])
         return instance
 
+class LoadContext:
+    def __init__(self, game:'Game', events_list:list['ShipEvent']):
+        self.game = game
+        self.events_list = events_list or []
+
 class Game:
     def __init__(self):
         self.day = 0
@@ -421,21 +426,15 @@ class Game:
         print(f"Game saved to {filename}")
     
     @classmethod
-    def load(cls, save: dict):
-        instance = cls()
-        instance.day = save["day"]
-        # Don't load observers here - they'll be loaded separately
-        return instance
-    
-    @classmethod
-    def load_from_file(cls, filename: str):
+    def load_from_file(cls, filename: str,context:LoadContext):
         """Load the entire game state from a JSON file."""
         with open(filename, 'r') as f:
             save_data = json.load(f)
         
         # Create the Game instance
         # Step 1
-        game = cls.load(save_data)
+        game = context.game
+        game.day = save_data["day"]
 
         grouped = defaultdict(list)
 
@@ -443,39 +442,76 @@ class Game:
             grouped[item["type"]].append(item["data"])
         
         LOAD_ORDER = [
-            "World",
             "Location",
+            "World",
             "Good",
+            "Storage",
+            "Warehouse",
+            "Port",
+            "Contract",
             "CrewRole",
             "CrewMate",
-            "Contract",
-            "Ship"
+            "ShipType",
+            "Ship",
+            "Fleet",
+            "Player",
+            "Tavern",
+            "Exchange",
+            "MessengerPigeon"
         ]
 
         CLASS_REGISTRY = {
             "World": World,
             "Location": Location,
             "Good": Good,
+            "Storage": Storage,
+            "Warehouse":Warehouse,
+            "Port": Port,
             "CrewRole": CrewRole,
             "CrewMate": CrewMate,
             "Contract": Contract,
-            "Ship": Ship
+            "ShipType":ShipType,
+            "Ship": Ship,
+            "Fleet":Fleet,
+            "Player":Player,
+            "Tavern":Tavern,
+            "Exchange":Exchange,
+            "MessengerPigeon":MessengerPigeon
         }
+        # Load phase 1: Instantiate all objects
         for item_type in LOAD_ORDER:
             for item_data in grouped[item_type]:
-                CLASS_REGISTRY[item_type].load(item_data, game)
+                print(f"Loading {item_type}")
+                CLASS_REGISTRY[item_type].init_load(item_data, context)
+        
+        print([observer.ID for observer in game.observers])
+        # Load phase 2: Populate object properties
+        for item in game.observers:
+            if hasattr(item,"secondary_load"):
+                print(f"Secondary load: {type(item)} {item.ID}")
+                item.secondary_load(item._save_data,context)
+        
+        # Load phase 3: Delete temporary save data in each object
+        for item in game.observers:
+            if hasattr(item, "_save_data"):
+                del item._save_data
+
         return game
     
-    def scan_loaded_objects(self,item_type,item_id):
+    def scan_loaded_objects(self,item_type,item_id,crash_on_fail=False):
         for item in self.observers:
             if type(item) == item_type:
                 if hasattr(item,"ID"):
                     if item.ID == item_id:
                         return item
                 else:
-                    raise ValueError("Could not scan for loaded item as item provided has no 'name' property! \nAborting load...")
+                    raise ValueError("Could not scan for loaded item as item provided has no 'ID' property! \nAborting load...")
         else:
-            raise ValueError(f"Could not find object {item_id} in loaded items! \nAborting load...")
+            if crash_on_fail:
+                raise ValueError(f"Could not find object {item_id} in loaded items! \nAborting load...")
+            else:
+                print(f"Could not find an object! Object:{item_type} with ID: {item_id}")
+                return None
 
     # Game methods
     def register(self, obj):
@@ -485,7 +521,8 @@ class Game:
             ID = str(uuid.uuid4())
             while ID in self.used_IDs:
                 ID = str(uuid.uuid4())
-            obj.ID = id
+            obj.ID = ID
+            self.used_IDs.append(ID)
 
     def unregister(self, obj):
         self.to_remove.append(obj)
@@ -502,6 +539,7 @@ class Game:
         for obj in self.to_remove:
             if obj in self.observers:
                 self.observers.remove(obj)
+        self.to_remove.clear()
         print(f"--Day [{self.day}] notices--")
         for notice in daily_notices:
             self.notices.append(notice)
@@ -531,13 +569,14 @@ class Location:
         return save
     
     @classmethod
-    def load(cls, save: dict,game:Game):
+    def init_load(cls, save: dict,context:LoadContext):
+        game = context.game
         instance = cls(
             save["name"],
             game,
             coordinates = save["coordinates"],
             description = save["description"],
-            id=save["ID"]
+            ID=save["ID"]
         )
         return instance
     
@@ -565,11 +604,12 @@ class World:
         return save
     
     @classmethod
-    def load(cls, save: dict,game:Game):
+    def init_load(cls, save: dict,context:LoadContext):
+        game = context.game
         instance = cls(
             locations=save["locations"],
             game=game,
-            id=save["ID"]
+            ID=save["ID"]
         )
         return instance
 
@@ -587,13 +627,14 @@ class Good:
             "name":self.name,
             "description":self.description,
             "value":self.value,
-            "weigth":self.weight,
+            "weight":self.weight,
             "ID":self.ID
         }
         return save
     
     @classmethod
-    def load(cls, save: dict,game:Game):
+    def init_load(cls, save: dict,context:LoadContext):
+        game = context.game
         instance = cls(
             save["name"],
             save["description"],
@@ -665,9 +706,38 @@ class Storage:
         returns the list index of the selected item (1st item = 0)"""
         table_data = self.get_invent_table()
         return menu("Select an item",[f"{amount} | {good.name}" for good,amount in self.cargo.items()],return_option=True,table=table_data)-1
+    
+    def save(self):
+        save_cargo = {}
+        for good,amount in self.cargo.items():
+            save_cargo[good.ID] = amount
+        save = {
+            "cargo":save_cargo,
+            "name":self.name,
+            "cargo_weight":self.cargo_weight.as_tuple(),
+            "ID":self.ID
+        }
+        return save
+    
+    @classmethod
+    def init_load(cls, save: dict,context:LoadContext):
+        game = context.game
+        instance = cls(
+            save["name"],
+            game,
+            cargo_weight=save["cargo_weight"],
+            ID=save["ID"]
+        )
+        instance._save_data = save # THIS IS CRITICAL, IT STORES DATA FOR THE SECOND PHASE
+        return instance
+    
+    def secondary_load(self,save,context:LoadContext):
+        game = context.game
+        for good_id,amount in save["cargo"]:
+            self.cargo[game.scan_loaded_objects(Good,good_id)]=amount
 
 class Contract:
-    def __init__(self,game:Game,reward_good:Good,reward_amount:int,deadline:int,good:Good,amount:int,destination_port:'Port',destination_storage:Storage,home_port:'Port'=None, ID:str | None = None):
+    def __init__(self,game:Game,reward_good:Good,reward_amount:int,deadline:int,good:Good,amount:int,destination_port:'Port',destination_storage:Storage,home_port:'Port', ID:str | None = None):
         self.reward_good = reward_good
         self.reward_amount = reward_amount
         self.deadline = deadline
@@ -687,14 +757,14 @@ class Contract:
 
     def save(self):
         save = {
-            "reward_good":self.reward_good.id,
+            "reward_good":self.reward_good.ID,
             "reward_amount":self.reward_amount,
             "deadline":self.deadline,
-            "good":self.good.id,
+            "good":self.good.ID,
             "amount":self.amount,
-            "destination_port":self.destination_port.id,
-            "destination_storage":self.destination_storage.id,
-            "home_port":self.home_port.id,
+            "destination_port":self.destination_port.ID,
+            "destination_storage":self.destination_storage.ID,
+            "home_port":self.home_port.ID,
             "expired":self.expired,
             "complete":self.complete,
             "complete_notice":self.complete_notice,
@@ -704,12 +774,13 @@ class Contract:
         return save
 
     @classmethod
-    def load(cls,save:dict,game:Game):
+    def init_load(cls,save:dict,context:LoadContext):
+        game = context.game
         reward_good = game.scan_loaded_objects(Good,save["reward_good"])
         good = game.scan_loaded_objects(Good,save["good"])
-        destination_port = game.scan_loaded_objects(Good,save["destination_port"])
-        destination_storage = game.scan_loaded_objects(Good,save["destination_storage"])
-        home_port = game.scan_loaded_objects(Good,save["home_port"])
+        destination_port = game.scan_loaded_objects(Port,save["destination_port"])
+        destination_storage = game.scan_loaded_objects(Storage,save["destination_storage"])
+        home_port = game.scan_loaded_objects(Port,save["home_port"])
         instance = cls(
             game,
             reward_good,
@@ -758,7 +829,7 @@ class CrewRole:
         return save
     
     @classmethod
-    def load(cls, save: dict,game:Game):
+    def init_load(cls, save: dict,game:Game):
         instance = cls(
             save["name"],
             save["description"],
@@ -795,7 +866,7 @@ class CrewMate(Human):
         return save
     
     @classmethod
-    def load(cls, save: dict,game:Game):
+    def init_load(cls, save: dict,game:Game):
         role = game.scan_loaded_objects(CrewRole,save["crew_role"])
         instance = cls(
             role,
@@ -878,7 +949,7 @@ class ShipType:
         return save
     
     @classmethod
-    def load(cls, save: dict,game:Game):
+    def init_load(cls, save: dict,game:Game):
         instance = cls(
             game,
             save["name"],
@@ -893,7 +964,7 @@ class ShipType:
         return instance
 
 class Ship:
-    def __init__(self,name:str,ship_type:ShipType,event_list:list[ShipEvent],game:Game,crew:list['CrewMate']=[],coordinates:tuple | None = None, current_health:int | None = None, current_toughness:int | None = None, ships_log:list[str] | None = None, storage:Storage | None = None, is_dispatched:bool | None = None, travel_progress:Stat | None = None, destinations:list[Location] | None = None, current_destination:Location | None = None, contracts:list[Contract] | None = None, home_port:'Port' | None = None, current_port:'Port' | None = None, last_port:'Port'| None = None, is_under_repair:bool | None = None, daily_repair_amount:int | None = None, ID = None):
+    def __init__(self,name:str,ship_type:ShipType,event_list:list[ShipEvent],game:Game,crew:list['CrewMate'] | None = None,coordinates:tuple | None = None, current_health:int | None = None, current_toughness:int | None = None, ships_log:list[str] | None = None, storage:Storage | None = None, is_dispatched:bool | None = None, travel_progress:Stat | None = None, destinations:list[Location] | None = None, current_destination:Location | None = None, contracts:list[Contract] | None = None, home_port:'Port' | None = None, current_port:'Port' | None = None, last_port:'Port'| None = None, is_under_repair:bool | None = None, daily_repair_amount:int | None = None, ID = None):
         self.ship_type = ship_type
         self.game = game
         self.coordinates = coordinates if coordinates is not None else (0,0)
@@ -908,7 +979,7 @@ class Ship:
         self.event_list = event_list # Not saved, gonna pass event_list into the load function
         self.ships_log = ships_log if ships_log is not None else []
         self.crew_amount = Stat(ship_type.crew_capacity,0,0) # Calculated later, does not need to be saved
-        self.crew:list[CrewMate] = crew
+        self.crew = crew if crew is not None else []
         #Affectable ship properties (to be adjusted by outside factors)
         self.storage = Storage(f"{name} Cargo",self.game, ship_type.cargo_capacity) if storage is None else storage
         self.is_dispatched = is_dispatched if is_dispatched is not None else False
@@ -943,7 +1014,7 @@ class Ship:
             "coordinates":self.coordinates,
             "ID":self.ID,
             "current_health":self.health.current_value,
-            "sailing_efficiency":self.sailing_efficiency.current_value,
+            #"sailing_efficiency":self.sailing_efficiency.current_value,
             "current_toughness":self.toughness.current_value,
             "name":self.name,
             "ships_log":self.ships_log,
@@ -951,18 +1022,31 @@ class Ship:
             "storage":self.storage.ID,
             "is_dispatched":self.is_dispatched,
             "travel_progress":self.travel_progress.as_tuple(),
-            "destinations":[loc.ID for loc in self.destinations],
-            "current_destination":self.current_destination.ID,
-            "contracts":[con.ID for con in self.contracts],
-            "home_port":self.home_port.ID,
-            "last_port":self.last_port.ID,
+            "destinations":[loc.ID for loc in self.destinations] if len(self.destinations) > 0 else None,
+            "current_destination": self.current_destination.ID if self.current_destination else None,
+            "contracts":[con.ID for con in self.contracts] if len(self.contracts) > 0 else None,
+            "home_port":self.home_port.ID if self.home_port is not None else None,
+            "last_port":self.last_port.ID if self.last_port is not None else None,
             "is_under_repair":self.is_under_repair,
             "daily_repair_amount":self.daily_repair_amount
         }
+        return save
 
     @classmethod
-    def load(cls,save:dict,game:Game,events_list:list[Ship]):
+    def init_load(cls,save:dict,game:Game,events_list:list[Ship]):
         ship_type = game.scan_loaded_objects(ShipType,save["ship_type"])
+        instance = cls(
+            save["name"],
+            ship_type,
+            events_list,
+            game,
+            ID=save["ID"]
+        )
+        instance._save_data = save  # 🔥 store for phase 2
+        return instance
+    
+    def secondary_load(self,save:dict,context:LoadContext):
+        game = context.game
         crew = [game.scan_loaded_objects(CrewMate,crewID) for crewID in save["crew"]]
         storage = game.scan_loaded_objects(Storage,save["storage"])
         destinations = [game.scan_loaded_objects(Location,destID) for destID in save["destinations"]]
@@ -971,30 +1055,23 @@ class Ship:
         home_port = game.scan_loaded_objects(Port,save["home_port"])
         current_port = game.scan_loaded_objects(Port,save["current_port"])
         last_port = game.scan_loaded_objects(Port,save["last_port"])
-        instance = cls(
-            save["name"],
-            ship_type,
-            events_list,
-            game,
-            crew=crew,
-            coordinates=save["coordinates"],
-            current_health=save["current_health"],
-            current_toughness=save["current_toughness"],
-            ships_log=save["ships_log"],
-            storage=storage,
-            is_dispatched=save["is_dispatched"],
-            travel_progress=Stat.from_tuple(save["travel_progress"]),
-            destinations=destinations,
-            current_destination=current_destination,
-            contracts=contracts,
-            home_port=home_port,
-            current_port=current_port,
-            last_port=last_port,
-            is_under_repair=save["is_under_repair"],
-            daily_repair_amount=save["daily_repair_amount"],
-            ID=save["ID"]
-        )
-        return instance
+        
+        self.crew=crew
+        self.coordinates=save["coordinates"]
+        self.health.current_value = save["current_health"]
+        self.toughness.current_value = save["current_toughness"]
+        self.ships_log=save["ships_log"]
+        self.storage=storage
+        self.is_dispatched=save["is_dispatched"]
+        self.travel_progress=Stat.from_tuple(save["travel_progress"])
+        self.destinations=destinations
+        self.current_destination=current_destination
+        self.contracts=contracts
+        self.home_port=home_port
+        self.current_port=current_port
+        self.last_port=last_port
+        self.is_under_repair=save["is_under_repair"]
+        self.daily_repair_amount=save["daily_repair_amount"]
     
     #NON-USER FRIENDLY FUNCTIONS (NO UI)
     def start_repairs(self,daily_repair_amount:int):
@@ -1191,18 +1268,42 @@ class Ship:
         msg = None
         msg = self.daily_travel(days)
         return msg
-           
+        
 class Warehouse:
-    def __init__(self,name:str,game:Game,max_weight:int = 10000, ID:str | None = None):
+    def __init__(self,name:str,game:Game,storage:Storage | None = None,max_weight:int = 10000, ID:str | None = None):
         self.name = name
-        self.storage = Storage(f"{name} Warehouse",game,max_weight)
+        self.storage = storage if storage is not None else Storage(f"{name} Warehouse",game,max_weight)
         self.ID = ID if ID is not None else None
         game.register(self)
 
+    def save(self):
+        save = {
+            "name":self.name,
+            "storage":self.storage.ID,
+            "ID":self.ID
+        }
+        return save
+
+    @classmethod
+    def init_load(cls,save:dict,context:LoadContext):
+        game = context.game
+        instance = cls(
+            save["name"],
+            game
+        )
+        instance._save_data = save
+        return instance
+    
+    def secondary_load(self,save:dict,context:LoadContext):
+        game = context.game
+        storage = game.scan_loaded_objects(Storage,save["storage"])
+        self.storage = storage
+
+
 class Port:
-    def __init__(self, name: str, location:object,world:World,game:Game,currency_goods:list[Good],ships: list[Ship] | None = None, warehouses: list[Warehouse] | None = None, ID:str | None = None):
+    def __init__(self, name: str, location:Location,world:World,game:Game,currency_goods:list[Good],ships: list[Ship] | None = None, warehouses: list[Warehouse] | None = None, ID:str | None = None):
         self.name = name
-        self.location:Location = location
+        self.location = location
         self.world = world
         self.game = game
         self.currency_goods = currency_goods
@@ -1452,6 +1553,48 @@ class Port:
                         self.repair_ship_menu(selected_ship,player)
                     case _:
                         break
+    
+    def save(self):
+        save  = {
+            "name":self.name,
+            "location":self.location.ID,
+            "world":self.world.ID,
+            "currency_goods":[good.ID for good in self.currency_goods],
+            "ships":[ship.ID for ship in self.ships],
+            "warehouses":[warehouse.ID for warehouse in self.warehouses],
+            "ID":self.ID
+        }
+        return save
+
+    @classmethod
+    def init_load(cls,save:dict,context:LoadContext):
+        game = context.game
+        location = game.scan_loaded_objects(Location,save["location"])
+        world = game.scan_loaded_objects(World,save["world"])
+        currency_goods = []
+        for good_id in save["currency_goods"]:
+            currency_goods.append(game.scan_loaded_objects(Good,good_id))
+        instance = cls(
+            save["name"],
+            location,
+            world,
+            game,
+            currency_goods,
+            ID=save["ID"]
+        )
+        instance._save_data = save
+        return instance
+
+    def secondary_load(self,save,context:LoadContext):
+        game = context.game
+        ships = []
+        warehouses = []
+        for warehouse_id in save["warehouses"]:
+            warehouses.append(game.scan_loaded_objects(Ship,warehouse_id))
+        for ship_id in save["ships"]:
+            ships.append(game.scan_loaded_objects(Ship,ship_id))
+        self.ships = ships
+        self.warehouses = warehouses
 
 class Fleet:
     def __init__(self,ships:list[Ship],game:Game, ID:str | None = None):

@@ -8,6 +8,23 @@ player = building_blocks.player
 theBargainHouse = building_blocks.theBargainHouse
 portGrandure = building_blocks.portGrandure
 
+def new_temp_game():
+    game = components.Game()
+    gold = components.Good("Gold","Shiny",1,0.1,game)
+    bread = components.Good("Bread","Staple food",0.1,0.2,game)
+    home = components.Location("Home",game)
+    away = components.Location("Away",game)
+    world = components.World([home,away],game)
+    home_warehouse1 = components.Warehouse("Home warehouse 1",game)
+    home_warehouse2 = components.Warehouse("Home Warehouse 2",game)
+    dest_warehouse1 = components.Warehouse("Dest warehouse",game)
+    port_home = components.Port("Port Home",home,world,game,[gold],warehouses=[home_warehouse1,home_warehouse2])
+    port_away = components.Port("Port Away",away,world,game,[gold],warehouses=[dest_warehouse1])
+    dest_storage = dest_warehouse1.storage
+    contract_1 = components.Contract(game,gold,10,5,bread,5,port_away,dest_storage,port_home)
+
+    return game
+
 def start_exchange(exchange:components.Exchange,player:components.Player):
     components.clear_terminal()
     while True:
@@ -70,14 +87,16 @@ def __main__():
                         print("A new day begins...")
                     case 6:                             
                         #print("Saving game...")
-                        save_load.view_objects_in_running_game()
                         #save_load.show_building_blocks_objects()
                         input("=====DONE=====")
                         #print("Game saved successfully!")
                         #print("Thanks for playing!")
                         #break
         case 2:
-            print("Load save feature coming soon!")
+            print("Loading...")
+            game = components.Game()
+            context = components.LoadContext(game)
+            new_game = components.Game.load_from_file("save1",context)
         case 3:
             print("Settings menu coming soon!")
         case 4:
@@ -104,4 +123,33 @@ def __main__():
         case 5:
             print("Thanks for playing!")
 
-__main__()
+print("Creating new test game")
+game = new_temp_game()
+print("Success!")
+for item in game.observers:
+    if type(item) == components.Contract:
+        con = item
+print("Checking stability of contract object")
+
+print(f"Home port: {con.home_port.name}")
+
+input("Press enter to run game save")
+game.save_to_file("save1")
+
+input("Press enter to load")
+print("Loading...")
+game = components.Game()
+context = components.LoadContext(game,building_blocks.event_list)
+new_game = components.Game.load_from_file("save1",context)
+for observer in new_game.observers:
+    print(f"{observer} | {observer.ID}")
+    if type(observer) == components.Contract:
+        contract = observer
+    if type(observer) == components.Port:
+        if observer.name == "Home":
+            home_port = observer
+print("Verifying stability of loaded game...")
+print(f"Home port: {contract.home_port.name}")
+print("Home port warehouses")
+for warehouse in home_port.warehouses:
+    print(warehouse.name)
