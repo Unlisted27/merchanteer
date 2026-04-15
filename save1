@@ -8,7 +8,7 @@
         "description": "Shiny",
         "value": 1,
         "weight": 0.1,
-        "ID": "6bc8ae80-969b-459f-a05a-9198c13b6e8a"
+        "ID": "99f1b009-0e23-484f-92b1-148d3fd35bd5"
       }
     },
     {
@@ -18,17 +18,17 @@
         "description": "Staple food",
         "value": 0.1,
         "weight": 0.2,
-        "ID": "6ccb2875-dd00-43f0-b193-0ddf4d44c81b"
+        "ID": "994d8a9d-637f-427a-ba37-83df09759700"
       }
     },
     {
       "type": "Location",
       "data": {
-        "ID": "44d0ccbb-0d59-4981-a2cd-0c507367e3f2",
+        "ID": "84cff435-4672-4acc-bcd1-4d29727def90",
         "name": "Home",
         "coordinates": [
-          40621,
-          11843
+          12685,
+          7133
         ],
         "description": null
       }
@@ -36,11 +36,11 @@
     {
       "type": "Location",
       "data": {
-        "ID": "a12cc060-5573-4a81-a6a1-c69d26659fb0",
+        "ID": "0e3904f4-4a10-496d-a9ea-f9a5d724aada",
         "name": "Away",
         "coordinates": [
-          21650,
-          16386
+          41040,
+          19472
         ],
         "description": null
       }
@@ -52,7 +52,7 @@
           "Home",
           "Away"
         ],
-        "ID": "9d26bcfb-1dbf-4db1-9455-89202749d4a4"
+        "ID": "146cbb94-1c31-438f-80ba-2443476b6824"
       }
     },
     {
@@ -65,15 +65,15 @@
           0,
           0
         ],
-        "ID": "ca1baac9-4c6f-47c6-be54-db2acf3dc3d6"
+        "ID": "45188a5a-9d15-47b9-ab06-5d2e5f190f2f"
       }
     },
     {
       "type": "Warehouse",
       "data": {
         "name": "Home warehouse 1",
-        "storage": "ca1baac9-4c6f-47c6-be54-db2acf3dc3d6",
-        "ID": "2a610b97-f119-43e7-82d8-3faaf73a18b4"
+        "storage": "45188a5a-9d15-47b9-ab06-5d2e5f190f2f",
+        "ID": "2e2205f2-81bb-4694-bede-daa6afb82d53"
       }
     },
     {
@@ -86,15 +86,15 @@
           0,
           0
         ],
-        "ID": "bbd0f1a9-56ed-4595-b243-8553922562de"
+        "ID": "13f4826f-4d81-4d41-98eb-c3b4639f88b8"
       }
     },
     {
       "type": "Warehouse",
       "data": {
         "name": "Home Warehouse 2",
-        "storage": "bbd0f1a9-56ed-4595-b243-8553922562de",
-        "ID": "4a670807-2495-495f-a0d8-7cee13d00123"
+        "storage": "13f4826f-4d81-4d41-98eb-c3b4639f88b8",
+        "ID": "761dcaf5-52f7-4279-8b6e-af15b8236bb2"
       }
     },
     {
@@ -107,66 +107,96 @@
           0,
           0
         ],
-        "ID": "5d209e2e-6cfb-4eeb-82ab-b27060b2d54b"
+        "ID": "645cd6b4-1cae-4c4a-b317-5f5d597b6469"
       }
     },
     {
       "type": "Warehouse",
       "data": {
         "name": "Dest warehouse",
-        "storage": "5d209e2e-6cfb-4eeb-82ab-b27060b2d54b",
-        "ID": "3b34dcc1-4f90-4b6a-88fa-6e12773bcd32"
+        "storage": "645cd6b4-1cae-4c4a-b317-5f5d597b6469",
+        "ID": "ea2b0e95-a97e-4ff9-bb9a-c70dd62692ec"
       }
     },
     {
       "type": "Port",
       "data": {
         "name": "Port Home",
-        "location": "44d0ccbb-0d59-4981-a2cd-0c507367e3f2",
-        "world": "9d26bcfb-1dbf-4db1-9455-89202749d4a4",
+        "location": "84cff435-4672-4acc-bcd1-4d29727def90",
+        "world": "146cbb94-1c31-438f-80ba-2443476b6824",
         "currency_goods": [
-          "6bc8ae80-969b-459f-a05a-9198c13b6e8a"
+          "99f1b009-0e23-484f-92b1-148d3fd35bd5"
         ],
         "ships": [],
         "warehouses": [
-          "2a610b97-f119-43e7-82d8-3faaf73a18b4",
-          "4a670807-2495-495f-a0d8-7cee13d00123"
+          "2e2205f2-81bb-4694-bede-daa6afb82d53",
+          "761dcaf5-52f7-4279-8b6e-af15b8236bb2"
         ],
-        "ID": "d0b16578-536e-4f7c-b9dc-29ff0ae726a6"
+        "ID": "b615c6fd-cd7f-49a5-9683-0a9d71c67bbc"
       }
     },
     {
       "type": "Port",
       "data": {
         "name": "Port Away",
-        "location": "a12cc060-5573-4a81-a6a1-c69d26659fb0",
-        "world": "9d26bcfb-1dbf-4db1-9455-89202749d4a4",
+        "location": "0e3904f4-4a10-496d-a9ea-f9a5d724aada",
+        "world": "146cbb94-1c31-438f-80ba-2443476b6824",
         "currency_goods": [
-          "6bc8ae80-969b-459f-a05a-9198c13b6e8a"
+          "99f1b009-0e23-484f-92b1-148d3fd35bd5"
         ],
         "ships": [],
         "warehouses": [
-          "3b34dcc1-4f90-4b6a-88fa-6e12773bcd32"
+          "ea2b0e95-a97e-4ff9-bb9a-c70dd62692ec"
         ],
-        "ID": "24927e21-a4ff-4137-a757-16507a0f8b50"
+        "ID": "30672094-9c38-4537-b869-247390685032"
       }
     },
     {
       "type": "Contract",
       "data": {
-        "reward_good": "6bc8ae80-969b-459f-a05a-9198c13b6e8a",
+        "reward_good": "99f1b009-0e23-484f-92b1-148d3fd35bd5",
         "reward_amount": 10,
         "deadline": 5,
-        "good": "6ccb2875-dd00-43f0-b193-0ddf4d44c81b",
+        "good": "994d8a9d-637f-427a-ba37-83df09759700",
         "amount": 5,
-        "destination_port": "24927e21-a4ff-4137-a757-16507a0f8b50",
-        "destination_storage": "5d209e2e-6cfb-4eeb-82ab-b27060b2d54b",
-        "home_port": "d0b16578-536e-4f7c-b9dc-29ff0ae726a6",
+        "destination_port": "30672094-9c38-4537-b869-247390685032",
+        "destination_storage": "645cd6b4-1cae-4c4a-b317-5f5d597b6469",
+        "home_port": "b615c6fd-cd7f-49a5-9683-0a9d71c67bbc",
         "expired": false,
         "complete": false,
         "complete_notice": false,
         "contract_travel_time": null,
-        "ID": "c71cbe7e-8f04-4a63-b90c-00f90d457b49"
+        "ID": "d903a7bc-e6bf-4409-a172-84195a53689f"
+      }
+    },
+    {
+      "type": "CrewRole",
+      "data": {
+        "name": "Buckaneer",
+        "description": "A regular sailor, well equiped in all areas but not excelling in any.",
+        "sailing_booster": 0,
+        "maintenance_booster": 0,
+        "ID": "e499ab49-c2a3-456a-9530-90c8bafbd9b4"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "e499ab49-c2a3-456a-9530-90c8bafbd9b4",
+        "sailing_ability": 19,
+        "maintenance_skill": 10,
+        "name": "Larfredon",
+        "ID": "95299d29-42fb-47c4-966b-97c9a2ba37a4"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "e499ab49-c2a3-456a-9530-90c8bafbd9b4",
+        "sailing_ability": 18,
+        "maintenance_skill": 18,
+        "name": "Lizjanney",
+        "ID": "8fa39393-b498-4eff-890a-ac213631724d"
       }
     }
   ]

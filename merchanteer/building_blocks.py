@@ -61,14 +61,16 @@ event_list.append(Storm())
 #Crew roles
 buckaneer = components.CrewRole("Buckaneer","A regular sailor, well equiped in all areas but not excelling in any.",game)
 
+crew_roles = [buckaneer]
+
 # Crew
 
 #Ship types
 ketch = components.ShipType(game,"Ketch")
 
 #ships
-theSliver = components.Ship("the Sliver",ketch,event_list,game,crew=[components.gen_crewmate([buckaneer],game),components.gen_crewmate([buckaneer],game)])
-theSplinter = components.Ship("the Splinter",ketch,event_list,game,crew=[components.gen_crewmate([buckaneer],game),components.gen_crewmate([buckaneer],game)])
+theSliver = components.Ship("the Sliver",ketch,event_list,game,crew=[components.gen_crewmate(crew_roles,game),components.gen_crewmate(crew_roles,game)])
+theSplinter = components.Ship("the Splinter",ketch,event_list,game,crew=[components.gen_crewmate(crew_roles,game),components.gen_crewmate(crew_roles,game)])
 #Fleet
 player_fleet = components.Fleet([theSliver,theSplinter],game)
 

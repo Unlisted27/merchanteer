@@ -7,8 +7,8 @@ Storage /
 Warehouses
 Ports /
 Contracts /
-Crew roles 
-Crew 
+Crew roles /
+Crew /
 Ship Type
 Ships
 Fleets

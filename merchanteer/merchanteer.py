@@ -23,6 +23,12 @@ def new_temp_game():
     dest_storage = dest_warehouse1.storage
     contract_1 = components.Contract(game,gold,10,5,bread,5,port_away,dest_storage,port_home)
 
+    buckaneer = components.CrewRole("Buckaneer","A regular sailor, well equiped in all areas but not excelling in any.",game)
+
+    crew_roles = [buckaneer]
+    crewMate1 = components.gen_crewmate(crew_roles,game)
+    crewMate2 = components.gen_crewmate(crew_roles,game)
+
     return game
 
 def start_exchange(exchange:components.Exchange,player:components.Player):
@@ -126,12 +132,6 @@ def __main__():
 print("Creating new test game")
 game = new_temp_game()
 print("Success!")
-for item in game.observers:
-    if type(item) == components.Contract:
-        con = item
-print("Checking stability of contract object")
-
-print(f"Home port: {con.home_port.name}")
 
 input("Press enter to run game save")
 game.save_to_file("save1")
@@ -141,15 +141,7 @@ print("Loading...")
 game = components.Game()
 context = components.LoadContext(game,building_blocks.event_list)
 new_game = components.Game.load_from_file("save1",context)
+
+print("Here are the observers...")
 for observer in new_game.observers:
     print(f"{observer} | {observer.ID}")
-    if type(observer) == components.Contract:
-        contract = observer
-    if type(observer) == components.Port:
-        if observer.name == "Home":
-            home_port = observer
-print("Verifying stability of loaded game...")
-print(f"Home port: {contract.home_port.name}")
-print("Home port warehouses")
-for warehouse in home_port.warehouses:
-    print(warehouse.name)
