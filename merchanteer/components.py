@@ -1762,14 +1762,6 @@ class Exchange:
             self.gen_daily_contracts()
 
     def gen_daily_contracts(self):
-        print(self.game)
-        print(self.good_list)
-        print(self.reward_list)
-        print(self.game.day)
-        print(self.location)
-        print(self.world)
-        print(self.max_cargo_weight)
-        input("GENERATING COTNRACTS")
         if len(self.good_list) == 0 or len(self.reward_list) == 0 or self.game is None:
             raise ValueError("If no contracts are provided, good_list, reward_list, and Game must be provided. Also, make sure the day value is accurate.")
         for i in range(random.randint(3,5)):
