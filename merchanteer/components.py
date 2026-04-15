@@ -254,15 +254,19 @@ def gen_contract(game:'Game',good_list: list,reward_list:list, current_day, curr
     deadline = current_day + random.randint(10, 20)  # 10-20 days from now
     possible_destinations = [loc for loc in world.locations if loc != current_location]
     destination_location = random.choice(possible_destinations) if possible_destinations else None
+    #input(destination_location.name)
+    if destination_location is None:
+        raise ValueError("Failed to create contract, no possible destinations found!")
     #print(f"Possible destinations: {[loc.name for loc in possible_destinations]}")
     #print(f"Chosen destination: {destination_location.name if destination_location else 'None'}")
     #print(f"destination_location ports: {[port.name for port in destination_location.ports] if destination_location else 'N/A'}")
     #input()
-    destination_port=random.choice(destination_location.ports) if len(destination_location.ports) > 0 else input("Found an error here") #This logic needs to be fixed to allow for multiple ports per location
+    destination_port=random.choice(destination_location.ports) if len(destination_location.ports) > 0 else input("Found an error here")
+    #input(destination_port.warehouses)
     if destination_port and len(destination_port.warehouses) > 0:
         destination_storage = destination_port.warehouses[0].storage#random.choice(destination_port.warehouses).storage 
     else:
-        return  #no valid destination found
+        raise ValueError("Could not create contract, no valid destination warehouses found!")
     # create the contract
     contract = Contract(
         game,
@@ -736,7 +740,7 @@ class Storage:
     
     def secondary_load(self,save,context:LoadContext):
         game = context.game
-        for good_id,amount in save["cargo"]:
+        for good_id,amount in dict(save["cargo"]).items():
             self.cargo[game.scan_loaded_objects(Good,good_id)]=amount
 
 class Contract:
@@ -1716,11 +1720,10 @@ class Exchange:
         self.reward_list = list(reward_list) if reward_list is not None else []
         self.max_cargo_weight = max_cargo_weight
         if self.location is not None and type(self.location) is Location:
-            self.location.add_exchange(self)
+            if self not in self.location.exchanges:
+                self.location.add_exchange(self)
         else:
             raise ValueError("Exchange must have a valid Location")
-        if not self.contracts:   # safer check for empty list
-            self.gen_daily_contracts()
 
     def save(self):
         save = {
@@ -1751,9 +1754,22 @@ class Exchange:
             max_cargo_weight = save["max_cargo_weight"],
             ID=save["ID"]
         )
+        instance._save_data = save
         return instance
 
+    def secondary_load(self,save,context):
+        if not self.contracts:   # safer check for empty list
+            self.gen_daily_contracts()
+
     def gen_daily_contracts(self):
+        print(self.game)
+        print(self.good_list)
+        print(self.reward_list)
+        print(self.game.day)
+        print(self.location)
+        print(self.world)
+        print(self.max_cargo_weight)
+        input("GENERATING COTNRACTS")
         if len(self.good_list) == 0 or len(self.reward_list) == 0 or self.game is None:
             raise ValueError("If no contracts are provided, good_list, reward_list, and Game must be provided. Also, make sure the day value is accurate.")
         for i in range(random.randint(3,5)):
@@ -1765,7 +1781,7 @@ class Exchange:
 
     def show_contracts(self):
         table_data = {}
-
+        print(f"CONTRACTS {self.contracts}")
         for i, c in enumerate(self.contracts, start=1):
             status = "Expired" if c.expired else f"Due day {c.deadline}"
             reward = f"{c.reward_amount} {c.reward_good.name}"
