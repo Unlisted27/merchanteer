@@ -1,172 +1,565 @@
 {
-  "day": 0,
+  "day": 2,
   "game_items": [
     {
-      "type": "Good",
+      "type": "Location",
       "data": {
-        "name": "Gold",
-        "description": "Shiny",
-        "value": 1,
-        "weight": 0.1,
-        "ID": "99f1b009-0e23-484f-92b1-148d3fd35bd5"
-      }
-    },
-    {
-      "type": "Good",
-      "data": {
-        "name": "Bread",
-        "description": "Staple food",
-        "value": 0.1,
-        "weight": 0.2,
-        "ID": "994d8a9d-637f-427a-ba37-83df09759700"
+        "ID": "c790033c-e265-46c8-b9e6-3f13a93955b7",
+        "name": "Grandure",
+        "coordinates": [
+          47524,
+          41
+        ],
+        "description": "A bustling trade city with a large port."
       }
     },
     {
       "type": "Location",
       "data": {
-        "ID": "84cff435-4672-4acc-bcd1-4d29727def90",
-        "name": "Home",
+        "ID": "7ea2106d-f12a-4566-aa32-f2817190ab3d",
+        "name": "Clammer",
         "coordinates": [
-          12685,
-          7133
+          46230,
+          32046
         ],
-        "description": null
+        "description": "A small fishing village known for its seafood."
       }
     },
     {
       "type": "Location",
       "data": {
-        "ID": "0e3904f4-4a10-496d-a9ea-f9a5d724aada",
-        "name": "Away",
+        "ID": "062bb5d3-7eda-455d-9026-99d9f17917d6",
+        "name": "Old Cove",
         "coordinates": [
-          41040,
-          19472
+          49321,
+          18936
         ],
-        "description": null
+        "description": "One of the first foreign settlements, old cove has survived through it all."
       }
     },
     {
       "type": "World",
       "data": {
         "locations": [
-          "Home",
-          "Away"
+          "c790033c-e265-46c8-b9e6-3f13a93955b7",
+          "7ea2106d-f12a-4566-aa32-f2817190ab3d",
+          "062bb5d3-7eda-455d-9026-99d9f17917d6"
         ],
-        "ID": "146cbb94-1c31-438f-80ba-2443476b6824"
+        "ID": "94006487-4dd4-4cd0-9103-f327aabbef7c"
+      }
+    },
+    {
+      "type": "Good",
+      "data": {
+        "name": "gold",
+        "description": "shiny",
+        "value": 1,
+        "weight": 0.1,
+        "ID": "1071d8f1-5765-4604-b553-3abced63cd43"
+      }
+    },
+    {
+      "type": "Good",
+      "data": {
+        "name": "silver",
+        "description": "less-shiny",
+        "value": 0.5,
+        "weight": 0.1,
+        "ID": "27e1ae9b-cd68-4909-ab11-3048b0f1d9d1"
+      }
+    },
+    {
+      "type": "Good",
+      "data": {
+        "name": "bread",
+        "description": "staple food",
+        "value": 0.1,
+        "weight": 0.05,
+        "ID": "7819e4da-bfb4-4042-9013-af760f734608"
+      }
+    },
+    {
+      "type": "Good",
+      "data": {
+        "name": "fish",
+        "description": "protein food",
+        "value": 0.3,
+        "weight": 1,
+        "ID": "3975e8ad-7b8c-4cc9-a617-c7bea2f4e127"
+      }
+    },
+    {
+      "type": "Good",
+      "data": {
+        "name": "wood",
+        "description": "building material",
+        "value": 0.5,
+        "weight": 2,
+        "ID": "de14bfbe-b1d3-40cb-99c8-5f55ff633690"
+      }
+    },
+    {
+      "type": "Good",
+      "data": {
+        "name": "cloth",
+        "description": "fabric material",
+        "value": 0.3,
+        "weight": 0.1,
+        "ID": "96dcd45f-d746-4d73-9fec-bce88dead5a2"
+      }
+    },
+    {
+      "type": "Good",
+      "data": {
+        "name": "rice",
+        "description": "staple food",
+        "value": 0.2,
+        "weight": 1,
+        "ID": "5e91518b-436a-4dad-a717-55e01f177e12"
       }
     },
     {
       "type": "Storage",
       "data": {
         "cargo": {},
-        "name": "Home warehouse 1 Warehouse",
+        "name": "the Sliver Cargo",
         "cargo_weight": [
-          10000,
+          [
+            [
+              [
+                48000,
+                0,
+                0
+              ],
+              0,
+              0
+            ],
+            0,
+            0
+          ],
           0,
           0
         ],
-        "ID": "45188a5a-9d15-47b9-ab06-5d2e5f190f2f"
-      }
-    },
-    {
-      "type": "Warehouse",
-      "data": {
-        "name": "Home warehouse 1",
-        "storage": "45188a5a-9d15-47b9-ab06-5d2e5f190f2f",
-        "ID": "2e2205f2-81bb-4694-bede-daa6afb82d53"
+        "ID": "f4eeab73-78b3-4ce4-889f-797377c72f0c"
       }
     },
     {
       "type": "Storage",
       "data": {
         "cargo": {},
-        "name": "Home Warehouse 2 Warehouse",
+        "name": "the Splinter Cargo",
         "cargo_weight": [
-          10000,
+          [
+            [
+              [
+                48000,
+                0,
+                0
+              ],
+              0,
+              0
+            ],
+            0,
+            0
+          ],
           0,
           0
         ],
-        "ID": "13f4826f-4d81-4d41-98eb-c3b4639f88b8"
-      }
-    },
-    {
-      "type": "Warehouse",
-      "data": {
-        "name": "Home Warehouse 2",
-        "storage": "13f4826f-4d81-4d41-98eb-c3b4639f88b8",
-        "ID": "761dcaf5-52f7-4279-8b6e-af15b8236bb2"
+        "ID": "490de275-c33b-4615-869e-b1a20627bd2c"
       }
     },
     {
       "type": "Storage",
       "data": {
         "cargo": {},
-        "name": "Dest warehouse Warehouse",
+        "name": "the Hold Warehouse",
         "cargo_weight": [
-          10000,
+          [
+            [
+              [
+                10000,
+                0,
+                0
+              ],
+              0,
+              0
+            ],
+            0,
+            0
+          ],
           0,
           0
         ],
-        "ID": "645cd6b4-1cae-4c4a-b317-5f5d597b6469"
+        "ID": "ab51e827-6a1f-4e9c-9001-5c6fe9c27bb0"
+      }
+    },
+    {
+      "type": "Storage",
+      "data": {
+        "cargo": {},
+        "name": "Clammer Warehouse Warehouse",
+        "cargo_weight": [
+          [
+            [
+              [
+                10000,
+                0,
+                0
+              ],
+              0,
+              0
+            ],
+            0,
+            0
+          ],
+          0,
+          0
+        ],
+        "ID": "0e09b0c2-ba2c-4ee1-a6cc-c005b367af5d"
+      }
+    },
+    {
+      "type": "Storage",
+      "data": {
+        "cargo": {},
+        "name": "Old Cove Warehouse Warehouse",
+        "cargo_weight": [
+          [
+            [
+              [
+                10000,
+                0,
+                0
+              ],
+              0,
+              0
+            ],
+            0,
+            0
+          ],
+          0,
+          0
+        ],
+        "ID": "db461a33-9943-4cef-979e-2f573af55565"
+      }
+    },
+    {
+      "type": "Storage",
+      "data": {
+        "cargo": {},
+        "name": "Player Inventory",
+        "cargo_weight": [
+          [
+            [
+              [
+                100,
+                0,
+                0
+              ],
+              0,
+              0
+            ],
+            0,
+            0
+          ],
+          0,
+          0
+        ],
+        "ID": "778d3983-d052-41e0-a495-9f874ac55e4d"
       }
     },
     {
       "type": "Warehouse",
       "data": {
-        "name": "Dest warehouse",
-        "storage": "645cd6b4-1cae-4c4a-b317-5f5d597b6469",
-        "ID": "ea2b0e95-a97e-4ff9-bb9a-c70dd62692ec"
+        "name": "the Hold",
+        "storage": "ab51e827-6a1f-4e9c-9001-5c6fe9c27bb0",
+        "ID": "3a4587b1-7d0c-4288-b2c6-0ae678e8d545"
+      }
+    },
+    {
+      "type": "Warehouse",
+      "data": {
+        "name": "Clammer Warehouse",
+        "storage": "0e09b0c2-ba2c-4ee1-a6cc-c005b367af5d",
+        "ID": "d14220ed-5e37-41e4-9310-b67d9937b7b9"
+      }
+    },
+    {
+      "type": "Warehouse",
+      "data": {
+        "name": "Old Cove Warehouse",
+        "storage": "db461a33-9943-4cef-979e-2f573af55565",
+        "ID": "3521ecd9-5a55-495c-a0ca-cc08cd40e176"
       }
     },
     {
       "type": "Port",
       "data": {
-        "name": "Port Home",
-        "location": "84cff435-4672-4acc-bcd1-4d29727def90",
-        "world": "146cbb94-1c31-438f-80ba-2443476b6824",
+        "name": "port Clammer",
+        "location": "7ea2106d-f12a-4566-aa32-f2817190ab3d",
+        "world": "94006487-4dd4-4cd0-9103-f327aabbef7c",
         "currency_goods": [
-          "99f1b009-0e23-484f-92b1-148d3fd35bd5"
+          "1071d8f1-5765-4604-b553-3abced63cd43",
+          "27e1ae9b-cd68-4909-ab11-3048b0f1d9d1"
         ],
         "ships": [],
         "warehouses": [
-          "2e2205f2-81bb-4694-bede-daa6afb82d53",
-          "761dcaf5-52f7-4279-8b6e-af15b8236bb2"
+          "d14220ed-5e37-41e4-9310-b67d9937b7b9"
         ],
-        "ID": "b615c6fd-cd7f-49a5-9683-0a9d71c67bbc"
+        "ID": "8c4ddc8b-be1a-411e-8ab0-8b12bdf534da"
       }
     },
     {
       "type": "Port",
       "data": {
-        "name": "Port Away",
-        "location": "0e3904f4-4a10-496d-a9ea-f9a5d724aada",
-        "world": "146cbb94-1c31-438f-80ba-2443476b6824",
+        "name": "port Grandure",
+        "location": "c790033c-e265-46c8-b9e6-3f13a93955b7",
+        "world": "94006487-4dd4-4cd0-9103-f327aabbef7c",
         "currency_goods": [
-          "99f1b009-0e23-484f-92b1-148d3fd35bd5"
+          "1071d8f1-5765-4604-b553-3abced63cd43",
+          "27e1ae9b-cd68-4909-ab11-3048b0f1d9d1"
+        ],
+        "ships": [
+          "6331ae9c-d38b-4a9a-8d97-5fe4c48993b0",
+          "1f3be2ae-36e0-49ef-ab83-2507534ec7f9"
+        ],
+        "warehouses": [
+          "3a4587b1-7d0c-4288-b2c6-0ae678e8d545"
+        ],
+        "ID": "ac47bf06-9f81-46fe-b478-cfbab692e771"
+      }
+    },
+    {
+      "type": "Port",
+      "data": {
+        "name": "Old Cove Port",
+        "location": "062bb5d3-7eda-455d-9026-99d9f17917d6",
+        "world": "94006487-4dd4-4cd0-9103-f327aabbef7c",
+        "currency_goods": [
+          "1071d8f1-5765-4604-b553-3abced63cd43",
+          "27e1ae9b-cd68-4909-ab11-3048b0f1d9d1"
         ],
         "ships": [],
         "warehouses": [
-          "ea2b0e95-a97e-4ff9-bb9a-c70dd62692ec"
+          "3521ecd9-5a55-495c-a0ca-cc08cd40e176"
         ],
-        "ID": "30672094-9c38-4537-b869-247390685032"
+        "ID": "f0f8716a-20a7-4b73-a839-3e1c33abb577"
       }
     },
     {
       "type": "Contract",
       "data": {
-        "reward_good": "99f1b009-0e23-484f-92b1-148d3fd35bd5",
-        "reward_amount": 10,
-        "deadline": 5,
-        "good": "994d8a9d-637f-427a-ba37-83df09759700",
-        "amount": 5,
-        "destination_port": "30672094-9c38-4537-b869-247390685032",
-        "destination_storage": "645cd6b4-1cae-4c4a-b317-5f5d597b6469",
-        "home_port": "b615c6fd-cd7f-49a5-9683-0a9d71c67bbc",
+        "reward_good": "27e1ae9b-cd68-4909-ab11-3048b0f1d9d1",
+        "reward_amount": 35,
+        "deadline": 10,
+        "good": "de14bfbe-b1d3-40cb-99c8-5f55ff633690",
+        "amount": 75,
+        "destination_port": "8c4ddc8b-be1a-411e-8ab0-8b12bdf534da",
+        "destination_storage": "0e09b0c2-ba2c-4ee1-a6cc-c005b367af5d",
+        "home_location": "c790033c-e265-46c8-b9e6-3f13a93955b7",
         "expired": false,
         "complete": false,
         "complete_notice": false,
         "contract_travel_time": null,
-        "ID": "d903a7bc-e6bf-4409-a172-84195a53689f"
+        "ID": "2e705b4f-8e89-483b-89dc-c9d92bab01b6"
+      }
+    },
+    {
+      "type": "Contract",
+      "data": {
+        "reward_good": "27e1ae9b-cd68-4909-ab11-3048b0f1d9d1",
+        "reward_amount": 1533,
+        "deadline": 20,
+        "good": "7819e4da-bfb4-4042-9013-af760f734608",
+        "amount": 13281,
+        "destination_port": "8c4ddc8b-be1a-411e-8ab0-8b12bdf534da",
+        "destination_storage": "0e09b0c2-ba2c-4ee1-a6cc-c005b367af5d",
+        "home_location": "c790033c-e265-46c8-b9e6-3f13a93955b7",
+        "expired": false,
+        "complete": false,
+        "complete_notice": false,
+        "contract_travel_time": null,
+        "ID": "0e3f128d-1b13-41f0-bcf5-74b7b98688b2"
+      }
+    },
+    {
+      "type": "Contract",
+      "data": {
+        "reward_good": "27e1ae9b-cd68-4909-ab11-3048b0f1d9d1",
+        "reward_amount": 69,
+        "deadline": 10,
+        "good": "3975e8ad-7b8c-4cc9-a617-c7bea2f4e127",
+        "amount": 242,
+        "destination_port": "8c4ddc8b-be1a-411e-8ab0-8b12bdf534da",
+        "destination_storage": "0e09b0c2-ba2c-4ee1-a6cc-c005b367af5d",
+        "home_location": "c790033c-e265-46c8-b9e6-3f13a93955b7",
+        "expired": false,
+        "complete": false,
+        "complete_notice": false,
+        "contract_travel_time": null,
+        "ID": "f646a404-afad-47f6-b319-605abcc3584f"
+      }
+    },
+    {
+      "type": "Contract",
+      "data": {
+        "reward_good": "1071d8f1-5765-4604-b553-3abced63cd43",
+        "reward_amount": 215,
+        "deadline": 19,
+        "good": "5e91518b-436a-4dad-a717-55e01f177e12",
+        "amount": 975,
+        "destination_port": "8c4ddc8b-be1a-411e-8ab0-8b12bdf534da",
+        "destination_storage": "0e09b0c2-ba2c-4ee1-a6cc-c005b367af5d",
+        "home_location": "c790033c-e265-46c8-b9e6-3f13a93955b7",
+        "expired": false,
+        "complete": false,
+        "complete_notice": false,
+        "contract_travel_time": null,
+        "ID": "5306874f-1d54-43e9-9fd4-8dac3f6c9c7c"
+      }
+    },
+    {
+      "type": "Contract",
+      "data": {
+        "reward_good": "27e1ae9b-cd68-4909-ab11-3048b0f1d9d1",
+        "reward_amount": 958,
+        "deadline": 11,
+        "good": "7819e4da-bfb4-4042-9013-af760f734608",
+        "amount": 8101,
+        "destination_port": "f0f8716a-20a7-4b73-a839-3e1c33abb577",
+        "destination_storage": "db461a33-9943-4cef-979e-2f573af55565",
+        "home_location": "c790033c-e265-46c8-b9e6-3f13a93955b7",
+        "expired": false,
+        "complete": false,
+        "complete_notice": false,
+        "contract_travel_time": null,
+        "ID": "ca003965-2b8f-49e6-a0f5-d366c041dcf5"
+      }
+    },
+    {
+      "type": "Contract",
+      "data": {
+        "reward_good": "27e1ae9b-cd68-4909-ab11-3048b0f1d9d1",
+        "reward_amount": 2144,
+        "deadline": 14,
+        "good": "96dcd45f-d746-4d73-9fec-bce88dead5a2",
+        "amount": 7402,
+        "destination_port": "8c4ddc8b-be1a-411e-8ab0-8b12bdf534da",
+        "destination_storage": "0e09b0c2-ba2c-4ee1-a6cc-c005b367af5d",
+        "home_location": "c790033c-e265-46c8-b9e6-3f13a93955b7",
+        "expired": false,
+        "complete": false,
+        "complete_notice": false,
+        "contract_travel_time": null,
+        "ID": "5e3130a8-7695-4af4-9214-c36c3d2db838"
+      }
+    },
+    {
+      "type": "Contract",
+      "data": {
+        "reward_good": "1071d8f1-5765-4604-b553-3abced63cd43",
+        "reward_amount": 2809,
+        "deadline": 17,
+        "good": "96dcd45f-d746-4d73-9fec-bce88dead5a2",
+        "amount": 8241,
+        "destination_port": "8c4ddc8b-be1a-411e-8ab0-8b12bdf534da",
+        "destination_storage": "0e09b0c2-ba2c-4ee1-a6cc-c005b367af5d",
+        "home_location": "c790033c-e265-46c8-b9e6-3f13a93955b7",
+        "expired": false,
+        "complete": false,
+        "complete_notice": false,
+        "contract_travel_time": null,
+        "ID": "b218e14a-b55f-4ecc-a4be-ebd147d09989"
+      }
+    },
+    {
+      "type": "Contract",
+      "data": {
+        "reward_good": "1071d8f1-5765-4604-b553-3abced63cd43",
+        "reward_amount": 1507,
+        "deadline": 13,
+        "good": "7819e4da-bfb4-4042-9013-af760f734608",
+        "amount": 14020,
+        "destination_port": "8c4ddc8b-be1a-411e-8ab0-8b12bdf534da",
+        "destination_storage": "0e09b0c2-ba2c-4ee1-a6cc-c005b367af5d",
+        "home_location": "c790033c-e265-46c8-b9e6-3f13a93955b7",
+        "expired": false,
+        "complete": false,
+        "complete_notice": false,
+        "contract_travel_time": null,
+        "ID": "f76f507c-7643-4be6-8808-a63b1d8bbe66"
+      }
+    },
+    {
+      "type": "Contract",
+      "data": {
+        "reward_good": "1071d8f1-5765-4604-b553-3abced63cd43",
+        "reward_amount": 138,
+        "deadline": 18,
+        "good": "de14bfbe-b1d3-40cb-99c8-5f55ff633690",
+        "amount": 291,
+        "destination_port": "8c4ddc8b-be1a-411e-8ab0-8b12bdf534da",
+        "destination_storage": "0e09b0c2-ba2c-4ee1-a6cc-c005b367af5d",
+        "home_location": "c790033c-e265-46c8-b9e6-3f13a93955b7",
+        "expired": false,
+        "complete": false,
+        "complete_notice": false,
+        "contract_travel_time": null,
+        "ID": "bb9067c7-70a9-4ef6-a681-fe1275435872"
+      }
+    },
+    {
+      "type": "Contract",
+      "data": {
+        "reward_good": "27e1ae9b-cd68-4909-ab11-3048b0f1d9d1",
+        "reward_amount": 1495,
+        "deadline": 17,
+        "good": "7819e4da-bfb4-4042-9013-af760f734608",
+        "amount": 15232,
+        "destination_port": "8c4ddc8b-be1a-411e-8ab0-8b12bdf534da",
+        "destination_storage": "0e09b0c2-ba2c-4ee1-a6cc-c005b367af5d",
+        "home_location": "c790033c-e265-46c8-b9e6-3f13a93955b7",
+        "expired": false,
+        "complete": false,
+        "complete_notice": false,
+        "contract_travel_time": null,
+        "ID": "4012696d-782c-47fa-95c6-30455bb5ff8c"
+      }
+    },
+    {
+      "type": "Contract",
+      "data": {
+        "reward_good": "27e1ae9b-cd68-4909-ab11-3048b0f1d9d1",
+        "reward_amount": 45,
+        "deadline": 12,
+        "good": "de14bfbe-b1d3-40cb-99c8-5f55ff633690",
+        "amount": 112,
+        "destination_port": "8c4ddc8b-be1a-411e-8ab0-8b12bdf534da",
+        "destination_storage": "0e09b0c2-ba2c-4ee1-a6cc-c005b367af5d",
+        "home_location": "c790033c-e265-46c8-b9e6-3f13a93955b7",
+        "expired": false,
+        "complete": false,
+        "complete_notice": false,
+        "contract_travel_time": null,
+        "ID": "df768b6b-4b6a-4c57-9152-75435a2decbf"
+      }
+    },
+    {
+      "type": "Contract",
+      "data": {
+        "reward_good": "1071d8f1-5765-4604-b553-3abced63cd43",
+        "reward_amount": 1967,
+        "deadline": 22,
+        "good": "7819e4da-bfb4-4042-9013-af760f734608",
+        "amount": 16517,
+        "destination_port": "f0f8716a-20a7-4b73-a839-3e1c33abb577",
+        "destination_storage": "db461a33-9943-4cef-979e-2f573af55565",
+        "home_location": "c790033c-e265-46c8-b9e6-3f13a93955b7",
+        "expired": false,
+        "complete": false,
+        "complete_notice": false,
+        "contract_travel_time": null,
+        "ID": "d7678dda-17ac-45c5-93dc-adb963aa8f6a"
       }
     },
     {
@@ -176,27 +569,585 @@
         "description": "A regular sailor, well equiped in all areas but not excelling in any.",
         "sailing_booster": 0,
         "maintenance_booster": 0,
-        "ID": "e499ab49-c2a3-456a-9530-90c8bafbd9b4"
+        "ID": "98c7b647-8f8b-46cb-a0ec-fd9b75bb4f63"
       }
     },
     {
       "type": "CrewMate",
       "data": {
-        "crew_role": "e499ab49-c2a3-456a-9530-90c8bafbd9b4",
-        "sailing_ability": 19,
-        "maintenance_skill": 10,
-        "name": "Larfredon",
-        "ID": "95299d29-42fb-47c4-966b-97c9a2ba37a4"
+        "crew_role": "98c7b647-8f8b-46cb-a0ec-fd9b75bb4f63",
+        "sailing_ability": 17,
+        "maintenance_skill": 16,
+        "name": "Roderard",
+        "ID": "25cc0e58-daf2-4389-8dc3-d1761c8b60af"
       }
     },
     {
       "type": "CrewMate",
       "data": {
-        "crew_role": "e499ab49-c2a3-456a-9530-90c8bafbd9b4",
-        "sailing_ability": 18,
+        "crew_role": "98c7b647-8f8b-46cb-a0ec-fd9b75bb4f63",
+        "sailing_ability": 11,
         "maintenance_skill": 18,
-        "name": "Lizjanney",
-        "ID": "8fa39393-b498-4eff-890a-ac213631724d"
+        "name": "Diadoragoth",
+        "ID": "4b4265f4-643f-46af-9744-734fbfb33f16"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "98c7b647-8f8b-46cb-a0ec-fd9b75bb4f63",
+        "sailing_ability": 11,
+        "maintenance_skill": 19,
+        "name": "Achlinemir",
+        "ID": "a9127918-d67d-4779-888b-d52e0933a22e"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "98c7b647-8f8b-46cb-a0ec-fd9b75bb4f63",
+        "sailing_ability": 20,
+        "maintenance_skill": 17,
+        "name": "Dengus",
+        "ID": "bd07cc8c-df4f-4789-bf96-5a0f9f950318"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "98c7b647-8f8b-46cb-a0ec-fd9b75bb4f63",
+        "sailing_ability": 20,
+        "maintenance_skill": 15,
+        "name": "Blanwin",
+        "ID": "fd511988-b12c-4e37-be4f-a0456b5ccd08"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "98c7b647-8f8b-46cb-a0ec-fd9b75bb4f63",
+        "sailing_ability": 13,
+        "maintenance_skill": 15,
+        "name": "Pauldon",
+        "ID": "80fe13d4-5d94-42c3-8abd-d2c85b68179d"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "98c7b647-8f8b-46cb-a0ec-fd9b75bb4f63",
+        "sailing_ability": 17,
+        "maintenance_skill": 20,
+        "name": "Marcedarno",
+        "ID": "182c45a2-6361-4a85-a01b-918e3f09bd52"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "98c7b647-8f8b-46cb-a0ec-fd9b75bb4f63",
+        "sailing_ability": 12,
+        "maintenance_skill": 13,
+        "name": "Geofio",
+        "ID": "ecc3a046-4ba4-4e5f-9ab7-24771bd5231f"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "98c7b647-8f8b-46cb-a0ec-fd9b75bb4f63",
+        "sailing_ability": 20,
+        "maintenance_skill": 19,
+        "name": "Ednlethro",
+        "ID": "2ed6e168-676f-44b6-91ac-3d837afa1529"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "98c7b647-8f8b-46cb-a0ec-fd9b75bb4f63",
+        "sailing_ability": 17,
+        "maintenance_skill": 17,
+        "name": "Graferdred",
+        "ID": "244b5fad-7b66-48a9-9f3d-f4626f8f40f1"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "98c7b647-8f8b-46cb-a0ec-fd9b75bb4f63",
+        "sailing_ability": 18,
+        "maintenance_skill": 16,
+        "name": "Matmarhard",
+        "ID": "5a479d89-0e7b-4782-bd89-ef049665cde9"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "98c7b647-8f8b-46cb-a0ec-fd9b75bb4f63",
+        "sailing_ability": 13,
+        "maintenance_skill": 12,
+        "name": "Larzar",
+        "ID": "e71a3492-e1df-4c4f-b2cc-6d6831e4433a"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "98c7b647-8f8b-46cb-a0ec-fd9b75bb4f63",
+        "sailing_ability": 11,
+        "maintenance_skill": 18,
+        "name": "Gilla",
+        "ID": "d25f7d04-089c-44ea-904c-fc5c54bd0a1d"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "98c7b647-8f8b-46cb-a0ec-fd9b75bb4f63",
+        "sailing_ability": 20,
+        "maintenance_skill": 19,
+        "name": "Caelvinya",
+        "ID": "047ea115-e181-46a4-9bcc-e9fae3097833"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "98c7b647-8f8b-46cb-a0ec-fd9b75bb4f63",
+        "sailing_ability": 16,
+        "maintenance_skill": 15,
+        "name": "Tancrmatbeth",
+        "ID": "0d9dfa32-9e15-4e97-8103-15cbec7384dc"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "98c7b647-8f8b-46cb-a0ec-fd9b75bb4f63",
+        "sailing_ability": 11,
+        "maintenance_skill": 14,
+        "name": "Lambmund",
+        "ID": "b236d980-518f-4cac-9cdf-d5d553e9ab87"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "98c7b647-8f8b-46cb-a0ec-fd9b75bb4f63",
+        "sailing_ability": 10,
+        "maintenance_skill": 15,
+        "name": "Congoth",
+        "ID": "4480bd5c-e73b-456c-a4f0-28eb712360e9"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "98c7b647-8f8b-46cb-a0ec-fd9b75bb4f63",
+        "sailing_ability": 20,
+        "maintenance_skill": 17,
+        "name": "Radros",
+        "ID": "ec1fef6a-2695-488d-8555-b863d06711f3"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "98c7b647-8f8b-46cb-a0ec-fd9b75bb4f63",
+        "sailing_ability": 19,
+        "maintenance_skill": 11,
+        "name": "Oscran",
+        "ID": "7e74bc0f-a131-42bf-9e9d-d10aae1b2c11"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "98c7b647-8f8b-46cb-a0ec-fd9b75bb4f63",
+        "sailing_ability": 13,
+        "maintenance_skill": 18,
+        "name": "Dagio",
+        "ID": "44c0738e-8df8-418e-ac50-6e69d709ebe2"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "98c7b647-8f8b-46cb-a0ec-fd9b75bb4f63",
+        "sailing_ability": 16,
+        "maintenance_skill": 16,
+        "name": "Norien",
+        "ID": "2bdef455-c667-4bbc-85c6-8499dd115a3c"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "98c7b647-8f8b-46cb-a0ec-fd9b75bb4f63",
+        "sailing_ability": 18,
+        "maintenance_skill": 10,
+        "name": "Phillon",
+        "ID": "68a6f01a-ba09-43dc-911f-bf622d02fd61"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "98c7b647-8f8b-46cb-a0ec-fd9b75bb4f63",
+        "sailing_ability": 12,
+        "maintenance_skill": 17,
+        "name": "Athalievien",
+        "ID": "3473b2ee-e864-4324-9a2b-e4dc25745a90"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "98c7b647-8f8b-46cb-a0ec-fd9b75bb4f63",
+        "sailing_ability": 13,
+        "maintenance_skill": 18,
+        "name": "Worradque",
+        "ID": "13299c9f-7be8-4523-8d4e-d0a6941c8695"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "98c7b647-8f8b-46cb-a0ec-fd9b75bb4f63",
+        "sailing_ability": 20,
+        "maintenance_skill": 12,
+        "name": "Ronmundlis",
+        "ID": "d20579d7-74e0-4dec-98ae-bf35a475026a"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "98c7b647-8f8b-46cb-a0ec-fd9b75bb4f63",
+        "sailing_ability": 17,
+        "maintenance_skill": 10,
+        "name": "Rufia",
+        "ID": "7a18d6e6-3090-4b6a-a41e-292f2943c794"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "98c7b647-8f8b-46cb-a0ec-fd9b75bb4f63",
+        "sailing_ability": 20,
+        "maintenance_skill": 16,
+        "name": "Klemvonen",
+        "ID": "42a5725a-92ed-42e0-adca-16169b21b38a"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "98c7b647-8f8b-46cb-a0ec-fd9b75bb4f63",
+        "sailing_ability": 13,
+        "maintenance_skill": 19,
+        "name": "Athaas",
+        "ID": "249730f1-848c-484a-977d-c12f0a034c72"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "98c7b647-8f8b-46cb-a0ec-fd9b75bb4f63",
+        "sailing_ability": 14,
+        "maintenance_skill": 10,
+        "name": "Janel",
+        "ID": "351987dc-8ed7-4aca-a5c5-81b59f73f0db"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "98c7b647-8f8b-46cb-a0ec-fd9b75bb4f63",
+        "sailing_ability": 16,
+        "maintenance_skill": 11,
+        "name": "Tomnathdyn",
+        "ID": "3308742d-0a38-43ae-aa01-372735218715"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "98c7b647-8f8b-46cb-a0ec-fd9b75bb4f63",
+        "sailing_ability": 19,
+        "maintenance_skill": 17,
+        "name": "Angbalddith",
+        "ID": "ddea21a3-c265-43a3-ab7d-a9093660ec9a"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "98c7b647-8f8b-46cb-a0ec-fd9b75bb4f63",
+        "sailing_ability": 15,
+        "maintenance_skill": 11,
+        "name": "Rufylenver",
+        "ID": "f04914ee-b01a-4fad-ad0d-0d772bda2d22"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "98c7b647-8f8b-46cb-a0ec-fd9b75bb4f63",
+        "sailing_ability": 18,
+        "maintenance_skill": 16,
+        "name": "Aethgaldward",
+        "ID": "fe2f5b6a-a419-4811-9831-ab88bbe224d6"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "98c7b647-8f8b-46cb-a0ec-fd9b75bb4f63",
+        "sailing_ability": 13,
+        "maintenance_skill": 15,
+        "name": "Ursmsonney",
+        "ID": "1d46bb57-cb7d-47b8-8589-c52ff1d291a4"
+      }
+    },
+    {
+      "type": "ShipType",
+      "data": {
+        "name": "Ketch",
+        "health": 100,
+        "cargo_capacity": 48000,
+        "crew_capacity": 10,
+        "sailing_efficiency": 50,
+        "toughness": 35,
+        "daily_maintenance": 10,
+        "ID": "6778fb96-3b4e-439c-b119-8fd004e87857"
+      }
+    },
+    {
+      "type": "Ship",
+      "data": {
+        "ship_type": "6778fb96-3b4e-439c-b119-8fd004e87857",
+        "coordinates": [
+          47524,
+          41
+        ],
+        "ID": "6331ae9c-d38b-4a9a-8d97-5fe4c48993b0",
+        "current_health": 100,
+        "current_toughness": 35,
+        "name": "the Sliver",
+        "ships_log": [],
+        "crew": [
+          "25cc0e58-daf2-4389-8dc3-d1761c8b60af",
+          "4b4265f4-643f-46af-9744-734fbfb33f16",
+          "0d9dfa32-9e15-4e97-8103-15cbec7384dc"
+        ],
+        "storage": "f4eeab73-78b3-4ce4-889f-797377c72f0c",
+        "is_dispatched": false,
+        "travel_progress": [
+          0,
+          0,
+          0
+        ],
+        "destinations": null,
+        "current_destination": null,
+        "contracts": null,
+        "home_port": null,
+        "current_port": "ac47bf06-9f81-46fe-b478-cfbab692e771",
+        "last_port": null,
+        "is_under_repair": false,
+        "daily_repair_amount": 0
+      }
+    },
+    {
+      "type": "Ship",
+      "data": {
+        "ship_type": "6778fb96-3b4e-439c-b119-8fd004e87857",
+        "coordinates": [
+          47524,
+          41
+        ],
+        "ID": "1f3be2ae-36e0-49ef-ab83-2507534ec7f9",
+        "current_health": 100,
+        "current_toughness": 35,
+        "name": "the Splinter",
+        "ships_log": [],
+        "crew": [
+          "a9127918-d67d-4779-888b-d52e0933a22e",
+          "bd07cc8c-df4f-4789-bf96-5a0f9f950318"
+        ],
+        "storage": "490de275-c33b-4615-869e-b1a20627bd2c",
+        "is_dispatched": false,
+        "travel_progress": [
+          0,
+          0,
+          0
+        ],
+        "destinations": null,
+        "current_destination": null,
+        "contracts": null,
+        "home_port": null,
+        "current_port": "ac47bf06-9f81-46fe-b478-cfbab692e771",
+        "last_port": null,
+        "is_under_repair": false,
+        "daily_repair_amount": 0
+      }
+    },
+    {
+      "type": "Fleet",
+      "data": {
+        "ships": [
+          "6331ae9c-d38b-4a9a-8d97-5fe4c48993b0",
+          "1f3be2ae-36e0-49ef-ab83-2507534ec7f9"
+        ],
+        "ID": "df128907-d5c3-4890-a57c-8ce3c07a3e5f"
+      }
+    },
+    {
+      "type": "Player",
+      "data": {
+        "storage": "778d3983-d052-41e0-a495-9f874ac55e4d",
+        "reputation": 0,
+        "fleet": "df128907-d5c3-4890-a57c-8ce3c07a3e5f",
+        "contracts": [],
+        "warehouses": [
+          "3a4587b1-7d0c-4288-b2c6-0ae678e8d545"
+        ],
+        "ID": "0780267e-d209-4359-bdd5-4aa543b8b930"
+      }
+    },
+    {
+      "type": "Tavern",
+      "data": {
+        "name": "Fish Head Tavern",
+        "location": "c790033c-e265-46c8-b9e6-3f13a93955b7",
+        "crew_roles": [
+          "98c7b647-8f8b-46cb-a0ec-fd9b75bb4f63"
+        ],
+        "player": "0780267e-d209-4359-bdd5-4aa543b8b930",
+        "ID": "5d927c73-0150-458a-972c-c72f0e3f127c"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "98c7b647-8f8b-46cb-a0ec-fd9b75bb4f63",
+        "sailing_ability": 19,
+        "maintenance_skill": 17,
+        "name": "Emmricmar",
+        "ID": "fc8a82fb-547e-4387-bc32-b101e4ab844f"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "98c7b647-8f8b-46cb-a0ec-fd9b75bb4f63",
+        "sailing_ability": 16,
+        "maintenance_skill": 10,
+        "name": "Condenro",
+        "ID": "949c237c-1eaf-426d-96e1-2045217de682"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "98c7b647-8f8b-46cb-a0ec-fd9b75bb4f63",
+        "sailing_ability": 11,
+        "maintenance_skill": 19,
+        "name": "Nelmanas",
+        "ID": "549b2a36-d97f-4b40-a201-869e92aa4ecb"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "98c7b647-8f8b-46cb-a0ec-fd9b75bb4f63",
+        "sailing_ability": 19,
+        "maintenance_skill": 15,
+        "name": "Renlineton",
+        "ID": "bf363e08-de58-472e-8e10-dd0b76e64189"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "98c7b647-8f8b-46cb-a0ec-fd9b75bb4f63",
+        "sailing_ability": 14,
+        "maintenance_skill": 14,
+        "name": "Maurdorabel",
+        "ID": "9da39774-96ab-40c9-9cdb-064a090e3b7b"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "98c7b647-8f8b-46cb-a0ec-fd9b75bb4f63",
+        "sailing_ability": 12,
+        "maintenance_skill": 19,
+        "name": "Gilbgoth",
+        "ID": "bd1111d0-2ddd-42b5-ba9b-137ec7605522"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "98c7b647-8f8b-46cb-a0ec-fd9b75bb4f63",
+        "sailing_ability": 16,
+        "maintenance_skill": 11,
+        "name": "Pruradtin",
+        "ID": "6c4243da-f1ec-4f83-9581-09223cc07a1f"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "98c7b647-8f8b-46cb-a0ec-fd9b75bb4f63",
+        "sailing_ability": 15,
+        "maintenance_skill": 18,
+        "name": "Katlafie",
+        "ID": "5cd20d8e-b3d7-45a3-8cd7-d28a718875be"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "98c7b647-8f8b-46cb-a0ec-fd9b75bb4f63",
+        "sailing_ability": 10,
+        "maintenance_skill": 15,
+        "name": "Cleoftriel",
+        "ID": "1a7ac236-40db-4883-909a-06fa3e8288ab"
+      }
+    },
+    {
+      "type": "CrewMate",
+      "data": {
+        "crew_role": "98c7b647-8f8b-46cb-a0ec-fd9b75bb4f63",
+        "sailing_ability": 19,
+        "maintenance_skill": 16,
+        "name": "Norsuegar",
+        "ID": "2a28498c-7a8f-45c1-b6a7-e4e4fee9aeee"
+      }
+    },
+    {
+      "type": "Exchange",
+      "data": {
+        "name": "the Bargain House",
+        "location": "c790033c-e265-46c8-b9e6-3f13a93955b7",
+        "world": "94006487-4dd4-4cd0-9103-f327aabbef7c",
+        "good_list": [
+          "7819e4da-bfb4-4042-9013-af760f734608",
+          "3975e8ad-7b8c-4cc9-a617-c7bea2f4e127",
+          "de14bfbe-b1d3-40cb-99c8-5f55ff633690",
+          "96dcd45f-d746-4d73-9fec-bce88dead5a2",
+          "5e91518b-436a-4dad-a717-55e01f177e12"
+        ],
+        "reward_list": [
+          "1071d8f1-5765-4604-b553-3abced63cd43",
+          "27e1ae9b-cd68-4909-ab11-3048b0f1d9d1"
+        ],
+        "max_cargo_weight": 1000,
+        "ID": "65aebef6-8959-4f10-bff7-cf59434ec967"
       }
     }
   ]

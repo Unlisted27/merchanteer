@@ -273,7 +273,7 @@ def gen_contract(game:'Game',good_list: list,reward_list:list, current_day, curr
         amount=amount,
         destination_port=destination_port,
         destination_storage=destination_storage,
-        home_port = current_location
+        home_location = current_location
     )
 
     return contract
@@ -388,9 +388,9 @@ class Stat:
         return instance
 
 class LoadContext:
-    def __init__(self, game:'Game', events_list:list['ShipEvent']):
+    def __init__(self, game:'Game', event_list:list['ShipEvent']):
         self.game = game
-        self.events_list = events_list or []
+        self.event_list = event_list or []
 
 class Game:
     def __init__(self):
@@ -422,6 +422,7 @@ class Game:
     def save_to_file(self, filename: str):
         """Save the entire game state to a JSON file."""
         save_data = self.save()
+        print(save_data)
         with open(filename, 'w') as f:
             json.dump(save_data, f, indent=2)
         print(f"Game saved to {filename}")
@@ -599,7 +600,7 @@ class World:
 
     def save(self) -> dict:
         save = {
-            "locations":[location.name for location in self.locations],
+            "locations":[location.ID for location in self.locations],
             "ID":self.ID
         }
         return save
@@ -607,8 +608,9 @@ class World:
     @classmethod
     def init_load(cls, save: dict,context:LoadContext):
         game = context.game
+        locations = [game.scan_loaded_objects(Location,locID) for locID in save["locations"]]
         instance = cls(
-            locations=save["locations"],
+            locations=locations,
             game=game,
             ID=save["ID"]
         )
@@ -738,7 +740,7 @@ class Storage:
             self.cargo[game.scan_loaded_objects(Good,good_id)]=amount
 
 class Contract:
-    def __init__(self,game:Game,reward_good:Good,reward_amount:int,deadline:int,good:Good,amount:int,destination_port:'Port',destination_storage:Storage,home_port:'Port', ID:str | None = None):
+    def __init__(self,game:Game,reward_good:Good,reward_amount:int,deadline:int,good:Good,amount:int,destination_port:'Port',destination_storage:Storage,home_location:Port, ID:str | None = None):
         self.reward_good = reward_good
         self.reward_amount = reward_amount
         self.deadline = deadline
@@ -746,7 +748,7 @@ class Contract:
         self.amount = amount
         self.destination_port = destination_port
         self.destination_storage = destination_storage
-        self.home_port = home_port
+        self.home_location = home_location
         self.expired = False
         self.complete = False
         self.complete_notice = False
@@ -765,7 +767,7 @@ class Contract:
             "amount":self.amount,
             "destination_port":self.destination_port.ID,
             "destination_storage":self.destination_storage.ID,
-            "home_port":self.home_port.ID,
+            "home_location":self.home_location.ID,
             "expired":self.expired,
             "complete":self.complete,
             "complete_notice":self.complete_notice,
@@ -781,7 +783,7 @@ class Contract:
         good = game.scan_loaded_objects(Good,save["good"])
         destination_port = game.scan_loaded_objects(Port,save["destination_port"])
         destination_storage = game.scan_loaded_objects(Storage,save["destination_storage"])
-        home_port = game.scan_loaded_objects(Port,save["home_port"])
+        home_location = game.scan_loaded_objects(Location,save["home_location"])
         instance = cls(
             game,
             reward_good,
@@ -791,7 +793,7 @@ class Contract:
             save["amount"],
             destination_port,
             destination_storage,
-            home_port,
+            home_location,
             save["ID"]
         )
         return instance
@@ -953,7 +955,8 @@ class ShipType:
         return save
     
     @classmethod
-    def init_load(cls, save: dict,game:Game):
+    def init_load(cls, save: dict,context:LoadContext):
+        game = context.game
         instance = cls(
             game,
             save["name"],
@@ -1030,6 +1033,7 @@ class Ship:
             "current_destination": self.current_destination.ID if self.current_destination else None,
             "contracts":[con.ID for con in self.contracts] if len(self.contracts) > 0 else None,
             "home_port":self.home_port.ID if self.home_port is not None else None,
+            "current_port":self.current_port.ID if self.current_port is not None else None,
             "last_port":self.last_port.ID if self.last_port is not None else None,
             "is_under_repair":self.is_under_repair,
             "daily_repair_amount":self.daily_repair_amount
@@ -1037,13 +1041,17 @@ class Ship:
         return save
 
     @classmethod
-    def init_load(cls,save:dict,game:Game,events_list:list[Ship]):
+    def init_load(cls,save:dict,context:LoadContext):
+        game=context.game
+        event_list = context.event_list
         ship_type = game.scan_loaded_objects(ShipType,save["ship_type"])
+        storage = game.scan_loaded_objects(Storage,save["storage"])
         instance = cls(
             save["name"],
             ship_type,
-            events_list,
+            event_list,
             game,
+            storage = storage,
             ID=save["ID"]
         )
         instance._save_data = save  # 🔥 store for phase 2
@@ -1051,21 +1059,18 @@ class Ship:
     
     def secondary_load(self,save:dict,context:LoadContext):
         game = context.game
-        crew = [game.scan_loaded_objects(CrewMate,crewID) for crewID in save["crew"]]
-        storage = game.scan_loaded_objects(Storage,save["storage"])
-        destinations = [game.scan_loaded_objects(Location,destID) for destID in save["destinations"]]
-        current_destination = game.scan_loaded_objects(Location,save["current_destination"])
-        contracts = [game.scan_loaded_objects(Contract,conID) for conID in save["contracts"]]
-        home_port = game.scan_loaded_objects(Port,save["home_port"])
-        current_port = game.scan_loaded_objects(Port,save["current_port"])
-        last_port = game.scan_loaded_objects(Port,save["last_port"])
-        
+        crew = [game.scan_loaded_objects(CrewMate,crewID) for crewID in save["crew"]] if save["crew"] else []
+        destinations = [game.scan_loaded_objects(Location,destID) for destID in save["destinations"]] if save["destinations"] else []
+        current_destination = game.scan_loaded_objects(Location,save["current_destination"]) if save["current_destination"] else None
+        contracts = [game.scan_loaded_objects(Contract,conID) for conID in save["contracts"]] if save["contracts"] else []
+        home_port = game.scan_loaded_objects(Port,save["home_port"]) if save["home_port"] else None
+        current_port = game.scan_loaded_objects(Port,save["current_port"]) if save["current_port"] else None
+        last_port = game.scan_loaded_objects(Port,save["last_port"]) if save["last_port"] else None
         self.crew=crew
         self.coordinates=save["coordinates"]
         self.health.current_value = save["current_health"]
         self.toughness.current_value = save["current_toughness"]
         self.ships_log=save["ships_log"]
-        self.storage=storage
         self.is_dispatched=save["is_dispatched"]
         self.travel_progress=Stat.from_tuple(save["travel_progress"])
         self.destinations=destinations
@@ -1272,7 +1277,7 @@ class Ship:
         msg = None
         msg = self.daily_travel(days)
         return msg
-        
+
 class Warehouse:
     def __init__(self,name:str,game:Game,storage:Storage | None = None,max_weight:int = 10000,ID:str | None = None):
         self.name = name
@@ -1602,12 +1607,30 @@ class Fleet:
         self.ships = ships
         self.ID = ID if ID is not None else None
         game.register(self)
+    
+    def save(self):
+        save = {
+            "ships":[ship.ID for ship in self.ships],
+            "ID":self.ID
+        }
+        return save
+
+    @classmethod
+    def init_load(cls,save:dict,context:LoadContext):
+        game = context.game
+        ships = [game.scan_loaded_objects(Ship,shipID) for shipID in save["ships"]]
+        instance = cls(
+            ships,
+            game,
+            save["ID"]
+        )
+        return instance
 
 class Player:
     def __init__(self, game:Game,storage: Storage, reputation: int, fleet: Fleet | None = None, contracts: list[Contract] | None = None, warehouses: list[Warehouse] | None = None, ID:str | None = None):
         self.storage = storage
         self.reputation = reputation
-        self.fleet = fleet
+        self.fleet = fleet if fleet is not None else None
         self.contracts = list(contracts) if contracts is not None else []
         self.warehouses = list(warehouses) if warehouses is not None else []
         self.game = game
@@ -1645,10 +1668,40 @@ class Player:
                     input("Press enter to go back")
                 case _:
                     break
+    
+    def save(self):
+        save = {
+            "storage":self.storage.ID,
+            "reputation":self.reputation,
+            "fleet":self.fleet.ID if self.fleet is not None else None,
+            "contracts":[con.ID for con in self.contracts],
+            "warehouses":[house.ID for house in self.warehouses],
+            "ID":self.ID
+        }
+        return save
+    
+    @classmethod
+    def init_load(cls,save:dict,context:LoadContext):
+        game = context.game
+        storage = game.scan_loaded_objects(Storage,save["storage"])
+        instance = cls(
+            game,
+            storage,
+            save["reputation"],
+            ID=save["ID"]
+        )
+        instance._save_data = save
+        return instance
+    
+    def secondary_load(self,save:dict,context:LoadContext):
+        game = context.game
+        self.fleet = game.scan_loaded_objects(Fleet,save["fleet"])
+        self.contracts = [game.scan_loaded_objects(Contract,conID) for conID in save["contracts"]]
+        self.warehouses = [game.scan_loaded_objects(Warehouse,houseID) for houseID in save["warehouses"]]
 
 class Exchange:
-    def __init__(self, name: str, location:'Location', game: Game, world: World,
-                 contracts: list[Contract] | None = None, good_list: list[Good] | None = None,
+    def __init__(self, name: str, location:Location, game: Game, world: World,
+                good_list: list[Good] | None = None,
                  reward_list: list[Good] | None = None, max_cargo_weight: int = 1000, ID:str | None = None):
         self.name = name
         self.location = location
@@ -1657,7 +1710,8 @@ class Exchange:
         self.ID = ID if ID is not None else None
         game.register(self) #Register the exchange to game
         # defensive copies: new list for each instance
-        self.contracts = list(contracts) if contracts is not None else []
+        #self.contracts = list(contracts) if contracts is not None else []
+        self.contracts = []
         self.good_list = list(good_list) if good_list is not None else []
         self.reward_list = list(reward_list) if reward_list is not None else []
         self.max_cargo_weight = max_cargo_weight
@@ -1667,7 +1721,38 @@ class Exchange:
             raise ValueError("Exchange must have a valid Location")
         if not self.contracts:   # safer check for empty list
             self.gen_daily_contracts()
-    
+
+    def save(self):
+        save = {
+            "name":self.name,
+            "location":self.location.ID,
+            "world":self.world.ID,
+            "good_list":[good.ID for good in self.good_list] if len(self.good_list) > 0 else [],
+            "reward_list":[reward.ID for reward in self.reward_list] if len(self.reward_list) > 0 else [],
+            "max_cargo_weight":self.max_cargo_weight,
+            "ID":self.ID
+        }
+        return save
+
+    @classmethod
+    def init_load(cls,save:dict,context:LoadContext):
+        game = context.game
+        location = game.scan_loaded_objects(Location,save["location"])
+        world = game.scan_loaded_objects(World,save["world"])
+        good_list = [game.scan_loaded_objects(Good,goodID) for goodID in save["good_list"]]
+        reward_list = [game.scan_loaded_objects(Good,rewardID) for rewardID in save["reward_list"]]
+        instance = cls(
+            save["name"],
+            location,
+            game,
+            world,
+            good_list = good_list,
+            reward_list = reward_list,
+            max_cargo_weight = save["max_cargo_weight"],
+            ID=save["ID"]
+        )
+        return instance
+
     def gen_daily_contracts(self):
         if len(self.good_list) == 0 or len(self.reward_list) == 0 or self.game is None:
             raise ValueError("If no contracts are provided, good_list, reward_list, and Game must be provided. Also, make sure the day value is accurate.")
@@ -1694,6 +1779,7 @@ class Exchange:
                 "Status": status
             }
         return menu("Available Contracts", [f"{contract.amount} {contract.good.name} to {contract.destination_port.name}" for contract in self.contracts], table=table_data, return_option=True)
+    
     def select_contract(self,player:Player):
         while True:
             clear_terminal()
@@ -1721,6 +1807,7 @@ class Exchange:
                         input("That warehouse cannot hold that much cargo, choose another (press enter to continue)")
             except Exception:# as e:
                 print("Invalid selection, try again")
+    
     def cashout_contracts(self,player:Player):
         while True:
             clear_terminal()
@@ -1749,6 +1836,19 @@ class Exchange:
             except Exception:# as e:
                 #print(e) #Uncomment this line to show error message when the user enters an invalid option
                 input("Invalid selection, try again")
+    
+    def start_exchange(self,player:Player):
+        while True:
+            answer = menu("Exchange Menu",["View available contracts","Cashout contracts"],True)
+            match answer:
+                case 1:
+                    contract = self.select_contract(player)
+                    if type(contract) is Contract:
+                        player.contracts.append(contract)
+                case 2:
+                    self.cashout_contracts(player)
+                case _:
+                    break
 
 class Tavern:
     def __init__(self,name:str,game:Game,location:Location,crew_roles:list[CrewRole],player:Player,crew:list[CrewMate] | None = None, ID:str | None = None):
@@ -1787,13 +1887,39 @@ class Tavern:
         else:
             None
 
+    def save(self):
+        save = {
+            "name":self.name,
+            "location":self.location.ID,
+            "crew_roles":[role.ID for role in self.crew_roles],
+            "player":self.player.ID,
+            "ID":self.ID
+        }
+        return save
+
+    @classmethod
+    def init_load(cls,save:dict,context:LoadContext):
+        game = context.game
+        location = game.scan_loaded_objects(Location,save["location"])
+        crew_roles = [game.scan_loaded_objects(CrewRole,roleID) for roleID in save["crew_roles"]]
+        player = game.scan_loaded_objects(Player,save["player"])
+        instance = cls(
+            save["name"],
+            game,
+            location,
+            crew_roles,
+            player,
+            ID = save["ID"]
+        )
+        return instance
+
 class MessengerPigeon:
-    def __init__(self,game:Game,message:str,start_coordinates:tuple[int],destination_coordinates:tuple[int], ID:str | None = None):
+    def __init__(self,game:Game,message:str,start_coordinates:tuple[int],destination_coordinates:tuple[int], travel_time:int | None = None,ID:str | None = None):
         self.game = game
         self.message = message
         self.start_coordinates = start_coordinates
         self.destination_coordinates = destination_coordinates
-        self.travel_time = distance(start_coordinates,destination_coordinates) #Calculate travel time based on distance
+        self.travel_time = travel_time if travel_time is not None else distance(start_coordinates,destination_coordinates) #Calculate travel time based on distance
         self.ID = ID if ID is not None else None
         self.game.register(self) #Register to game time so it can track travel time
     def on_day_passed(self, current_day):
@@ -1803,3 +1929,26 @@ class MessengerPigeon:
                 self.game.unregister(self) #Unregister from game time, makes no more references and pyhton cleans it up automatically
                 return f"A messenger pigeon has delivered a message:\n {self.message}"
         return None
+
+    def save(self):
+        save = {
+            "message":self.message,
+            "start_coordinates":self.start_coordinates,
+            "destination_coordinates":self.destination_coordinates,
+            "travel_time":self.travel_time,
+            "ID":self.ID
+            }
+        return save
+    
+    @classmethod
+    def init_load(cls,save:dict,context:LoadContext):
+        game = context.game
+        instance = cls(
+            game,
+            save["message"],
+            save["start_coordinates"],
+            save["destination_coordinates"],
+            save["travel_time"],
+            save["ID"]
+        )
+        return instance

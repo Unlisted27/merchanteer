@@ -9,10 +9,10 @@ Ports /
 Contracts /
 Crew roles /
 Crew /
-Ship Type
-Ships
-Fleets
-Player
-Taverns
-Exchanges
+Ship Type /
+Ships /
+Fleets /
+Player /
+Taverns /
+Exchanges 
 MessengerPigeon
