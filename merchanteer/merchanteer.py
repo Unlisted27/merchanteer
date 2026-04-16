@@ -4,20 +4,38 @@ import components, building_blocks, game_art, style,pathlib
 title = game_art.title
 
 import pathlib
-import json
 
-def select_save_file():
+def get_saves_folder() -> pathlib.Path:
     current_dir = pathlib.Path(__file__).parent
     saves_dir = current_dir.parent / "m_saves"
+    saves_dir.mkdir(parents=True, exist_ok=True)
+    return saves_dir
 
-    files = list(saves_dir.iterdir())
+def select_save_file():
+    saves_dir = get_saves_folder()
+    files = [file.name.removesuffix(".json") for file in list(saves_dir.iterdir())]
 
-    selected_index = components.menu("Select a save",[file.name for file in files],True)
+    selected_index = components.menu("Select a save",files,True)
     if selected_index is None:
         return None
     selected_index -=1
-    selected_file = files[selected_index]
+    selected_file = saves_dir / (files[selected_index]+".json")
     return selected_file
+
+def create_new_game():
+    while True:
+        components.clear_terminal()
+        print("~ A new adventure begins ~")
+        world_name = input("Enter world name: ")+".json"
+        saves_dir = get_saves_folder()
+        existing_files = [file.name for file in list(saves_dir.iterdir())]
+        if world_name in existing_files:
+            input("This save name already exists!")
+            continue
+        save_file = saves_dir / world_name
+        game = building_blocks.gen_world()
+        break
+    run_game(game,save_file)
 
 def run_game(game:components.Game,save_path:pathlib.Path):
     for observer in game.observers:
@@ -37,40 +55,43 @@ def run_game(game:components.Game,save_path:pathlib.Path):
             if observer.name == "the Bargain House":
                 theBargainHouse = observer
     while True:
-        answer = components.menu(f"Game menu | Day:{game.day}",["General actions","Bargain house","Port","Tavern","Next day","Save and quit"],art = game_art.title) 
-        match answer: 
-            #General actions
-            case 1:      
-                while True:
-                    answer = components.menu("General Actions",["View notices","Player actions"],True)                        # option 1
-                    match answer:
-                        case 1:
-                            components.clear_terminal()
-                            if len(game.notices) > 0:
-                                for notice in game.notices:
-                                    print(notice)
-                            else:
-                                print("No notices yet")
-                            input("Press enter to continue")
-                        case 2:
-                            player.player_actions()
-                        case _:
-                            break
-            #Exchange
-            case 2: 
-                theBargainHouse.start_exchange(player)
-            case 3:
-                portGrandure.manage_ships(player)
-            case 4:
-                fishHeadTavern.select_crew()
-            case 5:   
-                game.advance()
-            case 6:                             
-                print("Saving game...")
-                game.save_to_file(save_path)
-                print("Game saved successfully!")
-                print("Thanks for playing!")
-                break
+        try:
+            answer = components.menu(f"Game menu | Day:{game.day}",["General actions","Bargain house","Port","Tavern","Next day","Save and quit"],art = game_art.title) 
+            match answer: 
+                #General actions
+                case 1:      
+                    while True:
+                        answer = components.menu("General Actions",["View notices","Player actions"],True)                        # option 1
+                        match answer:
+                            case 1:
+                                components.clear_terminal()
+                                if len(game.notices) > 0:
+                                    for notice in game.notices:
+                                        print(notice)
+                                else:
+                                    print("No notices yet")
+                                input("Press enter to continue")
+                            case 2:
+                                player.player_actions()
+                            case _:
+                                break
+                #Exchange
+                case 2: 
+                    theBargainHouse.start_exchange(player)
+                case 3:
+                    portGrandure.manage_ships(player)
+                case 4:
+                    fishHeadTavern.select_crew()
+                case 5:   
+                    game.advance()
+                case 6:                             
+                    print("Saving game...")
+                    game.save_to_file(save_path)
+                    print("Game saved successfully!")
+                    print("Thanks for playing!")
+                    break
+        except KeyboardInterrupt:
+            input(f"{style.RED}Woah there, make sure you save before you exit!{style.RESET}")
 
 def __main__():
     components.clear_terminal()
@@ -80,8 +101,7 @@ def __main__():
         answer = components.menu("Main Menu",["Start new game","Load save","Settings","Credits","Quit game"])
         match answer:
             case 1:
-                game = building_blocks.create_new_game()
-                run_game(game)
+                create_new_game()
             case 2:
                 file = select_save_file()
                 if file is None:
@@ -99,22 +119,23 @@ def __main__():
                 game_art.slow_print(game_art.super_center_block(game_art.title.art),0.3)
                 game_art.slow_print(game_art.super_center_block("""
         ============CREDITS============
-                Game design
-                Unlisted_dev
+                  Game design
+                 Unlisted_dev
                                     
-                    Code    
-                Unlisted_dev
+                      Code    
+                  Unlisted_dev
 
-                    Art         
-            DefinitelyNotAPickle
+                      Art         
+              DefinitelyNotAPickle
 
-            Thank you for playing!
+              Thank you for playing!
                                 
-                support us             
-    https://buymeacoffee.com/unlisted_dev
-        (30/70) Artist / main dev split     
-        Unless specified otherwise (:
+                    support us             
+       https://buymeacoffee.com/unlisted_dev
+          (30/70) Artist / main dev split     
+           Unless specified otherwise (:
         """),0.3)
+                input()
             case 5:
                 print("Thanks for playing!")
                 break
@@ -122,7 +143,7 @@ def __main__():
 __main__()
 
 
-def new_temp_game():
+def _new_temp_game():
     game = components.Game()
     gold = components.Good("Gold","Shiny",1,0.1,game)
     bread = components.Good("Bread","Staple food",0.1,0.2,game)
@@ -159,9 +180,9 @@ def new_temp_game():
     pigeon = components.MessengerPigeon(game,"Test msg",away.coordinates,home.coordinates)
     return game
 
-def test_save_load():
+def _test_save_load():
     print("Creating new test game")
-    game = new_temp_game()
+    game = _new_temp_game()
     print("Success!")
 
     input("Press enter to run game save")

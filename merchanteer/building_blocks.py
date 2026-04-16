@@ -32,7 +32,7 @@ class Storm(components.ShipEvent):
         #input(f"Storm event occured on {ship.name}")
 event_list.append(Storm())
 
-def create_new_game() -> components.Game:
+def gen_world() -> components.Game:
     #Initial setup
     game = components.Game()
 
