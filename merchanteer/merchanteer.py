@@ -19,14 +19,18 @@ def select_save_file():
     if selected_index is None:
         return None
     selected_index -=1
-    selected_file = saves_dir / (files[selected_index]+".json")
+    selected_file = saves_dir / (files[selected_index]+".json"
+    "")
     return selected_file
 
 def create_new_game():
     while True:
         components.clear_terminal()
         print("~ A new adventure begins ~")
+        print("Input nothing to go back")
         world_name = input("Enter world name: ")+".json"
+        if world_name == ".json":
+            return None
         saves_dir = get_saves_folder()
         existing_files = [file.name for file in list(saves_dir.iterdir())]
         if world_name in existing_files:
@@ -56,7 +60,10 @@ def run_game(game:components.Game,save_path:pathlib.Path):
                 theBargainHouse = observer
     while True:
         try:
-            answer = components.menu(f"Game menu | Day:{game.day}",["General actions","Bargain house","Port","Tavern","Next day","Save and quit"],art = game_art.title) 
+            table_data = {}
+            for i, c in enumerate(player.contracts, start=1):
+                table_data[i] = c.simple_table()
+            answer = components.menu(f"Game menu | Day:{game.day}",["General actions","Bargain house","Port","Tavern","Next day","Save and quit"],art = game_art.title,table=table_data) 
             match answer: 
                 #General actions
                 case 1:      

@@ -71,7 +71,7 @@ Loading happens in 3 important stages
 
     This stage is done automatically by Game, it goes through each observer, and for any observer with a `_save_data` property, it deletes that property.
 
-Order of loading from a save:
+# Order of loading from a save:
 Game object is created, day value is loaded 
 game object tracks loaded objects via its observers list
 Location

@@ -251,9 +251,13 @@ d - in-development version, not meant to be played, likely very unstable
 # 0.1.0a Save load
 ## Added features
 ### Major added features
+Save/load system (I've been waiting so long to write that, more info in loading_logic.md)
 ### Minor added features
 ## Player notes
+You can now save and load your game!
 ## Bug fixes
+A lot went unlogged NGL
+ - Fixed bug where exchanges would not populate with contracts on first load
 ## Dev notes
 - All objects that need to be tracked via save/load now have an ID value. This value is set when the object runs ```game.register(self)``` in ```__init__```
 - GameTime changed to Game, and all references changed accordingly.
@@ -261,3 +265,4 @@ d - in-development version, not meant to be played, likely very unstable
 - Exchange objects now GameTime.register themselves
     - The old system of running GameTime.register on everything that needs to be time tracked is now fully deprecated as all objects that accept a GameTime arg now register themselves
 ## Other notes
+A lot has changed, see notes on the save/load system in loading_logic.md

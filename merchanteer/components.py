@@ -270,6 +270,7 @@ def gen_contract(game:'Game',good_list: list,reward_list:list, current_day, curr
     # create the contract
     contract = Contract(
         game,
+        name=genname(),
         reward_good=reward_good,
         reward_amount=reward_amount,
         deadline=deadline,
@@ -384,10 +385,13 @@ class Stat:
     # This function is mainly used in the save process to convert to a JSON friendly type
     def as_tuple(self):
         """Returns tuple(max,min,current)"""
-        return(self.max_value,self.min_value,self.current_value)
+        #input("STAT AS TUPLE")
+        new_tup = tuple([self.max_value,self.min_value,self.current_value])
+        return new_tup
 
     @classmethod
     def from_tuple(cls,tuple):
+        #input(f"LOADING TUPLE: {tuple[0]} / {tuple[1]} / {tuple[2]}")
         instance = cls(tuple[0],tuple[1],tuple[2])
         return instance
 
@@ -653,12 +657,12 @@ class Good:
         return instance 
 
 class Storage:
-    def __init__(self, name: str,game:Game, cargo_weight: int = 1000, cargo: dict | None = None, ID:str | None = None):
+    def __init__(self, name: str,game:Game, max_cargo_weight: int = 1000, cargo: dict | None = None, ID:str | None = None):
         if cargo is None:
             cargo: dict[Good, int] = {}        # create a fresh dict for this instance
         self.cargo = cargo
         self.name = name
-        self.cargo_weight = Stat(cargo_weight,current_value=0)
+        self.cargo_weight = Stat(max_cargo_weight,current_value=0)
         self.game = game
         self.ID = ID if ID is not None else None
         game.register(self)
@@ -732,7 +736,6 @@ class Storage:
         instance = cls(
             save["name"],
             game,
-            cargo_weight=save["cargo_weight"],
             ID=save["ID"]
         )
         instance._save_data = save # THIS IS CRITICAL, IT STORES DATA FOR THE SECOND PHASE
@@ -740,11 +743,13 @@ class Storage:
     
     def secondary_load(self,save,context:LoadContext):
         game = context.game
+        self.cargo_weight=Stat.from_tuple(save["cargo_weight"])
         for good_id,amount in dict(save["cargo"]).items():
             self.cargo[game.scan_loaded_objects(Good,good_id)]=amount
 
 class Contract:
-    def __init__(self,game:Game,reward_good:Good,reward_amount:int,deadline:int,good:Good,amount:int,destination_port:'Port',destination_storage:Storage,home_location:Port, ID:str | None = None):
+    def __init__(self,game:Game,name:str,reward_good:Good,reward_amount:int,deadline:int,good:Good,amount:int,destination_port:'Port',destination_storage:Storage,home_location:Port,expired:bool=False,complete:bool=False,complete_notice:bool=False,contract_travel_time:int|None = None, ID:str | None = None):
+        self.name=name
         self.reward_good = reward_good
         self.reward_amount = reward_amount
         self.deadline = deadline
@@ -753,10 +758,10 @@ class Contract:
         self.destination_port = destination_port
         self.destination_storage = destination_storage
         self.home_location = home_location
-        self.expired = False
-        self.complete = False
-        self.complete_notice = False
-        self.contract_travel_time:int = None
+        self.expired = expired
+        self.complete = complete
+        self.complete_notice = complete_notice
+        self.contract_travel_time:int = contract_travel_time
         self.game = game
         self.ID = ID if ID is not None else None
         game.register(self)
@@ -764,6 +769,7 @@ class Contract:
 
     def save(self):
         save = {
+            "name":self.name,
             "reward_good":self.reward_good.ID,
             "reward_amount":self.reward_amount,
             "deadline":self.deadline,
@@ -790,6 +796,7 @@ class Contract:
         home_location = game.scan_loaded_objects(Location,save["home_location"])
         instance = cls(
             game,
+            save["name"],
             reward_good,
             save["reward_amount"],
             save["deadline"],
@@ -801,6 +808,31 @@ class Contract:
             save["ID"]
         )
         return instance
+
+    def simple_table(self) -> dict:
+        table_data = {}
+        status = f"{style.RED}Expired{style.RESET}" if self.expired else f"{style.YELLOW}Due day {self.deadline}{style.RESET}"
+        status = f"{style.GREEN}Complete!{style.RESET}" if self.complete_notice else f"{style.YELLOW}Due day {self.deadline}{style.RESET}"
+        table_data = {
+            "Name": self.name,
+            "Destination": self.destination_port.location.name,
+            "Status": status
+        }
+        return table_data
+
+    def complex_table(self) -> dict:
+        table_data = {}
+        status = f"{style.RED}Expired{style.RESET}" if self.expired else f"{style.YELLOW}Due day {self.deadline}{style.RESET}"
+        status = f"{style.GREEN}Complete!{style.RESET}" if self.complete_notice else f"{style.YELLOW}Due day {self.deadline}{style.RESET}"
+        reward = f"{self.reward_amount} {self.reward_good.name}"
+        table_data = {
+            "Amount": self.amount,
+            "Good": self.good.name,
+            "Reward": reward,
+            "Destination": self.destination_port.location.name,
+            "Status": status
+        }
+        return table_data
 
     def check_completion(self):
         if self.destination_storage.cargo.get(self.good,0) >= self.amount:
@@ -1419,7 +1451,6 @@ class Port:
                                 continue
                             selected_contract_names.append(contract_names[answer-1])
                         except Exception:
-                            #input("BREAKED" + e)
                             break
                         selected_contract:Contract = player.contracts[answer-1]
                         
@@ -1454,6 +1485,7 @@ class Port:
                             break
                 case 3:
                     if len(self.planned_destinations) >= 1:
+                        selected_ship.calculate_crew_amount()
                         if selected_ship.crew_amount.current_value > 0:
                             selected_ship.primary_dispatch(self.planned_destinations,self.game)
                             print(f"{selected_ship.name} has been dispatched!")
@@ -1647,16 +1679,21 @@ class Player:
     def view_contracts(self):
         table_data = {}
         for contract in self.contracts:
-                status = "Expired" if contract.expired else f"Due day {contract.deadline}"
-                reward = f"{contract.reward_amount} {contract.reward_good.name}"
-                table_data[contract.good.name] = {
-                    "Amount": contract.amount,
-                    "Good": contract.good.name,
-                    "Reward": reward,
-                    "Destination": contract.destination_port.location.name,
-                    "Status": status
-                }
-        return menu("Contracts", [f"{contract.amount} {contract.good.name} to {contract.destination_port.name}" for contract in self.contracts], table=table_data, return_option=True)
+            table_data[contract.good.name] = contract.simple_table()
+        ans = menu("Contracts", [f"{contract.name}" for contract in self.contracts], table=table_data, return_option=True)
+        if ans is not None:
+            selected_con = self.contracts[ans-1]
+            menu(f"{selected_con.name}",[],True,table={"":selected_con.complex_table()})
+
+    def select_contract(self):
+        table_data = {}
+        for contract in self.contracts:
+            table_data[contract.good.name] = contract.simple_table()
+        ans = menu("Contracts", [f"{contract.name}" for contract in self.contracts], table=table_data, return_option=True)
+        if ans is not None:
+            return self.contracts[ans-1]
+        else:
+            return None
 
     def player_actions(self):
         while True:
@@ -1665,11 +1702,9 @@ class Player:
                 case 1:
                     clear_terminal()
                     self.view_stats()
-                    input("Press enter to go back")
                 case 2:
                     clear_terminal()
                     self.view_contracts()
-                    input("Press enter to go back")
                 case _:
                     break
     
@@ -1772,8 +1807,9 @@ class Exchange:
         self.gen_daily_contracts()
 
     def show_contracts(self):
+        if len(self.contracts) == 0:
+            self.gen_daily_contracts()
         table_data = {}
-        print(f"CONTRACTS {self.contracts}")
         for i, c in enumerate(self.contracts, start=1):
             status = "Expired" if c.expired else f"Due day {c.deadline}"
             reward = f"{c.reward_amount} {c.reward_good.name}"
@@ -1806,24 +1842,22 @@ class Exchange:
                     except Exception as e:
                         input("An error occured!\n"+e)
                     selected_warehouse:Warehouse = player.warehouses[answer]
-                    #input(selected_warehouse.name) 
                     if selected_warehouse.storage.add_to_cargo(chosen_contract.good,chosen_contract.amount):
                         input("Contract accepted! (press enter to continue)")
                         self.contracts.remove(chosen_contract) #Remove the contract from the exchange's list of contracts
                         return chosen_contract
                     else:
                         input("That warehouse cannot hold that much cargo, choose another (press enter to continue)")
-            except Exception:# as e:
-                print("Invalid selection, try again")
+            except Exception as e:
+                input("Invalid selection, try again: ")
     
     def cashout_contracts(self,player:Player):
         while True:
             clear_terminal()
-            answer = player.view_contracts()
-            if answer is None:
+            chosen_contract = player.select_contract()
+            if chosen_contract is None:
                 return
             try:
-                chosen_contract:Contract = player.contracts[answer-1] 
                 if chosen_contract.complete_notice:
                     warehouse_names = []
                     for warehouse in player.warehouses:
