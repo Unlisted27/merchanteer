@@ -1,9 +1,25 @@
-import components, building_blocks, game_art, style
+import components, building_blocks, game_art, style,pathlib
 
 #Art
 title = game_art.title
 
-def run_game(game:components.Game):
+import pathlib
+import json
+
+def select_save_file():
+    current_dir = pathlib.Path(__file__).parent
+    saves_dir = current_dir.parent / "m_saves"
+
+    files = list(saves_dir.iterdir())
+
+    selected_index = components.menu("Select a save",[file.name for file in files],True)
+    if selected_index is None:
+        return None
+    selected_index -=1
+    selected_file = files[selected_index]
+    return selected_file
+
+def run_game(game:components.Game,save_path:pathlib.Path):
     for observer in game.observers:
         if type(observer) == components.Port:
             if observer.name == "port Grandure":
@@ -51,7 +67,7 @@ def run_game(game:components.Game):
                 game.advance()
             case 6:                             
                 print("Saving game...")
-                game.save_to_file("save1")
+                game.save_to_file(save_path)
                 print("Game saved successfully!")
                 print("Thanks for playing!")
                 break
@@ -67,11 +83,15 @@ def __main__():
                 game = building_blocks.create_new_game()
                 run_game(game)
             case 2:
-                print("Loading...")
-                game = components.Game()
-                context = components.LoadContext(game,building_blocks.event_list)
-                new_game = components.Game.load_from_file("save1",context)
-                run_game(new_game)
+                file = select_save_file()
+                if file is None:
+                    continue
+                else:
+                    print("Loading...")
+                    game = components.Game()
+                    context = components.LoadContext(game,building_blocks.event_list)
+                    new_game = components.Game.load_from_file(file,context)
+                    run_game(new_game,file)
             case 3:
                 print("Settings menu coming soon!")
             case 4:
