@@ -411,6 +411,7 @@ class Game:
     def save(self) -> dict:
         save = {
             "day": self.day,
+            "notices":self.notices,
             "game_items": []  # Will store all observer save data
         }
         
@@ -445,6 +446,7 @@ class Game:
         # Step 1
         game = context.game
         game.day = save_data["day"]
+        game.notices = save_data["notices"]
 
         grouped = defaultdict(list)
 
@@ -491,10 +493,12 @@ class Game:
         # Load phase 1: Instantiate all objects
         for item_type in LOAD_ORDER:
             for item_data in grouped[item_type]:
-                print(f"Loading {item_type}")
-                CLASS_REGISTRY[item_type].init_load(item_data, context)
-        
-        print([observer.ID for observer in game.observers])
+                print(f"Loading {item_type} | {item_data["ID"]}")
+                obj = CLASS_REGISTRY[item_type].init_load(item_data, context)
+                print(f"Got: {obj}")
+
+        print("CURRENT OBSERVERS")
+        print(f"{type(observer)} | {observer.ID}" for observer in game.observers)
         # Load phase 2: Populate object properties
         for item in game.observers:
             if hasattr(item,"secondary_load"):
@@ -550,6 +554,7 @@ class Game:
             if obj in self.observers:
                 self.observers.remove(obj)
         self.to_remove.clear()
+        clear_terminal()
         print(f"--Day [{self.day}] notices--")
         for notice in daily_notices:
             self.notices.append(notice)
@@ -748,7 +753,7 @@ class Storage:
             self.cargo[game.scan_loaded_objects(Good,good_id)]=amount
 
 class Contract:
-    def __init__(self,game:Game,name:str,reward_good:Good,reward_amount:int,deadline:int,good:Good,amount:int,destination_port:'Port',destination_storage:Storage,home_location:Port,expired:bool=False,complete:bool=False,complete_notice:bool=False,contract_travel_time:int|None = None, ID:str | None = None):
+    def __init__(self,game:Game,name:str,reward_good:Good,reward_amount:int,deadline:int,good:Good,amount:int,destination_port:'Port',destination_storage:Storage,home_location:Port,expired:bool=False,complete:bool=False,complete_notice:bool=False,contract_travel_time:int|None = None, active:bool=False,ID:str | None = None):
         self.name=name
         self.reward_good = reward_good
         self.reward_amount = reward_amount
@@ -763,6 +768,7 @@ class Contract:
         self.complete_notice = complete_notice
         self.contract_travel_time:int = contract_travel_time
         self.game = game
+        self.active = active
         self.ID = ID if ID is not None else None
         game.register(self)
 
@@ -782,6 +788,7 @@ class Contract:
             "complete":self.complete,
             "complete_notice":self.complete_notice,
             "contract_travel_time":self.contract_travel_time,
+            "active":self.active,
             "ID":self.ID
         }
         return save
@@ -805,7 +812,12 @@ class Contract:
             destination_port,
             destination_storage,
             home_location,
-            save["ID"]
+            expired=save["expired"],
+            complete=save["complete"],
+            complete_notice=save["complete_notice"],
+            contract_travel_time=save["contract_travel_time"],
+            active=save["active"],
+            ID=save["ID"]
         )
         return instance
 
@@ -836,11 +848,13 @@ class Contract:
 
     def check_completion(self):
         if self.destination_storage.cargo.get(self.good,0) >= self.amount:
+            self.destination_storage.remove_cargo(self.good,self.amount)
             return True
         return False
     def on_day_passed(self, day):
-        if self.check_completion(): #Check if contract is complete
-            if not self.complete: #Check if it was already complete
+        if not self.complete and self.active:
+            if self.check_completion(): #Check if contract is complete
+             #Check if it was already complete
                 self.contract_travel_time = day + random.randint(2,5) #Random travel time for reward delivery
                 self.complete = True
         if day == self.contract_travel_time and self.complete is True and self.complete_notice is False and self.expired is False: #Check if reward should be delivered
@@ -1803,6 +1817,8 @@ class Exchange:
             self.contracts.append(gen_contract(self.game,self.good_list,self.reward_list,self.game.day,self.location,self.world,self.max_cargo_weight)) #We can Game.register contracts that are selected, dont need to do it when they are generated
     
     def on_day_passed(self, days):
+        for contract in self.contracts:
+            self.game.unregister(contract)
         self.contracts = []
         self.gen_daily_contracts()
 
@@ -1830,26 +1846,25 @@ class Exchange:
             answer = self.show_contracts()
             if answer is None:
                 return None
-            try:
-                chosen_contract = self.contracts[answer-1] 
-                while True:
-                    clear_terminal()
-                    warehouse_names = []
-                    for warehouse in player.warehouses:
-                        warehouse_names.append(warehouse.name)
-                    try:
-                        answer = int(menu("Where would you like to store these goods?",warehouse_names,True))-1
-                    except Exception as e:
-                        input("An error occured!\n"+e)
-                    selected_warehouse:Warehouse = player.warehouses[answer]
-                    if selected_warehouse.storage.add_to_cargo(chosen_contract.good,chosen_contract.amount):
-                        input("Contract accepted! (press enter to continue)")
-                        self.contracts.remove(chosen_contract) #Remove the contract from the exchange's list of contracts
-                        return chosen_contract
-                    else:
-                        input("That warehouse cannot hold that much cargo, choose another (press enter to continue)")
-            except Exception as e:
-                input("Invalid selection, try again: ")
+            chosen_contract = self.contracts[answer-1] 
+            while True:
+                clear_terminal()
+                warehouse_names = []
+                for warehouse in player.warehouses:
+                    warehouse_names.append(warehouse.name)
+                
+                answer = menu("Where would you like to store these goods?",warehouse_names,True)
+                if answer == None:
+                    break
+                answer -= 1
+                selected_warehouse:Warehouse = player.warehouses[answer]
+                if selected_warehouse.storage.add_to_cargo(chosen_contract.good,chosen_contract.amount):
+                    input("Contract accepted! (press enter to continue)")
+                    self.contracts.remove(chosen_contract) #Remove the contract from the exchange's list of contracts
+                    chosen_contract.active = True
+                    return chosen_contract
+                else:
+                    input("That warehouse cannot hold that much cargo, choose another (press enter to continue)")
     
     def cashout_contracts(self,player:Player):
         while True:
@@ -1917,7 +1932,7 @@ class Tavern:
                 "Role": crew_mate.crew_role.name,
                 "Sailing Ability": crew_mate.sailing_ability
             }
-        selected_crew = menu(f"{self.name} crew",list(table_data.keys()),return_option=True, table = table_data)
+        selected_crew = menu(f"{self.name} crew",list(table_data.keys()),return_option=True, table = table_data,art=game_art.tavern)
         if selected_crew is not None:
             selected_ship = menu("Select a ship to add this crew mate to", [ship.name for ship in self.player.fleet.ships], return_option=True)
             if selected_ship is not None:
@@ -1954,6 +1969,12 @@ class Tavern:
             ID = save["ID"]
         )
         return instance
+
+    def on_day_passed(self, days):
+        for crewMate in self.crew:
+            self.game.unregister(crewMate)
+        self.crew = []
+        self.populate_crew(10)
 
 class MessengerPigeon:
     def __init__(self,game:Game,message:str,start_coordinates:tuple[int],destination_coordinates:tuple[int], travel_time:int | None = None,ID:str | None = None):

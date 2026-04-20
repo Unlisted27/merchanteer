@@ -60,10 +60,11 @@ def run_game(game:components.Game,save_path:pathlib.Path):
                 theBargainHouse = observer
     while True:
         try:
-            table_data = {}
+            #table_data = {}
+            sub_table_data = {}
             for i, c in enumerate(player.contracts, start=1):
-                table_data[i] = c.simple_table()
-            answer = components.menu(f"Game menu | Day:{game.day}",["General actions","Bargain house","Port","Tavern","Next day","Save and quit"],art = game_art.title,table=table_data) 
+                sub_table_data[i] = c.simple_table()
+            answer = components.menu(f"Game menu | Day:{game.day}",["General actions","Bargain house","Port","Tavern","Next day","Save and quit"],art = game_art.title,sub_table=sub_table_data) 
             match answer: 
                 #General actions
                 case 1:      
@@ -139,7 +140,7 @@ def __main__():
                                 
                     support us             
        https://buymeacoffee.com/unlisted_dev
-          (30/70) Artist / main dev split     
+          (10/90) Artist / main dev split     
            Unless specified otherwise (:
         """),0.3)
                 input()
