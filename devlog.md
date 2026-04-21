@@ -247,3 +247,30 @@ d - in-development version, not meant to be played, likely very unstable
 - Reworked the transfering of goods system to be more up to date with the modern table format of menus. The go back option will now CONSISTANTLY be 1
 ## Other notes
 - Made the discord link in the README work and added a little blurb for devs regarding code structure
+
+# 0.1.0a Save load
+## Added features
+### Major added features
+Save/load system (I've been waiting so long to write that, more info in loading_logic.md)
+### Minor added features
+ - Art for the tavern has now been added
+ - In the main menu, there is a table displaying all active contracts
+## Player notes
+You can now save and load your game!
+## Bug fixes
+A lot went unlogged NGL
+ - Fixed bug where exchanges would not populate with contracts on first load
+ - Fixed bug where accepted contracts wouldnt load causing fatal crash (due to mis-aligned arguments in the contract's init_load method)
+ - Fixed outdated logic in selecting a warehouse to store contract goods that caused a-typical menu behaviour.
+ - Fixed notices not saving
+ - Fixed Contracts and Crew members persisting in game.observers even after being removed from their Exchange/Tavern. Patched my first RAM leak (:
+## Dev notes
+- All objects that need to be tracked via save/load now have an ID value. This value is set when the object runs ```game.register(self)``` in ```__init__```
+- GameTime changed to Game, and all references changed accordingly.
+    - This was done as Game now acts as the register tracking all objects that need to be saved, as well as the central clock. Game is a more fitting name for this new role.
+- Exchange objects now GameTime.register themselves
+    - The old system of running GameTime.register on everything that needs to be time tracked is now fully deprecated as all objects that accept a GameTime arg now register themselves
+ - Contracts now have an active status and can only complete when it is True. This avoids contracts that were not yet accepted being completed due to their required resources ending up in the required warehouse because of a different contract
+ - Also to prevent contracts being completed from the goods of another cotnract, contracts now remove their required completion items from their target warehouse upon completion.
+## Other notes
+A lot has changed, see notes on the save/load system in loading_logic.md
