@@ -274,3 +274,21 @@ A lot went unlogged NGL
  - Also to prevent contracts being completed from the goods of another cotnract, contracts now remove their required completion items from their target warehouse upon completion.
 ## Other notes
 A lot has changed, see notes on the save/load system in loading_logic.md
+
+
+# 0.1.1a 
+## Added features
+### Major added features
+
+### Minor added features
+ - Added confirmation when terminating crew contracts
+## Player notes
+
+## Bug fixes
+
+## Dev notes
+
+## Other notes
+ - Removed "Name change cancelled" dialogue upon canceling the name change of a ship, canceling name change will now simple go back with no additional input required.
+ - Readjusted credits formatting as they were looking a lil wonky
+ - Improved download instructions in README.md

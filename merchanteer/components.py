@@ -1047,15 +1047,12 @@ class Ship:
         self.home_port:Port = home_port if home_port is not None else None
         self.current_port:Port = current_port if current_port is not None else None
         self.last_port:Port = last_port if last_port is not None else None
-        
+        self.calculate_crew_amount()
         #Ship needs
         self.daily_maintenance = ShipNeed(self,"maintenance_skill","toughness","Maintenance",ship_type.daily_maintenance)
 
         #Needs list
         self.needs = [self.daily_maintenance]
-
-        self.calculate_crew_amount()
-
         # Properties for events to interact with
         self.daily_storm_value = Stat(100,0,0)
         self.daily_wind = Stat(100,0,0) #Average wind is 50
@@ -1063,7 +1060,7 @@ class Ship:
         #Repair values
         self.is_under_repair = is_under_repair if is_under_repair is not None else False
         self.daily_repair_amount = daily_repair_amount if daily_repair_amount is not None else 0
-
+        
     def save(self) -> dict:
         save = {
             # All stat values are current value, as their max value is populated by ship type
@@ -1104,7 +1101,7 @@ class Ship:
             storage = storage,
             ID=save["ID"]
         )
-        instance._save_data = save  # 🔥 store for phase 2
+        instance._save_data = save  # store for phase 2
         return instance
     
     def secondary_load(self,save:dict,context:LoadContext):
@@ -1131,6 +1128,7 @@ class Ship:
         self.last_port=last_port
         self.is_under_repair=save["is_under_repair"]
         self.daily_repair_amount=save["daily_repair_amount"]
+        self.calculate_crew_amount()
     
     #NON-USER FRIENDLY FUNCTIONS (NO UI)
     def start_repairs(self,daily_repair_amount:int):
@@ -1308,10 +1306,12 @@ class Ship:
                                 else:
                                     break
                         case 2:
-                            if self.remove_crew(crew_mate):
-                                input(f"{crew_mate.name} has been terminated, press enter to continue")
-                            else:
-                                input("There was an error terminating that crew mate, press enter to continue")
+                            answer = input("Are you sure you want to terminate this crew mate's contract? [y/n]")
+                            if answer.lower().strip().startswith("y"):
+                                if self.remove_crew(crew_mate):
+                                    input(f"{crew_mate.name} has been terminated, press enter to continue")
+                                else:
+                                    input("There was an error terminating that crew mate, press enter to continue")
                         case _:
                             break
                     break
@@ -1530,8 +1530,6 @@ class Port:
     def change_ship_name_menu(self,selected_ship:Ship):
         new_name = input("Enter new name (press [ENTER] to cancel): ")
         if new_name.strip() == "":
-            print("Name change cancelled.")
-            input("Press enter to continue")
             return
         selected_ship.name = new_name
         selected_ship.storage.name = f"{new_name} Cargo"
