@@ -130,13 +130,13 @@ def __main__():
                   Game design
                  Unlisted_dev
                                     
-                      Code    
-                  Unlisted_dev
+                     Code    
+                 Unlisted_dev
 
                       Art         
               DefinitelyNotAPickle
 
-              Thank you for playing!
+             Thank you for playing!
                                 
                     support us             
        https://buymeacoffee.com/unlisted_dev
