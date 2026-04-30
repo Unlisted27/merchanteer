@@ -71,3 +71,12 @@ COMPLETE 3. Reformat switch cases to avoid nested statements and implement highe
         - COMPLETE (crew can perform any role, but they specialise in one area)
  - COMPLETE Add ship repairing at home port
  - COMPLETE Add a way to view past daily notices
+
+# 0.1.1a
+ - Fix contracts not redeeming
+ - Market
+    - Market is where you can sell excess goods, prices change on a weekly basis.
+ - Fishing
+    - Ships can be dispatched on fishing expeditions
+    - Fish density determined by location default, plus random value each day
+    - The ship will catch on average more kg of fish during high fish denisty in the location

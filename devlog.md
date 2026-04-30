@@ -289,6 +289,6 @@ A lot has changed, see notes on the save/load system in loading_logic.md
 ## Dev notes
 
 ## Other notes
- - Removed "Name change cancelled" dialogue upon canceling the name change of a ship, canceling name change will now simple go back with no additional input required.
+ - Removed "Name change cancelled" dialogue upon canceling the name change of a ship, canceling name change will now simply go back with no additional input required.
  - Readjusted credits formatting as they were looking a lil wonky
  - Improved download instructions in README.md
