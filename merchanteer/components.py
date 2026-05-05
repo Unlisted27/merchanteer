@@ -823,8 +823,12 @@ class Contract:
 
     def simple_table(self) -> dict:
         table_data = {}
-        status = f"{style.RED}Expired{style.RESET}" if self.expired else f"{style.YELLOW}Due day {self.deadline}{style.RESET}"
-        status = f"{style.GREEN}Complete!{style.RESET}" if self.complete_notice else f"{style.YELLOW}Due day {self.deadline}{style.RESET}"
+        if self.expired:
+            status = f"{style.RED}Expired{style.RESET}"
+        elif self.complete_notice:
+            status = f"{style.GREEN}Complete!{style.RESET}"
+        else:
+            status = f"{style.YELLOW}Due day {self.deadline}{style.RESET}"
         table_data = {
             "Name": self.name,
             "Destination": self.destination_port.location.name,
@@ -834,8 +838,12 @@ class Contract:
 
     def complex_table(self) -> dict:
         table_data = {}
-        status = f"{style.RED}Expired{style.RESET}" if self.expired else f"{style.YELLOW}Due day {self.deadline}{style.RESET}"
-        status = f"{style.GREEN}Complete!{style.RESET}" if self.complete_notice else f"{style.YELLOW}Due day {self.deadline}{style.RESET}"
+        if self.expired:
+            status = f"{style.RED}Expired{style.RESET}"
+        elif self.complete_notice:
+            status = f"{style.GREEN}Complete!{style.RESET}"
+        else:
+            status = f"{style.YELLOW}Due day {self.deadline}{style.RESET}"
         reward = f"{self.reward_amount} {self.reward_good.name}"
         table_data = {
             "Amount": self.amount,
@@ -848,20 +856,27 @@ class Contract:
 
     def check_completion(self):
         if self.destination_storage.cargo.get(self.good,0) >= self.amount:
-            self.destination_storage.remove_cargo(self.good,self.amount)
             return True
         return False
     def on_day_passed(self, day):
         if not self.complete and self.active:
             if self.check_completion(): #Check if contract is complete
              #Check if it was already complete
+                self.destination_storage.remove_cargo(self.good,self.amount)
                 self.contract_travel_time = day + random.randint(2,5) #Random travel time for reward delivery
                 self.complete = True
-        if day == self.contract_travel_time and self.complete is True and self.complete_notice is False and self.expired is False: #Check if reward should be delivered
+        if (
+            self.contract_travel_time is not None and
+            day == self.contract_travel_time and
+            self.complete and
+            not self.complete_notice and
+            not self.expired
+            ): #Check if reward should be delivered
             self.complete_notice = True
-            return f"Contract for {self.amount} {self.good.name} is ready to be cashed out!"
-        if self.deadline < day and self.complete is False:
+            return f"Contract {self.name} for {self.amount} {self.good.name} is ready to be cashed out!"
+        if self.deadline < day and self.complete is False and self.expired is False:
             self.expired = True
+            return f"Contract {self.name} for {self.amount} {self.good.name} has expired!"
 
 class CrewRole:
     def __init__(self,name:str,description:str,game:Game,sailing_booster:int=0,maintenance_booster:int=0, ID:str | None=None):
@@ -1245,9 +1260,9 @@ class Ship:
                             contract.destination_storage.add_to_cargo(contract.good,amount_to_deposite) #Add the goods for this contract to the destination storage
                             self.storage.remove_cargo(contract.good,amount_to_deposite) #Remove the goods for this contract from the ship's storage
                         if contract.check_completion():
-                            self.ships_log.append(f"Contract for {contract.amount} {contract.good.name} completed!")
+                            self.ships_log.append(f"Contract {contract.name} for {contract.amount} {contract.good.name} completed!")
                         else:
-                            self.ships_log.append(f"Contract for {contract.amount} {contract.good.name} was NOT completed!")
+                            self.ships_log.append(f"Contract {contract.name} for {contract.amount} {contract.good.name} was NOT completed!")
                         self.contracts.remove(contract) #Remove the contract from the ship's list of contracts, even if it wasnt completed cause the ship is out of that Good anyways
                 if len(self.destinations) > 0:
                     self.dispatch(self.destinations[0],self.current_port.game) #Dispatch to the next destination in the list (this only dispatches to the first instance of that destination)

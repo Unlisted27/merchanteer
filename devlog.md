@@ -276,18 +276,14 @@ A lot went unlogged NGL
 A lot has changed, see notes on the save/load system in loading_logic.md
 
 
-# 0.1.1a 
+# 0.1.1a Contracts patch
 ## Added features
-### Major added features
-
 ### Minor added features
  - Added confirmation when terminating crew contracts
-## Player notes
-
 ## Bug fixes
-
+ - Fixed contracts not redeeming. This was due to the Contract.check_completion() function handlign the removal of items from the target warehouse, and since this was being called by ship objects for log purposes, it was removing the items before the contract object itself was able to check for its own completion, thus failing the check as the items were no longer there.
 ## Dev notes
-
+ - Make sure the function name accurately represents what the function does. check_completion should never have performed any action, it should simply check a value.
 ## Other notes
  - Removed "Name change cancelled" dialogue upon canceling the name change of a ship, canceling name change will now simply go back with no additional input required.
  - Readjusted credits formatting as they were looking a lil wonky
