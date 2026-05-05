@@ -70,8 +70,8 @@ def gen_world() -> components.Game:
     ketch = components.ShipType(game,"Ketch")
 
     #ships
-    theSliver = components.Ship("the Sliver",ketch,event_list,game,crew=[components.gen_crewmate(crew_roles,game),components.gen_crewmate(crew_roles,game)])
-    theSplinter = components.Ship("the Splinter",ketch,event_list,game,crew=[components.gen_crewmate(crew_roles,game),components.gen_crewmate(crew_roles,game)])
+    theSliver = components.Ship("the Sliver",ketch,event_list,game,crew=[components.gen_crewmate(crew_roles,game),components.gen_crewmate(crew_roles,game,True)])
+    theSplinter = components.Ship("the Splinter",ketch,event_list,game,crew=[components.gen_crewmate(crew_roles,game),components.gen_crewmate(crew_roles,game,True)])
     #Fleet
     player_fleet = components.Fleet([theSliver,theSplinter],game)
 

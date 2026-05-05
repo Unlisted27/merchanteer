@@ -73,7 +73,9 @@ COMPLETE 3. Reformat switch cases to avoid nested statements and implement highe
  - COMPLETE Add a way to view past daily notices
 
 # 0.1.1a
- - Fix contracts not redeeming
+ - COMPLETE Fix contracts not redeeming
+
+# 0.2.0a 
  - Market
     - Market is where you can sell excess goods, prices change on a weekly basis.
  - Fishing

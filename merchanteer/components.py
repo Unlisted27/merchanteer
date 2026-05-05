@@ -339,13 +339,13 @@ def genname():
         name = name_parts.start_sounds[random.randint(0,len(name_parts.start_sounds)-1)] + name_parts.middle_sounds[random.randint(0,len(name_parts.middle_sounds)-1)] + name_parts.end_sounds[random.randint(0,len(name_parts.end_sounds)-1)]
     return(name)
 
-def gen_crewmate(crew_roles:list['CrewRole'],game:'Game'):
+def gen_crewmate(crew_roles:list['CrewRole'],game:'Game',make_active = False):
     name = genname()
     if len(crew_roles) > 0:  
         crew_role = random.choice(crew_roles) 
     else:
         raise ValueError("Crew roles list cannot be empty")
-    return CrewMate(crew_role,game,name=name)
+    return CrewMate(crew_role,game,name=name,active=make_active)
 
 # Core components
 
@@ -498,7 +498,7 @@ class Game:
                 print(f"Got: {obj}")
 
         print("CURRENT OBSERVERS")
-        print(f"{type(observer)} | {observer.ID}" for observer in game.observers)
+        print([f"{type(observer)} | {observer.ID}" for observer in game.observers])
         # Load phase 2: Populate object properties
         for item in game.observers:
             if hasattr(item,"secondary_load"):
@@ -846,7 +846,8 @@ class Contract:
             status = f"{style.YELLOW}Due day {self.deadline}{style.RESET}"
         reward = f"{self.reward_amount} {self.reward_good.name}"
         table_data = {
-            "Amount": self.amount,
+            "Name": self.name,
+            "Weight": f"{round(self.amount*self.good.weight)}kg",
             "Good": self.good.name,
             "Reward": reward,
             "Destination": self.destination_port.location.name,
@@ -859,6 +860,8 @@ class Contract:
             return True
         return False
     def on_day_passed(self, day):
+        if not self.active:
+            self.game.unregister(self) # Unregister no longer needed contracts, remember: Exchange generates new contracts each day.
         if not self.complete and self.active:
             if self.check_completion(): #Check if contract is complete
              #Check if it was already complete
@@ -917,13 +920,15 @@ class Human:
         self.name = name if name is not None else genname()
 
 class CrewMate(Human):
-    def __init__(self,crew_role:CrewRole,game:Game,sailing_ability:int | None = None,maintenance_ability:int | None = None, name:str | None = None, ID:str | None = None):
+    def __init__(self,crew_role:CrewRole,game:Game,sailing_ability:int | None = None,maintenance_ability:int | None = None, name:str | None = None, active:bool=False, ID:str | None = None):
         super().__init__(name=name)
         self.crew_role = crew_role
         self.sailing_ability = Stat(100,current_value=sailing_ability if sailing_ability is not None else random.randint(10,20)+crew_role.sailing_booster) #Base sailing ability is a random number between 10 and 20, plus any booster from their crew role
         self.maintenance_skill = Stat(100,current_value=maintenance_ability if maintenance_ability is not None else random.randint(10,20)+crew_role.maintenance_booster) #Base maintenance skill is a random number between 10 and 20, plus any booster from their crew role
+        self.active = active
         self.ID = ID if ID is not None else None
-        game.register(self)
+        self.game = game
+        self.game.register(self)
     
     def save(self) -> dict:
         save = {
@@ -931,6 +936,7 @@ class CrewMate(Human):
             "sailing_ability":self.sailing_ability.current_value,
             "maintenance_skill":self.maintenance_skill.current_value,
             "name":self.name,
+            "active":self.active,
             "ID":self.ID
         }
         return save
@@ -945,9 +951,14 @@ class CrewMate(Human):
             save["sailing_ability"],
             save["maintenance_skill"],
             save["name"],
+            active=save["active"],
             ID=save["ID"]
         )
         return instance
+    
+    def on_day_passed(self, day):
+        if not self.active:
+            self.game.unregister(self) # Unregister to prevent flooding.
 
 #This class is abstract, meaning it cannot be instantiated without being inherited from, and any class that inherits from it must implement run_event
 class ShipEvent(ABC):
@@ -1324,6 +1335,7 @@ class Ship:
                             answer = input("Are you sure you want to terminate this crew mate's contract? [y/n]")
                             if answer.lower().strip().startswith("y"):
                                 if self.remove_crew(crew_mate):
+                                    crew_mate.active = False
                                     input(f"{crew_mate.name} has been terminated, press enter to continue")
                                 else:
                                     input("There was an error terminating that crew mate, press enter to continue")
@@ -1844,14 +1856,8 @@ class Exchange:
             reward = f"{c.reward_amount} {c.reward_good.name}"
 
             # Use i as the key for each contract
-            table_data[i] = {
-                "Amount": c.amount,
-                "Good": c.good.name,
-                "Reward": reward,
-                "Destination": c.destination_port.location.name,
-                "Status": status
-            }
-        return menu("Available Contracts", [f"{contract.amount} {contract.good.name} to {contract.destination_port.name}" for contract in self.contracts], table=table_data, return_option=True)
+            table_data[i] = c.complex_table()
+        return menu("Available Contracts", [f"{contract.name}" for contract in self.contracts], table=table_data, return_option=True)
     
     def select_contract(self,player:Player):
         while True:
@@ -1947,11 +1953,13 @@ class Tavern:
             }
         selected_crew = menu(f"{self.name} crew",list(table_data.keys()),return_option=True, table = table_data,art=game_art.tavern)
         if selected_crew is not None:
+            selected_crew = self.crew[selected_crew-1]
             selected_ship = menu("Select a ship to add this crew mate to", [ship.name for ship in self.player.fleet.ships], return_option=True)
             if selected_ship is not None:
-                if self.player.fleet.ships[selected_ship-1].add_crew(self.crew[selected_crew-1]):
-                    input(f"{self.crew[selected_crew-1].name} has been added to {self.player.fleet.ships[selected_ship-1].name}! (press enter to continue)")
-                    self.crew.pop(selected_crew-1) #Remove the crew mate from the tavern's list of crew
+                if self.player.fleet.ships[selected_ship-1].add_crew(selected_crew):
+                    selected_crew.active = True
+                    input(f"{selected_crew.name} has been added to {self.player.fleet.ships[selected_ship-1].name}! (press enter to continue)")
+                    self.crew.pop(self.crew.index(selected_crew)) #Remove the crew mate from the tavern's list of crew
                 else:
                     input("Cannot add crew, that ship is at crew capacity!")
         else:
