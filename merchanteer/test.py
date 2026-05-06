@@ -1,10 +1,4 @@
-import components,building_blocks
+import components,merchants_handbook
 
-player = components.Player(components.Storage("Player Inventory",100),0)
-
-data = {
-    "Item 1": {"property 1": 0, "property 2": 0},
-    "Item 2": {"property 1": 0, "property 2": 0},
-}
-
-print(components.get_table(data))
+book2 = components.Book.from_dict(merchants_handbook.book_data)
+book2.run()

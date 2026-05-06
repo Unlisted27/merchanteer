@@ -76,6 +76,7 @@ COMPLETE 3. Reformat switch cases to avoid nested statements and implement highe
  - COMPLETE Fix contracts not redeeming
 
 # 0.2.0a 
+ - Merchant's handbook
  - Market
     - Market is where you can sell excess goods, prices change on a weekly basis.
  - Fishing

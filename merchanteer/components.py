@@ -3,8 +3,42 @@
 # If you want to mod the game, or understand how this is all implemented, check out building_blocks.py
 from __future__ import annotations
 from collections import defaultdict #IDK what this does
-import os, time, random, math, json, game_art, style, uuid
+import os, time, random, math, json, game_art, style, uuid, textwrap
 from abc import ABC, abstractmethod
+
+def format_page(content, title="", width=50, height=20):
+    inner_width = width - 4   # borders + padding
+    inner_height = height - 4 # title + borders
+
+    # Wrap text nicely
+    wrapped = textwrap.wrap(content, width=inner_width)
+
+    # Cut off overflow (optional)
+    wrapped = wrapped[:inner_height]
+
+    # Pad remaining lines so box stays fixed size
+    while len(wrapped) < inner_height:
+        wrapped.append("")
+
+    # Build top border
+    lines = []
+    lines.append("+" + "-"*(width-2) + "+")
+
+    # Title row (centered)
+    title_str = title.center(width-4)
+    lines.append("| " + title_str + " |")
+
+    # Separator
+    lines.append("|" + "-"*(width-2) + "|")
+
+    # Content
+    for line in wrapped:
+        lines.append("| " + line.ljust(inner_width) + " |")
+
+    # Bottom border
+    lines.append("+" + "-"*(width-2) + "+")
+
+    return "\n".join(lines)
 
 def distance(point1:tuple[int],point2:tuple[int]):
     '''Returns the distance between two points. For ballancing and standard reasons, distances are in NM'''
@@ -346,6 +380,14 @@ def gen_crewmate(crew_roles:list['CrewRole'],game:'Game',make_active = False):
     else:
         raise ValueError("Crew roles list cannot be empty")
     return CrewMate(crew_role,game,name=name,active=make_active)
+
+def validate_input(string:str,options:list[str]):
+    ans = input(string)
+    if ans not in options:
+        return False
+    else:
+        return ans
+# Merchant's handbook
 
 # Core components
 
@@ -2036,3 +2078,72 @@ class MessengerPigeon:
             save["ID"]
         )
         return instance
+
+class Page:
+    def __init__(self,content:str,title:str=None,chapter_marker:bool = False):
+        self.content = content
+        self.title = title
+        self.chapter_marker = chapter_marker
+    def read(self):
+        while True:
+            clear_terminal()
+            print(format_page(self.content, self.title))
+            print("[1] Next | [2] Prev | [3] Cover")
+            ans = validate_input(":",["1","2","3"])
+            if ans is False:
+                continue
+            else:
+                return ans
+
+class Book:
+    def __init__(self,title:str,pages:list[Page]):
+        self.title = title
+        self.pages = pages
+        self.total_pages = len(pages)
+        self.current_page = 0
+        self.chapter_indicies = [i for i,page in enumerate(pages) if page.chapter_marker]
+
+    @classmethod
+    def from_dict(cls,data:dict):
+        pages = []
+        for page_data in data["pages"]:
+            page = Page(page_data["content"],page_data.get("title"),page_data.get("chapter_marker",False))
+            pages.append(page)
+        return cls(data["title"],pages)
+    def view_chapters(self):
+        chapter_names = [self.pages[i].title for i in self.chapter_indicies]
+        ans = menu("Chapters",chapter_names,return_option=True)
+        if ans is not None:
+            return self.chapter_indicies[ans-1]
+        else:
+            return None
+
+    def run(self):
+        while True:
+            ans = menu(self.title,["Read from beginning","View chapters"],True)
+            match ans:
+                case 1:
+                    self.current_page = 0
+                case 2:
+                    self.current_page = self.view_chapters()
+                case _:
+                    break
+            if self.current_page is None or self.current_page >= self.total_pages:
+                break
+            while True:
+                page = self.pages[self.current_page]
+                ans = page.read()
+                match ans:
+                    case "1":
+                        if self.current_page < self.total_pages-1:
+                            self.current_page += 1
+                        else:
+                            input("You are at the end of the book, press enter to continue")
+                    case "2":
+                        if self.current_page > 0:
+                            self.current_page -= 1
+                        else:
+                            input("You are at the beginning of the book, press enter to continue")
+                    case "3":
+                        break
+
