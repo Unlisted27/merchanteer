@@ -1,4 +1,4 @@
-import components,merchants_handbook
+import components,merchanteer.merchanteers_handbook as merchanteers_handbook
 
-book2 = components.Book.from_dict(merchants_handbook.book_data)
-book2.run()
+book_of_merchanteering = components.Book.from_dict(merchanteers_handbook.book_data)
+book_of_merchanteering.run()

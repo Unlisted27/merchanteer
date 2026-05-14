@@ -3,15 +3,69 @@
 # If you want to mod the game, or understand how this is all implemented, check out building_blocks.py
 from __future__ import annotations
 from collections import defaultdict #IDK what this does
-import os, time, random, math, json, game_art, style, uuid, textwrap
+import os, time, random, math, json, game_art, style, uuid, re
 from abc import ABC, abstractmethod
+
+ANSI_ESCAPE = re.compile(r'\x1B\[[0-?]*[ -/]*[@-~]')
+
+def visible_length(text):
+    return len(strip_ansi(text))
+
+def strip_ansi(text):
+    return ANSI_ESCAPE.sub('', text)
+
+def ansi_wrap(text, width):
+    lines = []
+
+    paragraphs = text.split("\n")
+
+    for paragraph in paragraphs:
+
+        # Preserve blank lines
+        if paragraph.strip() == "":
+            lines.append("")
+            continue
+
+        words = paragraph.split(" ")
+        current = ""
+
+        for word in words:
+            test = current + (" " if current else "") + word
+
+            if visible_length(test) <= width:
+                current = test
+            else:
+                lines.append(current)
+                current = word
+
+        if current:
+            lines.append(current)
+
+    return lines
+
+def ansi_center(text, width):
+    visible = visible_length(text)
+    
+    total_padding = width - visible
+    left_padding = total_padding // 2
+    right_padding = total_padding - left_padding
+
+    return (" " * left_padding) + text + (" " * right_padding)
+
+def ansi_ljust(text, width):
+    padding = width - visible_length(text)
+
+    if padding < 0:
+        padding = 0
+
+    return text + (" " * padding)
 
 def format_page(content, title="", width=50, height=20):
     inner_width = width - 4   # borders + padding
     inner_height = height - 4 # title + borders
 
     # Wrap text nicely
-    wrapped = textwrap.wrap(content, width=inner_width)
+    wrapped = ansi_wrap(content, width=inner_width)
 
     # Cut off overflow (optional)
     wrapped = wrapped[:inner_height]
@@ -25,7 +79,7 @@ def format_page(content, title="", width=50, height=20):
     lines.append("+" + "-"*(width-2) + "+")
 
     # Title row (centered)
-    title_str = title.center(width-4)
+    title_str = ansi_center(title, width-4)
     lines.append("| " + title_str + " |")
 
     # Separator
@@ -33,7 +87,8 @@ def format_page(content, title="", width=50, height=20):
 
     # Content
     for line in wrapped:
-        lines.append("| " + line.ljust(inner_width) + " |")
+        padding = inner_width - visible_length(line)
+        lines.append(f"| {line}{' ' * padding} |")
 
     # Bottom border
     lines.append("+" + "-"*(width-2) + "+")
@@ -105,11 +160,10 @@ def menu(
 
     if len(items) == 0 and not text_input:
         raise ValueError("Menu must have at least one option, return option, or be a text input")
-    length = max(len(name) + 1, *(len(i) for i in items)) #Calculate menu width based on longest line
+    length = max(visible_length(name) + 1, *(visible_length(i) for i in items)) #Calculate menu width based on longest line
 
     # Build menu block
     menu_lines = []
-    #menu_lines.append(name + " " * (length - len(name)))
     for thing in items:
         if return_option and thing == f"{vertical_sign}[1] Go back":
             menu_lines.append(style.YELLOW + thing + style.RESET + " " * (length - len(f"{vertical_sign}[1] Go back")))
@@ -125,7 +179,7 @@ def menu(
     table_lines = []
     if table:
         table_lines = get_table(table).splitlines()
-    table_width = max((len(t) for t in table_lines), default=0)
+    table_width = max((visible_length(t) for t in table_lines), default=0)
 
     sub_table_lines = []
     if sub_table:
@@ -157,9 +211,9 @@ def menu(
         gap = "  |  "
 
         for m, a, t in zip(menu_lines, art_lines, table_lines):
-            m = m.ljust(length)
-            a = a.ljust(max(len(x) for x in art_lines)) if art_lines else ""
-            t = t.ljust(table_width)
+            m = ansi_ljust(m, length)
+            a = ansi_ljust(a, max(visible_length(x) for x in art_lines)) if art_lines else ""
+            t = ansi_ljust(t, table_width)
 
             line = m + gap + a + gap + t
             print(line)
@@ -214,9 +268,8 @@ def get_table(data:dict|list, sep: str = "  "):
     headers:list = []
     if isinstance(data, list):
         if len(data) <= 1:
-            if len(data) <= 1:
-                header = data[0] if data else ""
-                return f"{header}\n{'-'*len(str(header))}\nNo data to display"
+            header = data[0] if data else ""
+            return f"{header}\n{'-'*visible_length(str(header))}\nNo data to display"
         headers = data[0]
         rows = data[1:]
 
@@ -237,7 +290,7 @@ def get_table(data:dict|list, sep: str = "  "):
 
     # Find max width of each column
     widths = [
-        max(len(h), max(len(row[i]) for row in str_rows) if str_rows else 0)
+        max(visible_length(h), max(visible_length(row[i]) for row in str_rows) if str_rows else 0)
         for i, h in enumerate(str_headers)
     ]
 
@@ -245,15 +298,23 @@ def get_table(data:dict|list, sep: str = "  "):
     pattern = sep.join("{:<" + str(w) + "}" for w in widths)
 
     # make headers
-    block = """"""
-    block += pattern.format(*str_headers) + "\n"
+    block = ""
+    block += sep.join(
+        ansi_ljust(h, widths[i])
+        for i, h in enumerate(str_headers)
+    ) + "\n"
+
     block += sep.join("-" * w for w in widths) + "\n"
 
     # make rows
     for row in str_rows:
-        if isinstance(row, str):        # single-column case
-            row = [row]                 # wrap in list
-        block += pattern.format(*row) + "\n"
+        if isinstance(row, str):
+            row = [row]
+
+        block += sep.join(
+            ansi_ljust(cell, widths[i])
+            for i, cell in enumerate(row)
+        ) + "\n"
 
     return block
 
@@ -725,7 +786,7 @@ class Storage:
         table_data = {}
         for good, amount in self.cargo.items():
             table_data[good.name] = {
-            "Good": good.name,
+            "Good": f"{style.GREEN}{good.name}{style.RESET}",
             "Amount": amount,
             "Value": round(good.value*amount,2),
             "Weight": f"{round(self.get_crate_weight(good,amount),2)}Kg"
@@ -763,7 +824,7 @@ class Storage:
         """Displays the inventory in a menu format and allows the user to select an item by number.\n
         returns the list index of the selected item (1st item = 0)"""
         table_data = self.get_invent_table()
-        return menu("Select an item",[f"{amount} | {good.name}" for good,amount in self.cargo.items()],return_option=True,table=table_data)-1
+        return menu("Select an item",[f"{amount} | {style.GREEN}{good.name}{style.RESET}" for good,amount in self.cargo.items()],return_option=True,table=table_data)-1
     
     def save(self):
         save_cargo = {}
@@ -872,8 +933,8 @@ class Contract:
         else:
             status = f"{style.YELLOW}Due day {self.deadline}{style.RESET}"
         table_data = {
-            "Name": self.name,
-            "Destination": self.destination_port.location.name,
+            "Name": f"{style.MAGENTA}{self.name}{style.RESET}",
+            "Destination": f"{style.LIGHT_BLUE}{self.destination_port.location.name}{style.RESET}",
             "Status": status
         }
         return table_data
@@ -1513,7 +1574,7 @@ class Port:
     def dispatch_menu(self,selected_ship:Ship,player:Player):
         while True:
             clear_terminal()
-            answer = menu("Route planning",["Add contracts","Add destinations","Dispatch"],True)
+            answer = menu("Route planning",[f"Add {style.MAGENTA}contracts{style.RESET}",f"Add {style.LIGHT_BLUE}destinations{style.RESET}","Dispatch"],True)
             match answer:
                 # Dispatch with contract logic
                 case 1:
@@ -1575,15 +1636,15 @@ class Port:
                             input("Press enter to continue")
                             return True
                         else:
-                            input("You cannot dispatch a ship with no crew, press enter to continue")
+                            input(f"{style.RED}You cannot dispatch a ship with no crew, press enter to continue{style.RESET}")
                     else:
-                        input("You must add at least one destination before dispatching (Press enter to continue)")
+                        input(f"{style.RED}You must add at least one destination before dispatching (Press enter to continue){style.RESET}")
                 case _:
                     break
     
     def load_ship_menu(self,selected_ship:Ship):
         clear_terminal()
-        answer = menu("Load from",["Warehouse","Another ship"],True)
+        answer = menu("Load from",["Warehouse",f"Another {style.CYAN}ship{style.RESET}"],True)
         match answer:
             #Warehouse loading logic
             case 1:
@@ -1597,8 +1658,12 @@ class Port:
                 return
 
     def change_ship_name_menu(self,selected_ship:Ship):
+        max_name_len = 22
         new_name = input("Enter new name (press [ENTER] to cancel): ")
         if new_name.strip() == "":
+            return
+        if len(new_name) > max_name_len:
+            input(f"Name cannot be longer than {max_name_len} characters, press enter to continue")
             return
         selected_ship.name = new_name
         selected_ship.storage.name = f"{new_name} Cargo"
@@ -1614,12 +1679,12 @@ class Port:
             for warehouse in self.warehouses:
                 self.warehouse_names.append(warehouse.name)
             for ship in self.ships:
-                self.ship_names.append(ship.name)
+                self.ship_names.append(f"{style.CYAN}{ship.name}{style.RESET}")
             clear_terminal()
             try:
                 table_data = {
                     ship.name: {
-                        "Name": ship.name,
+                        "Name": f"{style.CYAN}{ship.name}{style.RESET}",
                         "Type": ship.ship_type.name,
                         "Health": ship.health,
                         "In repair": f"{style.RED}Yes{style.RESET}" if ship.is_under_repair else f"{style.GREEN}No{style.RESET}",
@@ -1633,7 +1698,7 @@ class Port:
                 clear_terminal()
                 table_data = {
                         selected_ship.name: {
-                            "Name": selected_ship.name,
+                            "Name": f"{style.CYAN}{selected_ship.name}{style.RESET}",
                             "Type": selected_ship.ship_type.name,
                             "Health": selected_ship.health,
                             "Toughness": selected_ship.toughness,
@@ -1645,7 +1710,7 @@ class Port:
                     "Daily upkeed": 
                             {need.name: need.need_value for need in selected_ship.needs}
                 }
-                action = menu(f"{selected_ship.name} actions",["Load","view inventory","Plan voyage","View crew","Change name","View event log","Repair ship"],return_option=True,art=game_art.ship_1,table=table_data,sub_table=sub_table_data)
+                action = menu(f"{selected_ship.name} actions",["Load","view inventory","Plan voyage",f"View {style.ORANGE}crew{style.RESET}","Change name","View event log","Repair"],return_option=True,art=game_art.ship_1,table=table_data,sub_table=sub_table_data)
                 match action:
                     case 1:
                         #Load ship
@@ -1770,7 +1835,7 @@ class Player:
         table_data = {}
         for contract in self.contracts:
             table_data[contract.good.name] = contract.simple_table()
-        ans = menu("Contracts", [f"{contract.name}" for contract in self.contracts], table=table_data, return_option=True)
+        ans = menu("Contracts", [f"{style.MAGENTA}{contract.name}{style.RESET}" for contract in self.contracts], table=table_data, return_option=True)
         if ans is not None:
             return self.contracts[ans-1]
         else:
@@ -1899,7 +1964,7 @@ class Exchange:
 
             # Use i as the key for each contract
             table_data[i] = c.complex_table()
-        return menu("Available Contracts", [f"{contract.name}" for contract in self.contracts], table=table_data, return_option=True)
+        return menu(f"Available {style.MAGENTA}Contracts{style.RESET}", [f"{style.MAGENTA}{contract.name}{style.RESET}" for contract in self.contracts], table=table_data, return_option=True)
     
     def select_contract(self,player:Player):
         while True:
@@ -1957,7 +2022,7 @@ class Exchange:
     
     def start_exchange(self,player:Player):
         while True:
-            answer = menu("Exchange Menu",["View available contracts","Cashout contracts"],True)
+            answer = menu("Exchange Menu",[f"View available {style.MAGENTA}contracts{style.RESET}",f"Cashout {style.MAGENTA}contracts{style.RESET}"],True)
             match answer:
                 case 1:
                     contract = self.select_contract(player)
@@ -1989,11 +2054,11 @@ class Tavern:
         table_data = {}
         for crew_mate in self.crew:
             table_data[crew_mate.name] = {
-                "Name": crew_mate.name,
+                "Name": f"{style.ORANGE}{crew_mate.name}{style.RESET}",
                 "Role": crew_mate.crew_role.name,
                 "Sailing Ability": crew_mate.sailing_ability
             }
-        selected_crew = menu(f"{self.name} crew",list(table_data.keys()),return_option=True, table = table_data,art=game_art.tavern)
+        selected_crew = menu(f"{self.name} crew",[f"{style.ORANGE}{name}{style.RESET}" for name in table_data.keys()],return_option=True, table = table_data,art=game_art.tavern)
         if selected_crew is not None:
             selected_crew = self.crew[selected_crew-1]
             selected_ship = menu("Select a ship to add this crew mate to", [ship.name for ship in self.player.fleet.ships], return_option=True)

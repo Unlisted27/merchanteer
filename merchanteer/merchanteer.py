@@ -1,9 +1,9 @@
-import components, building_blocks, game_art, style,pathlib
+import components, building_blocks, game_art, style,pathlib,merchanteers_handbook
 
 #Art
 title = game_art.title
 
-import pathlib
+merchanteers_handbook = components.Book.from_dict(merchanteers_handbook.book_data)
 
 def get_saves_folder() -> pathlib.Path:
     current_dir = pathlib.Path(__file__).parent
@@ -64,7 +64,7 @@ def run_game(game:components.Game,save_path:pathlib.Path):
             sub_table_data = {}
             for i, c in enumerate(player.contracts, start=1):
                 sub_table_data[i] = c.simple_table()
-            answer = components.menu(f"Game menu | Day:{game.day}",["General actions","Bargain house","Port","Tavern","Next day","Save and quit"],art = game_art.title,sub_table=sub_table_data) 
+            answer = components.menu(f"Game menu | Day:{game.day}",[f"General actions",f"{style.MAGENTA}Bargain house{style.RESET}",f"{style.BLUE}Port{style.RESET}",f"{style.ORANGE}Tavern{style.RESET}",f"Next day",f"{style.YELLOW}Merchanteer's handbook{style.RESET}",f"Save and quit"],art = game_art.title,sub_table=sub_table_data) 
             match answer: 
                 #General actions
                 case 1:      
@@ -92,7 +92,9 @@ def run_game(game:components.Game,save_path:pathlib.Path):
                     fishHeadTavern.select_crew()
                 case 5:   
                     game.advance()
-                case 6:                             
+                case 6: 
+                    merchanteers_handbook.run()
+                case 7:                             
                     print("Saving game...")
                     game.save_to_file(save_path)
                     print("Game saved successfully!")
@@ -106,7 +108,7 @@ def __main__():
     print(title)
     input("Press Enter to begin...")
     while True:
-        answer = components.menu("Main Menu",["Start new game","Load save","Settings","Credits","Quit game"])
+        answer = components.menu("Main Menu",["Start new game","Load save","Merchanteer's handbook","Settings","Credits","Quit game"])
         match answer:
             case 1:
                 create_new_game()
@@ -121,8 +123,10 @@ def __main__():
                     new_game = components.Game.load_from_file(file,context)
                     run_game(new_game,file)
             case 3:
-                print("Settings menu coming soon!")
+                merchanteers_handbook.run()
             case 4:
+                input("Settings coming soon!")
+            case 5:
                 components.clear_terminal()
                 game_art.slow_print(game_art.super_center_block(game_art.title.art),0.3)
                 game_art.slow_print(game_art.super_center_block("""
@@ -144,12 +148,13 @@ def __main__():
            Unless specified otherwise (:
         """),0.3)
                 input()
-            case 5:
+            case 6:
                 print("Thanks for playing!")
                 break
 
 __main__()
 
+#Deprecated functions previously used for testing during save/load development.
 
 def _new_temp_game():
     game = components.Game()

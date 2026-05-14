@@ -76,7 +76,9 @@ COMPLETE 3. Reformat switch cases to avoid nested statements and implement highe
  - COMPLETE Fix contracts not redeeming
 
 # 0.2.0a 
- - Merchant's handbook
+ - COMPLETE Merchant's handbook
+ - Fix ships being accesible while under repair
+ - Fix ships indicating under repair when they are not, happens once a repair ends.
  - Market
     - Market is where you can sell excess goods, prices change on a weekly basis.
  - Fishing

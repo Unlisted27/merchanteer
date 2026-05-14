@@ -4,5 +4,16 @@ YELLOW = '\033[33m'
 BLUE = '\033[34m'
 MAGENTA = '\033[35m'
 CYAN = '\033[36m'
+
+LIGHT_BLUE = '\033[38;5;117m'
+BROWN = '\033[38;5;94m'
+ORANGE = '\033[38;5;208m'
+
 WHITE = '\033[37m'
+
+BOLD = '\033[1m'
+UNDERLINE = '\033[4m'
+ITALIC = '\033[3m'
+BLINK = '\033[5m'
+
 RESET = '\033[0m'
