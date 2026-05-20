@@ -560,6 +560,7 @@ class Game:
             "Location",
             "World",
             "Good",
+            "ResourceNode",
             "Storage",
             "Warehouse",
             "Port",
@@ -579,6 +580,7 @@ class Game:
             "World": World,
             "Location": Location,
             "Good": Good,
+            "ResourceNode": ResourceNode,
             "Storage": Storage,
             "Warehouse":Warehouse,
             "Port": Port,
@@ -1107,7 +1109,7 @@ class ShipNeed:
                 raise AttributeError(f"Parent ship does not have attribute {self.ship_stat_tie_in}")
 
 class ShipType:
-    def __init__(self,game:Game,name:str,health:int=100,cargo_capacity:int=48000,crew_capacity:int=10,max_sailing_efficiency:int=50,toughness:int=35,daily_maintenance:int=10, ID:str | None = None):
+    def __init__(self,game:Game,name:str,health:int=100,cargo_capacity:int=48000,crew_capacity:int=10,max_sailing_efficiency:int=50,max_fishing_efficiency:int=25,toughness:int=35,daily_maintenance:int=10, ID:str | None = None):
         '''All default stats are for a sloop, the smallest/starter ship'''
         self.game = game
         self.name = name
@@ -1115,6 +1117,8 @@ class ShipType:
         self.cargo_capacity = cargo_capacity #This is in kg
         self.crew_capacity = crew_capacity
         self.sailing_efficiency = max_sailing_efficiency #This is the max amount of sailing efficiency (sum of all crew sailing skill) for this ship to perform at its best. Adding crew that boost sailing efficiency past this point will do nothing
+        self.fishing_efficiency = max_fishing_efficiency #This is the max amount of fishing efficiency (sum of all crew fishing skill) for this ship to perform at its best. Adding crew that boost fishing efficiency past this point will do nothing
+        # Fishing efficiency note: its the max amount of fish catcheable per day.
         self.toughness = toughness
         self.ID = ID if ID is not None else None
         #Needs
@@ -1127,6 +1131,7 @@ class ShipType:
             "cargo_capacity":self.cargo_capacity,
             "crew_capacity":self.crew_capacity,
             "sailing_efficiency":self.sailing_efficiency,
+            "fishing_efficiency":self.fishing_efficiency,
             "toughness":self.toughness,
             "daily_maintenance":self.daily_maintenance,
             "ID":self.ID
@@ -1143,6 +1148,7 @@ class ShipType:
             save["cargo_capacity"],
             save["crew_capacity"],
             save["sailing_efficiency"],
+            save["fishing_efficiency"],
             save["toughness"],
             save["daily_maintenance"],
             ID = save["ID"]
@@ -1158,8 +1164,9 @@ class Ship:
         self.game.register(self) #Register to game time so it can track daily needs and events
         #SHIP STATS
         self.health = Stat(ship_type.health,0,current_health if current_health is not None else ship_type.health)
-        self.sailing_efficiency = Stat(ship_type.sailing_efficiency,current_value=0) # Does not need to be saved as it is calculated later is calculate_crew_amount(). This determines the max a ship can perform (so a rowboat's max performance will be less than a proper ship). The actual ship performace (the current value of this stat) is determined by the sum of all crew sailing_ability
+        self.sailing_efficiency = Stat(ship_type.sailing_efficiency,current_value=0) # Does not need to be saved as it is calculated later in calculate_crew_amount(). This determines the max a ship can perform (so a rowboat's max performance will be less than a proper ship). The actual ship performace (the current value of this stat) is determined by the sum of all crew sailing_ability
         self.toughness = Stat(ship_type.toughness,0,current_toughness if current_toughness is not None else ship_type.toughness) # This is the max ship toughness, this may degrade during travels        
+        self.fishing_efficiency = Stat(ship_type.fishing_efficiency,current_value=0) # This is calculated based on crew, and determines how much fish the ship can catch when fishing. Does not need to be saved
         #Internal properties (only to be adjsuted within the declaration of the class)
         self.name = name
         self.event_list = event_list # Not saved, gonna pass event_list into the load function
@@ -1267,11 +1274,11 @@ class Ship:
     
     def _run_daily_repairs(self,daily_repair_amount:int):
         if self.is_under_repair:
-            if self.current_port:
+            if not self.health.full():
                 self.health += daily_repair_amount
                 self.ships_log.append(f"Ship repaired by {daily_repair_amount}. Current health: {self.health}")
             else:
-                self.ships_log.append("Ship is not in port, terminating repairs")
+                self.ships_log.append("Repairs complete!")
                 self.is_under_repair = False
 
     def calculate_crew_amount(self):
@@ -1628,12 +1635,30 @@ class Port:
                         except Exception:
                             break
                 case 3:
+                    # Mandatory checks
                     if len(self.planned_destinations) >= 1:
                         selected_ship.calculate_crew_amount()
                         if selected_ship.crew_amount.current_value > 0:
+                            # Succeeded all mandatory checks
+                            # Contract warnings
+                            warn = False
+                            for contract in selected_ship.contracts:
+                                if contract.good not in selected_ship.storage.cargo:
+                                    warn = True
+                                    input(f"{style.RED}Warning: Contract {contract.name} for {contract.good.name} to {contract.destination_port.name} may not be completed as no {contract.good.name} has been loaded{style.RESET}")
+                                elif contract.amount > selected_ship.storage.cargo[contract.good]:
+                                    warn = True
+                                    input(f"{style.RED}Warning: Contract {contract.name} for {contract.good.name} to {contract.destination_port.name} may not be completed as there is not enough {contract.good.name} loaded{style.RESET}")
+                                if contract.destination_port.location not in self.planned_destinations:
+                                    warn = True
+                                    input(f"{style.RED}Warning: Contract {contract.name} for {contract.good.name} to {contract.destination_port.name} may not be completed as its destination has not been planned{style.RESET}")
+                            if warn:
+                                ans = input("Continue anyways? [y/n]")
+                                if ans.lower().strip() != "y":
+                                    continue
                             selected_ship.primary_dispatch(self.planned_destinations,self.game)
                             print(f"{selected_ship.name} has been dispatched!")
-                            input("Press enter to continue")
+                            input("Press ENTER to continue")
                             return True
                         else:
                             input(f"{style.RED}You cannot dispatch a ship with no crew, press enter to continue{style.RESET}")
@@ -1641,7 +1666,7 @@ class Port:
                         input(f"{style.RED}You must add at least one destination before dispatching (Press enter to continue){style.RESET}")
                 case _:
                     break
-    
+
     def load_ship_menu(self,selected_ship:Ship):
         clear_terminal()
         answer = menu("Load from",["Warehouse",f"Another {style.CYAN}ship{style.RESET}"],True)
@@ -1691,6 +1716,9 @@ class Port:
                     } for ship in self.ships
                 }
                 selected_ship:Ship = self.ships[menu(self.name,self.ship_names,return_option=True,art=game_art.port_birds_eye,table=table_data) -1] #Select a ship to manage\
+                if selected_ship.is_under_repair:
+                    input(f"{style.RED}This ship is currently in repair and cannot be managed. (Press ENTER to continue){style.RESET}")
+                    continue
             except Exception:
                 break
             # Ship management menu
@@ -1742,6 +1770,7 @@ class Port:
                     case _:
                         break
     
+    # Save load functions
     def save(self):
         save  = {
             "name":self.name,
@@ -2212,3 +2241,37 @@ class Book:
                     case "3":
                         break
 
+class ResourceNode:
+    def __init__(self,game:Game,resource:Good,location:Location,daily_regen:int=100,ID:str | None = None):
+        self.game = game
+        self.resource = resource
+        self.location = location
+        self.daily_regen = daily_regen
+        self.amount = daily_regen #Start with full amount of resource available
+        self.ID = ID if ID is not None else None
+        game.register(self)
+    
+    def save(self):
+        save = {
+            "resource":self.resource.ID,
+            "location":self.location.ID,
+            "daily_regen":self.daily_regen,
+            "amount":self.amount,
+            "ID":self.ID
+        }
+        return save
+    
+    @classmethod
+    def init_load(cls,save:dict,context:LoadContext):
+        game = context.game
+        resource = game.scan_loaded_objects(Good,save["resource"])
+        location = game.scan_loaded_objects(Location,save["location"])
+        instance = cls(
+            game,
+            resource,
+            location,
+            save["daily_regen"],
+            ID=save["ID"]
+        )
+        instance.amount = save["amount"]
+        return instance

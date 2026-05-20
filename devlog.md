@@ -295,6 +295,9 @@ A lot has changed, see notes on the save/load system in loading_logic.md
  - Added a colour code for the entire game (Can be found in index of handbook)
  - Added the Merchanteer's handbook (a game guide)
 ### Minor added features
+ - Added warnings for cases where a contract attached to a ship would not be completed due to:
+    - Insuficient goods loaded
+    - Destination port not planned for travel
 ## Player notes
  - Some contract menus reformatted
  - Give the Merchanteer's handbook a read, it contains a guide for getting started, and information on the major game objects
@@ -302,6 +305,8 @@ A lot has changed, see notes on the save/load system in loading_logic.md
  - Fixed un-activated contracts sticking around and filling up the save file.
  - Fixed un-activated crew filling up save file.
  - Fixed bug where hidden ANSI characters were forcing tables to overflow the screen width
+ - Fixed ships being accesible under repair
+ - Fixed ships being in repair forever
 ## Dev notes
  - Added Page and Book classes.
  - Added merchanteers_handbook.py, this is where all the text for the Merchanteer's Handbook is located.
