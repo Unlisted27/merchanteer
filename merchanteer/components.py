@@ -667,13 +667,14 @@ class Game:
         input("Press enter to continue")
 
 class Location:
-    def __init__(self,name:str,game:Game,description:str | None = None,coordinates:tuple[int,int] | None = None, ports:list['Port'] | None = None,exchanges:list['Exchange'] | None = None, ID:str | None = None):
+    def __init__(self,name:str,game:Game,description:str | None = None,coordinates:tuple[int,int] | None = None, ports:list['Port'] | None = None,exchanges:list['Exchange'] | None = None, resource_nodes:list['ResourceNode'] | None = None, ID:str | None = None):
         self.name = name # Saved
         self.game = game
         self.coordinates = coordinates # Saved
         self.description = description # Saved
         self.ports = ports if ports is not None else []
         self.exchanges = exchanges if exchanges is not None else []
+        self.resource_nodes = resource_nodes if resource_nodes is not None else []
         if self.coordinates is None:
             self.randomise_coordinates()
         self.ID = ID if ID is not None else None
@@ -708,7 +709,9 @@ class Location:
     def add_exchange(self, exchange):
         if exchange not in self.exchanges:
             self.exchanges.append(exchange)
-
+    def add_resource_node(self, resource_node):
+        if resource_node not in self.resource_nodes:
+            self.resource_nodes.append(resource_node)
 class World:
     def __init__(self,locations:list['Location'],game:Game, ID:str | None = None):
         self.locations = locations
@@ -1398,7 +1401,8 @@ class Ship:
     #EXTERNAL FUNCTIONS
     def primary_dispatch(self, destinations:'Location', game:Game):
         '''Call this function to dispatch a ship (DO NOT USE dispatch())\n
-        This function will handle all the backend for proper ship dispatch that dispatch() will not'''
+        This function will handle all the backend for proper ship dispatch that dispatch() will not\n
+        The purpose of dispatch() is the internal'''
         self.destinations = destinations
         self.home_port = self.current_port
         self.destinations.append(self.current_port.location) #Add the current location as the final destination so the ship returns home after its route is complete
@@ -1508,7 +1512,7 @@ class Port:
             for ship in self.ships:
                 ship.current_port = self
         self.planned_destinations:list[Location] = []
-        
+        self.planned_resource_nodes:list[ResourceNode] = []
         self.ID = ID if ID is not None else None
         game.register(self)
     def add_ship(self, ship: Ship):
@@ -1581,9 +1585,9 @@ class Port:
     def dispatch_menu(self,selected_ship:Ship,player:Player):
         while True:
             clear_terminal()
-            answer = menu("Route planning",[f"Add {style.MAGENTA}contracts{style.RESET}",f"Add {style.LIGHT_BLUE}destinations{style.RESET}","Dispatch"],True)
+            answer = menu("Route planning",[f"Add {style.MAGENTA}contracts{style.RESET}",f"Add {style.LIGHT_BLUE}destinations{style.RESET}",f"Add {style.GREEN}resource{style.RESET} nodes","Dispatch"],True)
             match answer:
-                # Dispatch with contract logic
+                # Add contract
                 case 1:
                     clear_terminal()
                     contract_names = []
@@ -1612,7 +1616,7 @@ class Port:
                             ans = input("Press enter to continue (e for error details) ")
                             if ans.lower() == "e": input(e)
                             break
-                    
+                # Add destination
                 case 2:
                     clear_terminal()
                     location_names = []
@@ -1621,6 +1625,9 @@ class Port:
                         if location != self.location:
                             available_locations.append(location)
                             location_names.append(location.name)
+                        else:
+                            location_names.append(f"{location.name}(⌂)")
+                            available_locations.append(location)
                     location_names.append("Clear all")
                     selected_destination_names = ["Selected Destinations"] + [loc.name for loc in self.planned_destinations] # Gets the name of destinations that may already be set prior to opening the menu
                     while True:
@@ -1634,7 +1641,28 @@ class Port:
                             selected_destination_names.append(available_locations[answer-1].name)
                         except Exception:
                             break
+                # Add resource nodes
                 case 3:
+                    ans = menu("Select resource node location",[l.name for l in self.planned_destinations],True)
+                    if ans == None:
+                        continue
+                    available_resource_nodes = self.planned_destinations[ans-1].resource_nodes
+                    if len(available_resource_nodes) > 0:
+                        node_names = [f"{node.resource.name} node" for node in available_resource_nodes]
+                        node_names.append("Clear resource nodes")
+                        selected_node_names = ["selected resource nodes"] + [f"{node.resource.name} node" for node in self.planned_resource_nodes]
+                        while True:
+                            try:
+                                answer = menu("Select resource nodes to harvest",node_names,True,table=selected_node_names)
+                                if answer == len(node_names): #Clear all option
+                                    self.planned_resource_nodes = []
+                                    selected_node_names = ["Selected Resource Nodes"]
+                                    continue
+                                self.planned_resource_nodes.append(available_resource_nodes[answer-1])
+                                selected_node_names.append(available_resource_nodes[answer-1].resource.name + " node")
+                            except Exception:
+                                break
+                case 4:
                     # Mandatory checks
                     if len(self.planned_destinations) >= 1:
                         selected_ship.calculate_crew_amount()
@@ -2242,19 +2270,27 @@ class Book:
                         break
 
 class ResourceNode:
-    def __init__(self,game:Game,resource:Good,location:Location,daily_regen:int=100,ID:str | None = None):
+    def __init__(self,game:Game,resource:Good,location:Location,ship_stat_tie_in:str,daily_regen:int=100,ID:str | None = None):
+        '''Note: ship_stat_tie_in is the EXACT name of the stat that effects how much a ship can pull from this resource node (ex fishing_efficiency)'''
         self.game = game
         self.resource = resource
         self.location = location
+        self.ship_stat_tie_in = ship_stat_tie_in
         self.daily_regen = daily_regen
         self.amount = daily_regen #Start with full amount of resource available
         self.ID = ID if ID is not None else None
         game.register(self)
-    
+        if self.location is not None and type(self.location) is Location:
+            if self not in self.location.resource_nodes:
+                self.location.add_resource_node(self)
+        else:
+            raise ValueError("ResourceNodes must have a valid Location")
+
     def save(self):
         save = {
             "resource":self.resource.ID,
             "location":self.location.ID,
+            "ship_stat_tie_in":self.ship_stat_tie_in,
             "daily_regen":self.daily_regen,
             "amount":self.amount,
             "ID":self.ID
@@ -2270,6 +2306,7 @@ class ResourceNode:
             game,
             resource,
             location,
+            save["ship_stat_tie_in"],
             save["daily_regen"],
             ID=save["ID"]
         )
