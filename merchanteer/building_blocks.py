@@ -60,11 +60,12 @@ def gen_world() -> components.Game:
     currency_goods = [gold,silver]
 
     #Resource nodes
-    grandure_fishing_spot = components.ResourceNode(game,fish,grandure,150)
+    grandure_fishing_spot = components.ResourceNode(game,fish,grandure,"fishing_efficiency")
     #Crew roles
     buckaneer = components.CrewRole("Buckaneer","A regular sailor, well equiped in all areas but not excelling in any.",game)
+    fisherman = components.CrewRole("Fisherman","A professional fisherman skilled in catching more fish than the average sailor.",game,-1,0,40)
 
-    crew_roles = [buckaneer]
+    crew_roles = [buckaneer,fisherman]
 
     # Crew
 

@@ -1009,11 +1009,12 @@ class Contract:
             return f"Contract {self.name} for {self.amount} {self.good.name} has expired!"
 
 class CrewRole:
-    def __init__(self,name:str,description:str,game:Game,sailing_booster:int=0,maintenance_booster:int=0, ID:str | None=None):
+    def __init__(self,name:str,description:str,game:Game,sailing_booster:int=0,maintenance_booster:int=0,fishing_booster:int=0, ID:str | None=None):
         self.name = name
         self.description = description
         self.sailing_booster = sailing_booster
         self.maintenance_booster = maintenance_booster
+        self.fishing_booster = fishing_booster
         self.ID = ID if ID is not None else None
         game.register(self)
     
@@ -1023,6 +1024,7 @@ class CrewRole:
             "description":self.description,
             "sailing_booster":self.sailing_booster,
             "maintenance_booster":self.maintenance_booster,
+            "fishing_booster":self.fishing_booster,
             "ID":self.ID
             }
         return save
@@ -1036,6 +1038,7 @@ class CrewRole:
             game,
             save["sailing_booster"],
             save["maintenance_booster"],
+            save["fishing_booster"],
             ID=save["ID"]
         )
         return instance
@@ -1047,11 +1050,12 @@ class Human:
         self.name = name if name is not None else genname()
 
 class CrewMate(Human):
-    def __init__(self,crew_role:CrewRole,game:Game,sailing_ability:int | None = None,maintenance_ability:int | None = None, name:str | None = None, active:bool=False, ID:str | None = None):
+    def __init__(self,crew_role:CrewRole,game:Game,sailing_ability:int | None = None,maintenance_ability:int | None = None,fishing_ability:int | None = None, name:str | None = None, active:bool=False, ID:str | None = None):
         super().__init__(name=name)
         self.crew_role = crew_role
         self.sailing_ability = Stat(100,current_value=sailing_ability if sailing_ability is not None else random.randint(10,20)+crew_role.sailing_booster) #Base sailing ability is a random number between 10 and 20, plus any booster from their crew role
         self.maintenance_skill = Stat(100,current_value=maintenance_ability if maintenance_ability is not None else random.randint(10,20)+crew_role.maintenance_booster) #Base maintenance skill is a random number between 10 and 20, plus any booster from their crew role
+        self.fishing_skill = Stat(400,current_value=fishing_ability if fishing_ability is not None else random.randint(25,50)+crew_role.fishing_booster) #Base fishing skill is a random number between 25 and 50, plus any booster from their crew role
         self.active = active
         self.ID = ID if ID is not None else None
         self.game = game
@@ -1062,6 +1066,7 @@ class CrewMate(Human):
             "crew_role":self.crew_role.ID,
             "sailing_ability":self.sailing_ability.current_value,
             "maintenance_skill":self.maintenance_skill.current_value,
+            "fishing_skill":self.fishing_skill.current_value,
             "name":self.name,
             "active":self.active,
             "ID":self.ID
@@ -1077,6 +1082,7 @@ class CrewMate(Human):
             game,
             save["sailing_ability"],
             save["maintenance_skill"],
+            save["fishing_skill"],
             save["name"],
             active=save["active"],
             ID=save["ID"]
@@ -1131,7 +1137,7 @@ class ShipNeed:
                 raise AttributeError(f"Parent ship does not have attribute {self.ship_stat_tie_in}")
 
 class ShipType:
-    def __init__(self,game:Game,name:str,health:int=100,cargo_capacity:int=48000,crew_capacity:int=10,max_sailing_efficiency:int=50,max_fishing_efficiency:int=25,toughness:int=35,daily_maintenance:int=10, ID:str | None = None):
+    def __init__(self,game:Game,name:str,health:int=100,cargo_capacity:int=48000,crew_capacity:int=10,max_sailing_efficiency:int=50,max_fishing_efficiency:int=400,toughness:int=35,daily_maintenance:int=10, ID:str | None = None):
         '''All default stats are for a sloop, the smallest/starter ship'''
         self.game = game
         self.name = name
@@ -1178,7 +1184,7 @@ class ShipType:
         return instance
 
 class Ship:
-    def __init__(self,name:str,ship_type:ShipType,event_list:list[ShipEvent],game:Game,crew:list['CrewMate'] | None = None,coordinates:tuple | None = None, current_health:int | None = None, current_toughness:int | None = None, ships_log:list[str] | None = None, storage:Storage | None = None, is_dispatched:bool | None = None, travel_progress:Stat | None = None, destinations:list[Location] | None = None,resource_nodes:list[ResourceNode] | None = None, current_destination:Location | None = None, contracts:list[Contract] | None = None, home_port:'Port' | None = None, current_port:'Port' | None = None, last_port:'Port'| None = None, is_under_repair:bool | None = None, daily_repair_amount:int | None = None, ID = None):
+    def __init__(self,name:str,ship_type:ShipType,event_list:list[ShipEvent],game:Game,crew:list['CrewMate'] | None = None,coordinates:tuple | None = None, current_health:int | None = None, current_toughness:int | None = None, ships_log:list[str] | None = None, storage:Storage | None = None, is_dispatched:bool | None = None, travel_progress:Stat | None = None, destinations:list[Location] | None = None,resource_nodes:list[ResourceNode] | None = None, is_at_resource_node:bool | None = None, current_destination:Location | None = None, contracts:list[Contract] | None = None, home_port:'Port' | None = None, current_port:'Port' | None = None, last_port:'Port'| None = None, is_under_repair:bool | None = None, daily_repair_amount:int | None = None, ID = None):
         self.ship_type = ship_type
         self.game = game
         self.coordinates = coordinates if coordinates is not None else (0,0)
@@ -1201,6 +1207,7 @@ class Ship:
         self.travel_progress = travel_progress if travel_progress is not None else Stat(0,0,0)
         self.destinations:list[Location] = destinations if destinations is not None else []
         self.resource_nodes:list[ResourceNode] = resource_nodes if resource_nodes is not None else []
+        self.is_at_resource_node = is_at_resource_node if is_at_resource_node is not None else False
         self.current_destination:Location = current_destination if current_destination is not None else None
         self.contracts:list[Contract] = contracts if contracts is not None else []
         self.home_port:Port = home_port if home_port is not None else None
@@ -1237,6 +1244,7 @@ class Ship:
             "travel_progress":self.travel_progress.as_tuple(),
             "destinations":[loc.ID for loc in self.destinations] if len(self.destinations) > 0 else None,
             "resource_nodes":[node.ID for node in self.resource_nodes] if len(self.resource_nodes) > 0 else None,
+            "is_at_resource_node":self.is_at_resource_node,
             "current_destination": self.current_destination.ID if self.current_destination else None,
             "contracts":[con.ID for con in self.contracts] if len(self.contracts) > 0 else None,
             "home_port":self.home_port.ID if self.home_port is not None else None,
@@ -1283,6 +1291,7 @@ class Ship:
         self.travel_progress=Stat.from_tuple(save["travel_progress"])
         self.destinations=destinations
         self.resource_nodes = resource_nodes
+        self.is_at_resource_node = save["is_at_resource_node"]
         self.current_destination=current_destination
         self.contracts=contracts
         self.home_port=home_port
@@ -1314,6 +1323,7 @@ class Ship:
                 raise ValueError("Total crew cannot exceed crew capacity at __init__")
             self.crew_amount += 1
             self.sailing_efficiency += crew_mate.sailing_ability.current_value
+            self.fishing_efficiency += crew_mate.fishing_skill.current_value
     def update_ship_daily_needs(self):
         '''Updates all ship daily needs'''
         for need in self.needs:
@@ -1391,52 +1401,70 @@ class Ship:
             # Run travel logic
             self.run_ship_daily_needs(days)
             self.calculate_ship_stats_daily_variation(days)
+            input(f"SHIP TRAVEL DEBUG: {self.current_port} / {self.current_destination.coordinates} / {self.coordinates} / {self.travel_progress} / {self.storage.cargo_weight}")
             if self.coordinates == self.current_destination.coordinates:
-                pass
+                self.travel_progress.current_value = self.travel_progress.max_value #This is to prevent edge case where ship is already at its next destination, such as double dispatching to the same location
             else:
                 self.travel_progress += self.sailing_efficiency.current_value * ((self.daily_wind.current_value/100)*2)  #The ship moves faster the higher its sailing efficiency and wind
                 self.coordinates = point_along_vector(self.last_port.location.coordinates,self.current_destination.coordinates,self.travel_progress.current_value)
             #input(self.travel_progress)
             # Check for arrival at a port
             if self.travel_progress.full():
-                self.current_port = self.current_destination.ports[0] #This logic needs to be fixed to allow for multiple ports per location
-                self.current_port.add_ship(self) #Add the ship to the port's list of ships
-                self.ships_log.append(f"Arrived at {self.current_port.name} on day {days}!") #Log arrival at port
-                #Empty cargo into target storage
-                for contract in self.contracts:
-                    if contract.destination_port.location == self.current_destination: #Check if this contract is for the port we just arrived at
-                        if contract.good in self.storage.cargo: #Check if we have any of the contracted good in storage
-                            amount_to_deposite = min(contract.amount, self.storage.cargo.get(contract.good, 0)) #Calculate how much of the contracted good we can actually deposite based on how much we have in storage and how much the contract requires
-                            contract.destination_storage.add_to_cargo(contract.good,amount_to_deposite) #Add the goods for this contract to the destination storage
-                            self.storage.remove_cargo(contract.good,amount_to_deposite) #Remove the goods for this contract from the ship's storage
-                        if contract.check_completion():
-                            self.ships_log.append(f"Contract {contract.name} for {contract.amount} {contract.good.name} completed!")
-                        else:
-                            self.ships_log.append(f"Contract {contract.name} for {contract.amount} {contract.good.name} was NOT completed!")
-                        self.contracts.remove(contract) #Remove the contract from the ship's list of contracts, even if it wasnt completed cause the ship is out of that Good anyways
-                if len(self.destinations) > 0:
-                    self.dispatch(self.destinations[0],self.current_port.game) #Dispatch to the next destination in the list (this only dispatches to the first instance of that destination)
-                else:
-                    self.is_dispatched = False
-                    self.current_destination = None
-                    self.day_of_arrival = None #Make this None so it throws errors if anything tries to interact with it, helps with pinpointing lost ship bugs
-                    self.ships_log.append(f"No more destinations, {self.name} is now idle.")
-                    return f"{self.name} has arrived at {self.current_port.name} and has no more destinations, it is now idle."
+                #if self.current_port.ships.count(self) == 0: #Ensure the ship isnt already added to the port
+                if not self.is_at_resource_node:  # Only do arrival procedures on first arrival
+                    self.current_port = self.current_destination.ports[0] #This logic needs to be fixed to allow for multiple ports per location
+                    self.current_port.add_ship(self) #Add the ship to the port's list of ships
+                    self.ships_log.append(f"Arrived at {self.current_port.name} on day {days}!") #Log arrival at port
+                    #Empty cargo into target storage
+                    for contract in self.contracts:
+                        if contract.destination_port.location == self.current_destination: #Check if this contract is for the port we just arrived at
+                            if contract.good in self.storage.cargo: #Check if we have any of the contracted good in storage
+                                amount_to_deposite = min(contract.amount, self.storage.cargo.get(contract.good, 0)) #Calculate how much of the contracted good we can actually deposite based on how much we have in storage and how much the contract requires
+                                contract.destination_storage.add_to_cargo(contract.good,amount_to_deposite) #Add the goods for this contract to the destination storage
+                                self.storage.remove_cargo(contract.good,amount_to_deposite) #Remove the goods for this contract from the ship's storage
+                            if contract.check_completion():
+                                self.ships_log.append(f"Contract {contract.name} for {contract.amount} {contract.good.name} completed!")
+                            else:
+                                self.ships_log.append(f"Contract {contract.name} for {contract.amount} {contract.good.name} was NOT completed!")
+                            self.contracts.remove(contract) #Remove the contract from the ship's list of contracts, even if it wasnt completed cause the ship is out of that Good anyways
+                
+                #Harvest resource nodes (runs every day ship is at a resource node location)
+                for resource_node in self.resource_nodes:
+                    self.harvest_resources(resource_node) #Harvest the resource node for 3 days, this is a placeholder value and will be changed later when I implement a proper harvesting system
+                
+                # Next dispatch or end travel (only if not harvesting)
+                if not self.is_at_resource_node:
+                    if len(self.destinations) > 0:
+                        self.dispatch(self.destinations[0],self.current_port.game) #Dispatch to the next destination in the list (this only dispatches to the first instance of that destination)
+                    else: #If there are no more destinations, ship can return home or just stay idle at the current port
+                        self.is_dispatched = False
+                        self.current_destination = None
+                        self.day_of_arrival = None #Make this None so it throws errors if anything tries to interact with it, helps with pinpointing lost ship bugs
+                        self.ships_log.append(f"No more destinations, {self.name} is now idle.")
+                        return f"{self.name} has arrived at {self.current_port.name} and has no more destinations, it is now idle."
         return None
-    def harvest_resources(self,resource_node:ResourceNode,harvest_length:int):
-        start_day = self.game.day
-        end_day = start_day + harvest_length
-        if self.coordinates == resource_node.location.coordinates:
-            if self.game.day < end_day:
-                result = resource_node.harvest(self)
-                #CONTINUE LEAVING NODE LOGIC LATER
+    def harvest_resources(self,resource_node:ResourceNode):
+        #if not self.is_at_resource_node:
+            #pass
+            #start_day = self.game.day
+            #end_day = start_day + 100 #Placehodler value as ships auto depart resource nodes when full
+        if self.current_port.location == resource_node.location:
+            #if self.game.day < end_day:
+            self.is_at_resource_node = True
+            result = resource_node.harvest(self)
+            if not result:
+                self.ships_log.append(f"Finished harvesting {resource_node.resource} resource node as the ship is now full")
+                self.is_at_resource_node = False
+            #else:
+                #self.is_at_resource_node = False
+                #self.ships_log.append(f"Finished harvesting {resource_node.resource} resource node as the time expired")
 
     #EXTERNAL FUNCTIONS
     def primary_dispatch(self, destinations:Location, resource_nodes:ResourceNode, game:Game):
         '''Call this function to dispatch a ship (DO NOT USE dispatch())\n
         This function will handle all the backend for proper ship dispatch that dispatch() will not\n
         The purpose of dispatch() is the internal'''
-        # LEFT OFF HERE
+        self.resource_nodes = resource_nodes
         self.destinations = destinations
         self.home_port = self.current_port
         self.destinations.append(self.current_port.location) #Add the current location as the final destination so the ship returns home after its route is complete
@@ -1450,7 +1478,9 @@ class Ship:
                     "Name": crew_mate.name,
                     "Role": crew_mate.crew_role.name,
                     "Health": crew_mate.health,
-                    "Sailing Ability": crew_mate.sailing_ability
+                    "Sailing Ability": crew_mate.sailing_ability,
+                    "Fishign skill":crew_mate.fishing_skill,
+                    "Maintenance Skill":crew_mate.maintenance_skill
                 }
             selected_crew = menu(f"{self.name} crew", [crew_mate.name for crew_mate in self.crew], True, table = table_data)
             if selected_crew is not None:
@@ -1549,9 +1579,15 @@ class Port:
         self.planned_resource_nodes:list[ResourceNode] = []
         self.ID = ID if ID is not None else None
         game.register(self)
+        self.refresh_ships()
+    def refresh_ships(self):
+        for ship in self.ships:
+            ship.current_port = self
+            ship.coordinates = self.location.coordinates
     def add_ship(self, ship: Ship):
         self.ships.append(ship)
         ship.current_port = self
+        ship.coordinates = self.location.coordinates
     def transfer_goods(self,from_storage:Storage,to_storage:Storage):
         while True:
             try:
@@ -1874,6 +1910,7 @@ class Port:
             ships.append(game.scan_loaded_objects(Ship,ship_id))
         self.ships = ships
         self.warehouses = warehouses
+        self.refresh_ships()
 
 class Fleet:
     def __init__(self,ships:list[Ship],game:Game, ID:str | None = None):
@@ -2304,14 +2341,14 @@ class Book:
                         break
 
 class ResourceNode:
-    def __init__(self,game:Game,resource:Good,location:Location,ship_stat_tie_in:str,daily_regen:int=100,ID:str | None = None):
+    def __init__(self,game:Game,resource:Good,location:Location,ship_stat_tie_in:str,amount:Stat=Stat(10000,0,10000),daily_regen:int=1000,ID:str | None = None):
         '''Note: ship_stat_tie_in is the EXACT name of the stat that effects how much a ship can pull from this resource node (ex fishing_efficiency)'''
         self.game = game
         self.resource = resource
         self.location = location
         self.ship_stat_tie_in = ship_stat_tie_in
         self.daily_regen = daily_regen
-        self.amount = daily_regen #Start with full amount of resource available
+        self.amount = amount #Start with full amount of resource available
         self.ID = ID if ID is not None else None
         game.register(self)
         if self.location is not None and type(self.location) is Location:
@@ -2325,9 +2362,18 @@ class ResourceNode:
         if not hasattr(ship,self.ship_stat_tie_in):
             raise AttributeError(f"Ship does not have attribute {self.ship_stat_tie_in}")
         harvest_efficiency = getattr(ship,self.ship_stat_tie_in)
-        harvest_amount = min(random.random()*harvest_efficiency.current_value, self.amount)
+        random_variation = random.randint(-50,50)
+        harvest_amount = min(random_variation+harvest_efficiency.current_value, self.amount.current_value)
+        print("CALCULATING HARVEST AMOUNT DEBUG:")
+        print("HARVEST EFFICIENCY: "+str(harvest_efficiency.current_value))
+        print("RANDOM VARIATION: "+str(random_variation))
+        print("TOTAL HARVEST AMOUNT: "+str(harvest_amount))
+        print("AMOUNT AT RESOURCE NODE"+self.amount.__str__())
+        harvest_amount = max(0,harvest_amount)
+        input("FINAL HARVEST VALUE: " +str(harvest_amount))
         self.amount -= harvest_amount
         remainder = ship.storage.add_to_cargo(self.resource,harvest_amount,add_part=True)
+        ship.storage.calc_cargo()
         if type(remainder) is bool and remainder == False: #If the ship can't hold all the harvested resources, add_to_cargo returns False
             return False
         if type(remainder) is int: #If the ship can't hold all the harvested resources, but can add some, add_to_cargo returns the amount that couldn't be added as an int
@@ -2335,7 +2381,7 @@ class ResourceNode:
             return False
         return True
     def on_day_passed(self, days):
-        self.amount = min(self.amount + self.daily_regen,self.daily_regen)
+        self.amount += self.daily_regen #Stat classes auto clamp values so no risk of overflowing the max
 
     def save(self):
         save = {
@@ -2343,7 +2389,7 @@ class ResourceNode:
             "location":self.location.ID,
             "ship_stat_tie_in":self.ship_stat_tie_in,
             "daily_regen":self.daily_regen,
-            "amount":self.amount,
+            "amount":self.amount.as_tuple(),
             "ID":self.ID
         }
         return save
@@ -2358,8 +2404,8 @@ class ResourceNode:
             resource,
             location,
             save["ship_stat_tie_in"],
-            save["daily_regen"],
+            amount=Stat.from_tuple(save["amount"]),
+            daily_regen=save["daily_regen"],
             ID=save["ID"]
         )
-        instance.amount = save["amount"]
         return instance
