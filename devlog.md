@@ -6,7 +6,7 @@ MAJOR     MINOR     PATCH    SPECIAL
 ### Special legend
 a - Alpha (internal testing)  
 b - Beta  (external testing)  
-p - pre-release (available for download but not most stable final verion)
+p - pre-release (available for download but not most stable final verion)  
 d - in-development version, not meant to be played, likely very unstable
 
 # up to 0.0.1a Contracts rework #1 and locations
